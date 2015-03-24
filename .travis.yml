@@ -1,4 +1,6 @@
-language: C++
+sudo: false
+language: cpp
 xcode_project: paq.xcodeproj # path to your xcodeproj folder
 xcode_scheme: paq-tests
+xcode_sdk: osx
 
