@@ -9,6 +9,8 @@
 #import "parser.h"
 
 int main(int argc, const char * argv[]) {
-    Parser::parse(Parser::createContext(), @"cheese");
+    Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", ^(NSString *err, NSDictionary *ast) {
+        NSLog(@"%@, %@", err, ast);
+    });
     return 0;
 }

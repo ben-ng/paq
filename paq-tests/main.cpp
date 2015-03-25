@@ -7,8 +7,15 @@
 //
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#include "catch.hpp"
+#import "catch.hpp"
+#import "parser.h"
 
 TEST_CASE( "Bundles Recursively", "[]" ) {
-    REQUIRE( 1 == 1 );
+    Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", ^(NSString *err, NSDictionary *ast) {
+        REQUIRE(err == nil);
+        REQUIRE(ast[@"type"] != nil);
+        REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
+        REQUIRE([((NSArray *)ast[@"body"]) count] == 1);
+        REQUIRE([((NSString *) ast[@"body"][0][@"type"]) isEqualToString: @"ExpressionStatement"]);
+    });
 }
