@@ -12,6 +12,10 @@
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 
+/**
+ * The parser functions simply return an AST for some given code
+ */
+
 class Parser {
 public:
     static void parse(JSContext* ctx, NSString* code, void (^callback)(NSString *err, NSDictionary *ast));

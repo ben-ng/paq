@@ -10,12 +10,19 @@
 #import "catch.hpp"
 #import "parser.h"
 
-TEST_CASE( "Parser returns a valid AST", "[]" ) {
+TEST_CASE( "Parser returns a valid AST for valid code", "[parser]" ) {
     Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", ^(NSString *err, NSDictionary *ast) {
         REQUIRE(err == nil);
         REQUIRE(ast[@"type"] != nil);
         REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
         REQUIRE([((NSArray *)ast[@"body"]) count] == 1);
         REQUIRE([((NSString *) ast[@"body"][0][@"type"]) isEqualToString: @"ExpressionStatement"]);
+    });
+}
+
+TEST_CASE( "Parser returns an error for invalid code", "[parser]" ) {
+    Parser::parse(Parser::createContext(), @"var unbalanced = {", ^(NSString *err, NSDictionary *ast) {
+        REQUIRE([err isEqualToString: @"SyntaxError: Unexpected token (1:18)"]);
+        REQUIRE(ast == nil);
     });
 }

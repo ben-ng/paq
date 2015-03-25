@@ -9,20 +9,28 @@
 #import "parser.h"
 
 void Parser::parse(JSContext* ctx, NSString* code, void (^callback)(NSString *err, NSDictionary *ast)) {
+    
+    __block bool returned = NO;
+    
     ctx.exceptionHandler = ^(JSContext *context, JSValue *exception) {
-        callback([exception toString], nil);
+        if(!returned) {
+            returned = YES;
+            callback([exception toString], nil);
+        }
     };
     
     JSValue *acornParse = ctx[@"exports"][@"parse"];
     
     JSValue *evalResult = [acornParse callWithArguments:@[code]];
     
-    if([evalResult isObject]) {
-        callback(nil, [evalResult toDictionary]);
-    }
-    else {
-        if([evalResult isString]) {
-            callback([evalResult toString], nil);
+    if(!returned) {
+        if([evalResult isObject]) {
+            callback(nil, [evalResult toDictionary]);
+        }
+        else {
+            if([evalResult isString]) {
+                callback([evalResult toString], nil);
+            }
         }
     }
 }
