@@ -215,7 +215,8 @@ TEST_CASE( "Creates a bundle", "[bundle]" ) {
     Resolve *resolver = new Resolve(nil);
     NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js");
-    Paq *paq = new Paq(@[resolver->path_resolve(@[here, @"fixtures/index-js/entry.js"])], nil);
+    NSString *entry = resolver->path_resolve(@[here, @"fixtures/index-js/entry.js"]);
+    Paq *paq = new Paq(@[entry], nil);
     __block NSString *bundled;
     
     dispatch_semaphore_t semab = dispatch_semaphore_create(0);
@@ -226,5 +227,16 @@ TEST_CASE( "Creates a bundle", "[bundle]" ) {
     });
     
     dispatch_semaphore_wait(semab, DISPATCH_TIME_FOREVER);
+    
     REQUIRE(bundled != nil);
+    
+    JSContext *ctx = [[JSContext alloc] init];
+    
+    ctx.exceptionHandler = ^(JSContext *context, JSValue *exception) {
+        NSLog(@"JS Error: %@", [exception toString]);
+    };
+    
+    JSValue *result = [ctx evaluateScript:[bundled stringByAppendingFormat:@"(\"%@\")", paq->JSONString(entry)]];
+    
+    REQUIRE([[result toString] isEqualToString:@"Custom Lib You found waldo! flamingo"]);
  }

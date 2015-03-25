@@ -50,8 +50,8 @@ private:
     void _getAST(NSString *file, void (^callback)(NSDictionary *ast, NSString *source));
     void _findRequires(NSString *file, NSDictionary *ast, void (^callback)(NSArray *requires));
     void _resolveRequires(NSArray *requires, NSMutableDictionary *parent, void (^callback)(NSArray *resolved));
-    NSString * JSONString(NSString *astring);
 public:
+    NSString * JSONString(NSString *astring);
     Paq(NSArray *entry, NSDictionary *options);
     void bundle(void (^callback)(NSError *error, NSString *bundle));
     void deps(void (^callback)(NSDictionary *dependencies));

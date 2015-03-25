@@ -71,7 +71,7 @@ void Paq::bundle(void (^callback)(NSError *error, NSString *bundle)) {
         
         NSMutableString *output = [[NSMutableString alloc] initWithString:prelude];
         
-        [output appendString:@"({"];
+        [output appendString:@"({\n"];
         
         __block unsigned long counter = 0;
         long depscount = [deps count];
@@ -82,7 +82,7 @@ void Paq::bundle(void (^callback)(NSError *error, NSString *bundle)) {
             counter++;
             
             [output appendFormat:@"\"%@\"", JSONString(key)];
-            [output appendString:@": [function (require, module, exports) {"];
+            [output appendString:@": [function (require, module, exports) {\n"];
             [output appendString:obj[@"source"]];
             [output appendString:@"\n}, "];
             
