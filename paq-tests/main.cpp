@@ -10,7 +10,7 @@
 #import "catch.hpp"
 #import "parser.h"
 
-TEST_CASE( "Bundles Recursively", "[]" ) {
+TEST_CASE( "Parser returns a valid AST", "[]" ) {
     Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", ^(NSString *err, NSDictionary *ast) {
         REQUIRE(err == nil);
         REQUIRE(ast[@"type"] != nil);
