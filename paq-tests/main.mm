@@ -133,3 +133,13 @@ TEST_CASE( "Resolves dependency with user defined main script", "[resolve]" ) {
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/index-js/node_modules/waldo/waldo/index.js"]);
 }
+
+TEST_CASE( "Resolves global", "[resolve]" ) {
+    Resolve *resolver = new Resolve(nil);
+    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js/entry.js");
+    NSString *resolved = resolver->_resolveFilename(@"http", parent);
+    
+    REQUIRE(resolved != nil);
+    REQUIRE([resolved isEqualToString:@"http"]);
+}

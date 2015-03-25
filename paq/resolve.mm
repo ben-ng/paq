@@ -223,7 +223,7 @@ NSString* Resolve::_findPath(NSString *request, NSArray *paths) {
 }
 
 BOOL Resolve::_nativeModuleExists(NSString *request) {
-    return [_nativeModules containsObject:@"request"];
+    return [_nativeModules containsObject:request];
 }
 
 NSString* Resolve::path_resolve(NSArray *args) {
