@@ -7,12 +7,12 @@ Paq implements a subset of [Browserify](http://browserify.org)'s features with f
 I post updates on Twitter:
 [![Follow @_benng](http://i.imgur.com/FImwJ9n.png)](https://twitter.com/_benng)
 
-# Caveats
+## Caveats
 
  * Mac only for now. If you get it running elsewhere, send a PR.
  * Implements only the subset of Browserify that I need at work.
 
-# Contributing
+## Contributing
 
 To work on paq, you'll need these tools:
 
