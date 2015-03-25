@@ -19,9 +19,9 @@ void Parser::parse(JSContext* ctx, NSString* code, void (^callback)(NSString *er
         }
     };
     
-    JSValue *acornParse = ctx[@"exports"][@"parse"];
+    JSValue *parseFunc = ctx[@"parse"];
     
-    JSValue *evalResult = [acornParse callWithArguments:@[code]];
+    JSValue *evalResult = [parseFunc callWithArguments:@[code]];
     
     if(!returned) {
         if([evalResult isObject]) {
@@ -56,6 +56,28 @@ JSContext* Parser::createContext() {
         if([ctx[@"exports"][@"parse"] isUndefined] || [ctx[@"exports"][@"parse"] isNull]) {
             [ctx evaluateScript:@"exports = {parse: function () {return 'acorn could not be parsed'}}"];
         }
+        
+        // Wrap acorn's parse function with the settings browserify uses
+        // This is lifted from substack's defined and detective modules
+        [ctx evaluateScript:@"\
+         function defined () {\
+         for (var i = 0; i < arguments.length; i++) {\
+         if (arguments[i] !== undefined) return arguments[i];\
+         }}\
+         function parse (src, opts) {\
+         if (!opts) opts = {};\
+         return exports.parse(src, {\
+         ecmaVersion: defined(opts.ecmaVersion, 6),\
+         ranges: defined(opts.ranges, opts.range),\
+         locations: defined(opts.locations, opts.loc),\
+         allowReturnOutsideFunction: defined(\
+         opts.allowReturnOutsideFunction, true\
+         ),\
+         strictSemicolons: defined(opts.strictSemicolons, false),\
+         allowTrailingCommas: defined(opts.allowTrailingCommas, true),\
+         forbidReserved: defined(opts.forbidReserved, false)\
+         });\
+         }"];
     }
     
     return ctx;
