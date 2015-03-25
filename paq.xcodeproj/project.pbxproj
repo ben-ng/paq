@@ -112,7 +112,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5081D7A1AC114F700D675E9 /* Build configuration list for PBXNativeTarget "paq" */;
 			buildPhases = (
-				B59884C11AC26EF0005929C3 /* ShellScript */,
 				B5081D6F1AC114F700D675E9 /* Sources */,
 				B5081D701AC114F700D675E9 /* Frameworks */,
 				B5081D711AC114F700D675E9 /* CopyFiles */,
@@ -130,7 +129,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5081D881AC118B500D675E9 /* Build configuration list for PBXNativeTarget "paq-tests" */;
 			buildPhases = (
-				B5BA5B641AC284C500FCE5EE /* ShellScript */,
 				B5081D801AC118B500D675E9 /* Sources */,
 				B5081D811AC118B500D675E9 /* Frameworks */,
 				B5081D821AC118B500D675E9 /* CopyFiles */,
@@ -178,35 +176,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		B59884C11AC26EF0005929C3 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "PATH=${PATH}:/usr/local/bin\nnode $PROJECT_DIR/node_modules/uglifyjs/bin/uglifyjs $PROJECT_DIR/node_modules/acorn/acorn.js > $PROJECT_DIR/paq/acorn-min.js";
-		};
-		B5BA5B641AC284C500FCE5EE /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "PATH=${PATH}:/usr/local/bin\nnode $PROJECT_DIR/node_modules/uglifyjs/bin/uglifyjs $PROJECT_DIR/node_modules/acorn/acorn.js > $PROJECT_DIR/paq/acorn-min.js";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B5081D6F1AC114F700D675E9 /* Sources */ = {
@@ -311,7 +280,7 @@
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn-min.js";
+				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/node_modules/acorn/acorn.js";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -323,7 +292,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn-min.js";
+				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/node_modules/acorn/acorn.js";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -337,7 +306,7 @@
 					"$(inherited)",
 				);
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn-min.js";
+				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/node_modules/acorn/acorn.js";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -348,7 +317,7 @@
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn-min.js";
+				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/node_modules/acorn/acorn.js";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

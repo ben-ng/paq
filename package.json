@@ -17,7 +17,6 @@
   },
   "homepage": "https://github.com/ben-ng/paq",
   "dependencies": {
-    "acorn": "^0.12.0",
-    "uglifyjs": "^2.4.10"
+    "acorn": "^0.12.0"
   }
 }

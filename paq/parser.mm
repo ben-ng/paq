@@ -30,21 +30,24 @@ void Parser::parse(JSContext* ctx, NSString* code, void (^callback)(NSString *er
 JSContext* Parser::createContext() {
     JSContext *ctx = [[JSContext alloc] init];
     
-    // Also, for some reason, if you don't have this defined, nothing works. Fun!
     ctx.exceptionHandler = ^(JSContext *context, JSValue *exception) {
-        NSLog(@"Error creating context: %@", [exception toString]);
+        NSLog(@"JS Error: %@", [exception toString]);
     };
-    
-    [ctx evaluateScript:@"var exports = {}, module = {exports: exports}"];
     
     unsigned long size;
     char *ACORN_SOURCE = getsectdata("__TEXT", "__acorn_src", &size);
     
     if(size == 0 || strlen(ACORN_SOURCE) == 0) {
-        [ctx evaluateScript:@"exports.parse = function () {return 'acorn is missing'}"];
+        [ctx evaluateScript:@"exports = {parse: function () {return 'acorn is missing from the __TEXT segment'}}"];
     }
     else {
-        [ctx evaluateScript:[NSString stringWithCString:ACORN_SOURCE encoding:NSUTF8StringEncoding]];
+        NSString *concatSource = [@"var exports = {}, module = {exports: exports};" stringByAppendingString:[NSString stringWithCString:ACORN_SOURCE encoding:NSUTF8StringEncoding]];
+        
+        [ctx evaluateScript:concatSource];
+        
+        if([ctx[@"exports"][@"parse"] isUndefined] || [ctx[@"exports"][@"parse"] isNull]) {
+            [ctx evaluateScript:@"exports = {parse: function () {return 'acorn could not be parsed'}}"];
+        }
     }
     
     return ctx;
