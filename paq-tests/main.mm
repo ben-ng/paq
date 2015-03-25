@@ -179,15 +179,16 @@ TEST_CASE( "Creates a dependency map", "[deps]" ) {
     
     [dependencies enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
         NSString *sourceFile = (NSString *) key;
-        NSArray *requirePairs = (NSArray *) obj;
+        NSDictionary *sourceData = (NSDictionary *) obj;
+        NSDictionary *requirePairs = sourceData[@"deps"];
+        
+        REQUIRE(sourceData[@"source"] != nil);
         
         if([key hasSuffix:@"/index-js/entry.js"]) {
+            REQUIRE([sourceData[@"entry"] boolValue] == YES);
             REQUIRE([requirePairs count] == 3);
             
-            for (long i=0; i<3; ++i) {
-                NSString *requireExpr = requirePairs[i][0];
-                NSString *resolution = requirePairs[i][1];
-                
+            [requirePairs enumerateKeysAndObjectsUsingBlock:^(NSString *requireExpr, NSString *resolution, BOOL *stop) {
                 if([requireExpr isEqualToString:@"./mylib"]) {
                     REQUIRE([resolution hasSuffix:@"/fixtures/index-js/mylib/index.js"]);
                 }
@@ -197,10 +198,33 @@ TEST_CASE( "Creates a dependency map", "[deps]" ) {
                 else if([requireExpr isEqualToString:@"flamingo"]) {
                     REQUIRE([resolution hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
                 }
-            }
+            }];
         }
         else {
+            REQUIRE([sourceData[@"entry"] boolValue] == NO);
             REQUIRE([requirePairs count] == 0);
         }
     }];
 }
+
+/**
+ * paq: bundle
+ */
+
+TEST_CASE( "Creates a bundle", "[bundle]" ) {
+    Resolve *resolver = new Resolve(nil);
+    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js");
+    Paq *paq = new Paq(@[resolver->path_resolve(@[here, @"fixtures/index-js/entry.js"])], nil);
+    __block NSString *bundled;
+    
+    dispatch_semaphore_t semab = dispatch_semaphore_create(0);
+    
+    paq->bundle(^(NSError *error, NSString *bundle) {
+        bundled = bundle;
+        dispatch_semaphore_signal(semab);
+    });
+    
+    dispatch_semaphore_wait(semab, DISPATCH_TIME_FOREVER);
+    REQUIRE(bundled != nil);
+ }

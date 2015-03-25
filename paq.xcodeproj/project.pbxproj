@@ -151,9 +151,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5081D881AC118B500D675E9 /* Build configuration list for PBXNativeTarget "paq-tests" */;
 			buildPhases = (
-				B505A1631AC2A0CF00986D7B /* ShellScript */,
+				B505A1631AC2A0CF00986D7B /* Compile Embedded Javascript */,
 				B5081D801AC118B500D675E9 /* Sources */,
 				B5081D811AC118B500D675E9 /* Frameworks */,
+				B50339861AC34E17004E1389 /* Copy Test Fixtures To Debug */,
 			);
 			buildRules = (
 			);
@@ -200,18 +201,33 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		B505A1631AC2A0CF00986D7B /* ShellScript */ = {
+		B50339861AC34E17004E1389 /* Copy Test Fixtures To Debug */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
+			name = "Copy Test Fixtures To Debug";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PATH=${PATH}:/usr/local/bin\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s escodegen ${PROJECT_DIR}/node_modules/escodegen | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/escodegen.bundle.js\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s acorn ${PROJECT_DIR}/node_modules/acorn | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/acorn.bundle.js\ncp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Debug";
+			shellScript = "cp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Debug";
+		};
+		B505A1631AC2A0CF00986D7B /* Compile Embedded Javascript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Compile Embedded Javascript";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "PATH=${PATH}:/usr/local/bin\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s escodegen ${PROJECT_DIR}/node_modules/escodegen | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/escodegen.bundle.js\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s acorn ${PROJECT_DIR}/node_modules/acorn | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/acorn.bundle.js\n";
 		};
 		B505A1731AC2B65100986D7B /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -376,6 +392,7 @@
 				OTHER_LDFLAGS = (
 					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -390,6 +407,7 @@
 				OTHER_LDFLAGS = (
 					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

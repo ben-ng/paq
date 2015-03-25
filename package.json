@@ -18,7 +18,10 @@
   "homepage": "https://github.com/ben-ng/paq",
   "dependencies": {
     "acorn": "^0.12.0",
+    "brfs": "^1.4.0",
+    "browser-pack": "^4.0.1",
     "browserify": "^9.0.3",
+    "concat-stream": "^1.4.7",
     "escodegen": "^1.6.1",
     "uglifyjs": "^2.4.10"
   }

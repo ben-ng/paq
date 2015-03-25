@@ -48,7 +48,7 @@ void Paq::deps(void (^callback)(NSDictionary *dependencies)) {
         if(_module_map[_entry[i]] == nil) {
             _unprocessed++;
             _module_map[_entry[i]] = [NSNumber numberWithBool:NO];
-            deps(_entry[i], _resolve->makeModuleStub(_entry[i]));
+            deps(_entry[i], _resolve->makeModuleStub(_entry[i]), YES);
         }
     }
 }
@@ -56,18 +56,78 @@ void Paq::deps(void (^callback)(NSDictionary *dependencies)) {
 void Paq::bundle(void (^callback)(NSError *error, NSString *bundle)) {
     _bundle_callback = [callback copy];
     
-    _deps_callback = ^void(NSDictionary *deps) {
-        // Once you have deps, you can pack them!
-    };
+    // See header file for the structure of the deps callback argument
+    deps(^void(NSDictionary *deps) {
+        NSString *prelude;
+        unsigned long size;
+        void *JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__prelude_src", &size);
+        
+        if(size == 0) {
+            NSLog(@"The section \"%s\"  is missing from the __TEXT segment", "__prelude_src");
+        }
+        else {
+            prelude = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
+        }
+        
+        NSMutableString *output = [[NSMutableString alloc] initWithString:prelude];
+        
+        [output appendString:@"({"];
+        
+        __block unsigned long counter = 0;
+        long depscount = [deps count];
+        
+        NSMutableArray *entryFiles = [[NSMutableArray alloc] initWithCapacity:[_entry count]];
+        
+        [deps enumerateKeysAndObjectsUsingBlock:^(NSString* key, NSDictionary* obj, BOOL *stop) {
+            counter++;
+            
+            [output appendFormat:@"\"%@\"", JSONString(key)];
+            [output appendString:@": [function (require, module, exports) {"];
+            [output appendString:obj[@"source"]];
+            [output appendString:@"\n}, "];
+            
+            NSError *error;
+            NSData *serialized = [NSJSONSerialization dataWithJSONObject:obj[@"deps"] options:0 error:&error];
+            
+            if(error) {
+                [NSException raise:@"Fatal Exception" format:@"The deps object could not be serialized"];
+            }
+                                  
+            [output appendString:[[NSString alloc] initWithData: serialized encoding:NSUTF8StringEncoding]];
+            [output appendString:@"]"];
+            
+            if(counter < depscount) {
+                [output appendString:@",\n"];
+            }
+            
+            if([obj[@"entry"] boolValue]) {
+                [entryFiles addObject:key];
+            }
+        }];
+        
+        [output appendString:@"},{},"];
+        
+        NSError *error;
+        NSData *serialized = [NSJSONSerialization dataWithJSONObject:entryFiles options:0 error:&error];
+        
+        if(error) {
+            [NSException raise:@"Fatal Exception" format:@"The entry array could not be serialized"];
+        }
+        
+        [output appendString:[[NSString alloc] initWithData:serialized encoding:NSUTF8StringEncoding]];
+        [output appendString:@")"];
+        
+        callback(nil, output);
+    });
 };
 
-void Paq::deps(NSString *file, NSMutableDictionary *parent) {
+void Paq::deps(NSString *file, NSMutableDictionary *parent, BOOL isEntry) {
     if(!file.isAbsolutePath) {
         [NSException raise:@"Fatal Exception" format:@"Paq::process must always be called with absolute paths to avoid infinite recursion. You called it with \"%@\"", file];
     }
     
     dispatch_async(_serialQ, ^{
-        _getAST(file, ^(NSDictionary *ast) {
+        _getAST(file, ^(NSDictionary *ast, NSString *source) {
             // Here we are in the parser context queue
             // After this, findRequires enters the require ctx queue
             _findRequires(file, ast, ^(NSArray *requires) {
@@ -78,11 +138,11 @@ void Paq::deps(NSString *file, NSMutableDictionary *parent) {
                     // Move to the main serial queue
                     dispatch_async(_serialQ, ^{
                         // Pull together the requires and resolved result for later
-                        NSMutableArray *zip = [[NSMutableArray alloc] initWithCapacity:[resolved count]];
+                        NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
                         for(long i=0, ii=[resolved count]; i<ii; ++i) {
-                            [zip addObject:@[requires[i], resolved[i]]];
+                            zip[requires[i]] = resolved[i];
                         }
-                        _module_map[file] = zip;
+                        _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
                         _unprocessed--;
                         
                         // Dispatch new tasks
@@ -91,11 +151,12 @@ void Paq::deps(NSString *file, NSMutableDictionary *parent) {
                             if(_module_map[resolved[i]] == nil) {
                                 _unprocessed++;
                                 _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
-                                deps(resolved[i], parent);
+                                deps(resolved[i], parent, NO);
                             }
                         }
                         
                         if(_unprocessed == 0) {
+                            // See header file for the structure of the deps callback argument
                             _deps_callback(_module_map);
                             Block_release(_deps_callback);
                         }
@@ -106,7 +167,7 @@ void Paq::deps(NSString *file, NSMutableDictionary *parent) {
     });
 }
 
-void Paq::_getAST(NSString *file, void (^callback)(NSDictionary *ast)) {
+void Paq::_getAST(NSString *file, void (^callback)(NSDictionary *ast, NSString* source)) {
     dispatch_async(_parserCtxQ, ^{
         dispatch_semaphore_wait(_parser_contexts, 60 * NSEC_PER_SEC);
         JSContext *parserCtx = (JSContext *) [_available_parser_contexts lastObject];
@@ -129,7 +190,7 @@ void Paq::_getAST(NSString *file, void (^callback)(NSDictionary *ast)) {
             dispatch_async(_parserCtxQ, ^{
                 [_available_parser_contexts addObject:parserCtx];
                 dispatch_semaphore_signal(_parser_contexts);
-                callback(ast);
+                callback(ast, source);
             });
         });
     });
@@ -174,4 +235,16 @@ void Paq::_resolveRequires(NSArray *requires, NSMutableDictionary *parent, void 
         
         callback(resolved);
     });
+}
+
+NSString * Paq::JSONString(NSString *astring) {
+    NSMutableString *s = [NSMutableString stringWithString:astring];
+    [s replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"/" withString:@"\\/" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\n" withString:@"\\n" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\b" withString:@"\\b" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\f" withString:@"\\f" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\r" withString:@"\\r" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\t" withString:@"\\t" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    return [NSString stringWithString:s];
 }

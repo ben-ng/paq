@@ -30,12 +30,27 @@ private:
     dispatch_queue_t _serialQ;
     dispatch_queue_t _concurrentQ;
     void (^_bundle_callback)(NSError *error, NSString *bundle);
+    
+    
+    /*
+     * This is a map like
+     * {
+     *      @"/absolute/path.js": @{
+     *          @"deps":@[
+     *              @[@"requiredExpression", @"/resolved/path.js"]
+     *          ],
+     *          @"source": @"var some = 'source code';",
+     *          @"entry": 1;
+     *      }
+     *  }
+     */
     void (^_deps_callback)(NSDictionary *deps);
     
-    void deps(NSString *file, NSMutableDictionary *parent);
-    void _getAST(NSString *file, void (^callback)(NSDictionary *ast));
+    void deps(NSString *file, NSMutableDictionary *parent, BOOL isEntry);
+    void _getAST(NSString *file, void (^callback)(NSDictionary *ast, NSString *source));
     void _findRequires(NSString *file, NSDictionary *ast, void (^callback)(NSArray *requires));
     void _resolveRequires(NSArray *requires, NSMutableDictionary *parent, void (^callback)(NSArray *resolved));
+    NSString * JSONString(NSString *astring);
 public:
     Paq(NSArray *entry, NSDictionary *options);
     void bundle(void (^callback)(NSError *error, NSString *bundle));

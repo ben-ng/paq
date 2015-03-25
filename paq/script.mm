@@ -23,7 +23,7 @@ JSContext * Script::loadEmbeddedBundle(std::string sectionName, NSString *afterL
         NSLog(@"The section \"%s\"  is missing from the __TEXT segment", sectionName.c_str());
     }
     else {
-        NSString *src = [[NSString alloc] initWithBytes:JS_SOURCE length:size encoding:NSUTF8StringEncoding];
+        NSString *src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
         
         [ctx evaluateScript:src];
         
