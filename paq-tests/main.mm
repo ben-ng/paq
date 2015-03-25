@@ -86,10 +86,20 @@ TEST_CASE( "Extracts requires", "[require]" ) {
  */
 
 TEST_CASE( "Creates node_module paths", "[resolve]" ) {
-    Resolve *resolver = new Resolve;
+    Resolve *resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSArray *paths = resolver->_nodeModulePaths(here);
     
     REQUIRE([paths count] > 1);
     REQUIRE([paths[0] hasSuffix:@"node_modules"]);
+}
+
+TEST_CASE( "Resolves lookup paths", "[resolve]" ) {
+    Resolve *resolver = new Resolve(nil);
+    NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/main-module-entry/entry.js");
+    NSArray *paths = resolver->_resolveLookupPaths(@"lodash", parent);
+    
+    REQUIRE([paths count] == 2);
+    REQUIRE([paths[1] count] > 6); // This should be pretty long
 }

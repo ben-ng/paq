@@ -12,10 +12,15 @@ class Resolve {
 private:
     NSMutableDictionary *_pathCache;
     NSArray *_nativeModules;
+    NSArray *_modulePaths;
     NSURL *_cwd;
+    BOOL _nativeModuleExists(NSString *request);
 public:
-    Resolve();
+    Resolve(NSDictionary *options);
     NSArray *_nodeModulePaths(NSString *from);
-    NSArray *_resolveLookupPaths(NSString *request, NSString *parent);
-    NSString* resolveRequire(NSString *required, NSString *requiree, NSArray *path);
+    NSArray *_resolveLookupPaths(NSString *request, NSMutableDictionary *parent);
+    NSString *resolveRequire(NSString *required, NSString *requiree, NSArray *path);
+    NSString *path_resolve(NSArray *args);
+    NSMutableDictionary *makeModuleStub(NSString *filename);
+    NSArray* normalizeArray(NSArray *parts, BOOL allowAboveRoot);
 };

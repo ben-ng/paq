@@ -35,15 +35,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
-		B5081D821AC118B500D675E9 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +46,9 @@
 		B505A1751AC2DEC300986D7B /* paq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = paq.h; sourceTree = "<group>"; };
 		B505A1781AC2E59B00986D7B /* resolve.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = resolve.mm; sourceTree = "<group>"; };
 		B505A1791AC2E59B00986D7B /* resolve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resolve.h; sourceTree = "<group>"; };
+		B505A17E1AC2FE5D00986D7B /* entry.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = entry.js; sourceTree = "<group>"; };
+		B505A1801AC2FE5D00986D7B /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		B505A1821AC2FE5D00986D7B /* entry.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = entry.js; sourceTree = "<group>"; };
 		B5081D731AC114F700D675E9 /* paq */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = paq; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5081D761AC114F700D675E9 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		B5081D841AC118B500D675E9 /* paq-tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "paq-tests"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,9 +81,44 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B505A17C1AC2FE5D00986D7B /* fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				B505A17D1AC2FE5D00986D7B /* index-js */,
+				B505A1811AC2FE5D00986D7B /* main-module-entry */,
+			);
+			path = fixtures;
+			sourceTree = "<group>";
+		};
+		B505A17D1AC2FE5D00986D7B /* index-js */ = {
+			isa = PBXGroup;
+			children = (
+				B505A17E1AC2FE5D00986D7B /* entry.js */,
+				B505A17F1AC2FE5D00986D7B /* mylib */,
+			);
+			path = "index-js";
+			sourceTree = "<group>";
+		};
+		B505A17F1AC2FE5D00986D7B /* mylib */ = {
+			isa = PBXGroup;
+			children = (
+				B505A1801AC2FE5D00986D7B /* index.js */,
+			);
+			path = mylib;
+			sourceTree = "<group>";
+		};
+		B505A1811AC2FE5D00986D7B /* main-module-entry */ = {
+			isa = PBXGroup;
+			children = (
+				B505A1821AC2FE5D00986D7B /* entry.js */,
+			);
+			path = "main-module-entry";
+			sourceTree = "<group>";
+		};
 		B5081D6A1AC114F700D675E9 = {
 			isa = PBXGroup;
 			children = (
+				B505A17C1AC2FE5D00986D7B /* fixtures */,
 				B59884B71AC2641A005929C3 /* JavaScriptCore.framework */,
 				B5081D751AC114F700D675E9 /* paq */,
 				B5081D851AC118B500D675E9 /* paq-tests */,
@@ -163,7 +192,6 @@
 				B505A1631AC2A0CF00986D7B /* ShellScript */,
 				B5081D801AC118B500D675E9 /* Sources */,
 				B5081D811AC118B500D675E9 /* Frameworks */,
-				B5081D821AC118B500D675E9 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -221,7 +249,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PATH=${PATH}:/usr/local/bin\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s escodegen ${PROJECT_DIR}/node_modules/escodegen | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/escodegen.bundle.js\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s acorn ${PROJECT_DIR}/node_modules/acorn | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/acorn.bundle.js";
+			shellScript = "PATH=${PATH}:/usr/local/bin\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s escodegen ${PROJECT_DIR}/node_modules/escodegen | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/escodegen.bundle.js\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s acorn ${PROJECT_DIR}/node_modules/acorn | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/acorn.bundle.js\ncp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Debug";
 		};
 		B505A1731AC2B65100986D7B /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;

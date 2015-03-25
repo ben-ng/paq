@@ -63,6 +63,10 @@
             argument = "--warn NoAssertions"
             isEnabled = "YES">
          </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--break"
+            isEnabled = "YES">
+         </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>
       </AdditionalOptions>
