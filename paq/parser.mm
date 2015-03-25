@@ -8,14 +8,15 @@
 
 #import "parser.h"
 
-void Parser::parse(JSContext* ctx, NSString* code, void (^callback)(NSString *err, NSDictionary *ast)) {
+NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error) {
     
-    __block bool returned = NO;
+    __block bool errored = NO;
     
     ctx.exceptionHandler = ^(JSContext *context, JSValue *exception) {
-        if(!returned) {
-            returned = YES;
-            callback([exception toString], nil);
+        errored = YES;
+        
+        if(error) {
+            *error = [NSError errorWithDomain:@"com.benng.paq" code:1 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
         }
     };
     
@@ -26,16 +27,21 @@ void Parser::parse(JSContext* ctx, NSString* code, void (^callback)(NSString *er
     
     JSValue *evalResult = [parseFunc callWithArguments:@[code]];
     
-    if(!returned) {
-        if([evalResult isObject]) {
-            callback(nil, [evalResult toDictionary]);
-        }
-        else {
-            if([evalResult isString]) {
-                callback([evalResult toString], nil);
-            }
-        }
+    if(errored) {
+        return nil;
     }
+    
+    if([evalResult isObject]) {
+        return [evalResult toDictionary];
+    }
+    else if([evalResult isString]) {
+        *error = [NSError errorWithDomain:@"com.benng.paq" code:1 userInfo:@{NSLocalizedDescriptionKey: [evalResult toString]}];
+    }
+    else {
+        *error = [NSError errorWithDomain:@"com.benng.paq" code:1 userInfo:@{NSLocalizedDescriptionKey: @"An unknown error occurred, there was no exception and an invalid return value from Acorn"}];
+    }
+    
+    return nil;
 }
 
 JSContext* Parser::createContext() {

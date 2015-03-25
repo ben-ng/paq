@@ -17,6 +17,6 @@
 
 class Parser {
 public:
-    static void parse(JSContext* ctx, NSString* code, void (^callback)(NSString *err, NSDictionary *ast));
+    static NSDictionary* parse(JSContext* ctx, NSString* code, NSError** err);
     static JSContext* createContext();
 };
