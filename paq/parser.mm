@@ -45,14 +45,14 @@ NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error) {
 }
 
 JSContext* Parser::createContext() {
-    return Script::loadEmbeddedModule("__acorn_src", @"\
+    return Script::loadEmbeddedBundle("__acorn_src", @"\
                                       function defined () {\
                                       for (var i = 0; i < arguments.length; i++) {\
                                       if (arguments[i] !== undefined) return arguments[i];\
                                       }}\
                                       function parse (src, opts) {\
                                       if (!opts) opts = {};\
-                                      return exports.parse(src, {\
+                                      return acorn.parse(src, {\
                                       ecmaVersion: defined(opts.ecmaVersion, 6),\
                                       ranges: defined(opts.ranges, opts.range),\
                                       locations: defined(opts.locations, opts.loc),\

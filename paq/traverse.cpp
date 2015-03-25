@@ -8,11 +8,11 @@
 
 #import "traverse.h"
 
-void Traverse::walk(NSDictionary *root, void (^callback)(NSObject *node)) {
+void Traverse::walk(NSDictionary *root, void (^callback)(NSDictionary *node)) {
     traverse(root, callback);
 }
 
-void Traverse::traverse(NSObject *node, void (^callback)(NSObject *node)) {
+void Traverse::traverse(NSObject *node, void (^callback)(NSDictionary *node)) {
     if([node isKindOfClass:NSArray.class]) {
         NSArray *arrNode = (NSArray *) node;
         

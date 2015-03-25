@@ -15,5 +15,5 @@ class Script {
 public:
     // Modules are embedded in the mach-o binary using a linker flag.
     // This helper method makes it easy to load a module into a JSContext.
-    static JSContext* loadEmbeddedModule(std::string sectionName, NSString* afterLoad);
+    static JSContext* loadEmbeddedBundle(std::string sectionName, NSString* afterLoad);
 };

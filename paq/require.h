@@ -11,9 +11,12 @@
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "script.h"
+#import "traverse.h"
 
 class Require {
+private:
+    static bool isRequire(NSDictionary *node);
 public:
-    static std::vector<std::string> findRequires(JSContext* ctx, NSDictionary *ast, void (^callback)(NSString *err, NSDictionary *ast));
+    static NSArray* findRequires(JSContext *ctx, NSString *path, NSDictionary *ast, NSError **error);
     static JSContext* createContext();
 };

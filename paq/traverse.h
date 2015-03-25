@@ -10,8 +10,8 @@
 
 class Traverse {
 private:
-    static void traverse(NSObject *node, void (^callback)(NSObject *node));
+    static void traverse(NSObject *node, void (^callback)(NSDictionary *node));
     
 public:
-    static void walk(NSDictionary *root, void (^callback)(NSObject *node));
+    static void walk(NSDictionary *root, void (^callback)(NSDictionary *node));
 };

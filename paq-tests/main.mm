@@ -10,6 +10,7 @@
 #import "catch.hpp"
 #import "parser.h"
 #import "traverse.h"
+#import "require.h"
 
 /**
  * Parser
@@ -49,8 +50,7 @@ TEST_CASE( "Parser works on executable scripts", "[parser]" ) {
  * Traverse
  */
 
-
-TEST_CASE( "Traverses an AST", "[parser, traverse]" ) {
+TEST_CASE( "Traverses an AST", "[traverse]" ) {
     NSError *err;
     NSDictionary *ast = Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", &err);
     __block unsigned int nodeCounter = 0;
@@ -60,4 +60,22 @@ TEST_CASE( "Traverses an AST", "[parser, traverse]" ) {
     });
     
     REQUIRE(nodeCounter == 7);
+}
+
+/**
+ * Require
+ */
+
+TEST_CASE( "Extracts requires", "[require]" ) {
+    NSError *err;
+    NSDictionary *ast = Parser::parse(Parser::createContext(), @"require(__dirname + '/compound'); if(1) { require('tofu'); }", &err);
+    
+    REQUIRE(err == nil);
+    
+    NSArray *requires = Require::findRequires(Require::createContext(), @"/fake", ast, &err);
+    
+    REQUIRE([err localizedDescription] == nil);
+    REQUIRE([requires count] == 2);
+    REQUIRE([requires[0] isEqualToString:@"__dirname + '/compound'"]);
+    REQUIRE([requires[1] isEqualToString:@"tofu"]);
 }
