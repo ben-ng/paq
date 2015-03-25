@@ -48,7 +48,6 @@
 		B505A1791AC2E59B00986D7B /* resolve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resolve.h; sourceTree = "<group>"; };
 		B505A17E1AC2FE5D00986D7B /* entry.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = entry.js; sourceTree = "<group>"; };
 		B505A1801AC2FE5D00986D7B /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
-		B505A1821AC2FE5D00986D7B /* entry.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = entry.js; sourceTree = "<group>"; };
 		B5081D731AC114F700D675E9 /* paq */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = paq; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5081D761AC114F700D675E9 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		B5081D841AC118B500D675E9 /* paq-tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "paq-tests"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -85,7 +84,6 @@
 			isa = PBXGroup;
 			children = (
 				B505A17D1AC2FE5D00986D7B /* index-js */,
-				B505A1811AC2FE5D00986D7B /* main-module-entry */,
 			);
 			path = fixtures;
 			sourceTree = "<group>";
@@ -105,14 +103,6 @@
 				B505A1801AC2FE5D00986D7B /* index.js */,
 			);
 			path = mylib;
-			sourceTree = "<group>";
-		};
-		B505A1811AC2FE5D00986D7B /* main-module-entry */ = {
-			isa = PBXGroup;
-			children = (
-				B505A1821AC2FE5D00986D7B /* entry.js */,
-			);
-			path = "main-module-entry";
 			sourceTree = "<group>";
 		};
 		B5081D6A1AC114F700D675E9 = {
