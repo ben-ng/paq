@@ -11,6 +11,7 @@
 #import "parser.h"
 #import "traverse.h"
 #import "require.h"
+#import "resolve.h"
 
 /**
  * Parser
@@ -78,4 +79,17 @@ TEST_CASE( "Extracts requires", "[require]" ) {
     REQUIRE([requires count] == 2);
     REQUIRE([requires[0] isEqualToString:@"__dirname + '/compound'"]);
     REQUIRE([requires[1] isEqualToString:@"tofu"]);
+}
+
+/**
+ * Resolve
+ */
+
+TEST_CASE( "Creates node_module paths", "[resolve]" ) {
+    Resolve *resolver = new Resolve;
+    NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSArray *paths = resolver->_nodeModulePaths(here);
+    
+    REQUIRE([paths count] > 1);
+    REQUIRE([paths[0] hasSuffix:@"node_modules"]);
 }

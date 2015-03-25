@@ -47,7 +47,6 @@ NSArray* Require::findRequires(JSContext *ctx, NSString *path, NSDictionary *ast
     return modules;
 };
 
-
 JSContext* Require::createContext() {
     return Script::loadEmbeddedBundle("__escodegen_src", @"generate = escodegen.generate;");
 };

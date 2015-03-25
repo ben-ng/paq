@@ -11,6 +11,10 @@
 		B505A1671AC2A26D00986D7B /* script.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1641AC2A26D00986D7B /* script.mm */; };
 		B505A16E1AC2A82700986D7B /* traverse.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.mm */; };
 		B505A16F1AC2A82700986D7B /* traverse.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.mm */; };
+		B505A1761AC2DEC300986D7B /* paq.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1741AC2DEC300986D7B /* paq.mm */; };
+		B505A1771AC2DEC300986D7B /* paq.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1741AC2DEC300986D7B /* paq.mm */; };
+		B505A17A1AC2E59B00986D7B /* resolve.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1781AC2E59B00986D7B /* resolve.mm */; };
+		B505A17B1AC2E59B00986D7B /* resolve.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1781AC2E59B00986D7B /* resolve.mm */; };
 		B5081D771AC114F700D675E9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5081D761AC114F700D675E9 /* main.mm */; };
 		B5081D871AC118B500D675E9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5081D861AC118B500D675E9 /* main.mm */; };
 		B59884B51AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
@@ -47,6 +51,10 @@
 		B505A1651AC2A26D00986D7B /* script.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = script.h; sourceTree = "<group>"; };
 		B505A16C1AC2A82700986D7B /* traverse.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = traverse.mm; sourceTree = "<group>"; };
 		B505A16D1AC2A82700986D7B /* traverse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = traverse.h; sourceTree = "<group>"; };
+		B505A1741AC2DEC300986D7B /* paq.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = paq.mm; sourceTree = "<group>"; };
+		B505A1751AC2DEC300986D7B /* paq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = paq.h; sourceTree = "<group>"; };
+		B505A1781AC2E59B00986D7B /* resolve.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = resolve.mm; sourceTree = "<group>"; };
+		B505A1791AC2E59B00986D7B /* resolve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resolve.h; sourceTree = "<group>"; };
 		B5081D731AC114F700D675E9 /* paq */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = paq; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5081D761AC114F700D675E9 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		B5081D841AC118B500D675E9 /* paq-tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "paq-tests"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -110,6 +118,10 @@
 				B505A1651AC2A26D00986D7B /* script.h */,
 				B505A16C1AC2A82700986D7B /* traverse.mm */,
 				B505A16D1AC2A82700986D7B /* traverse.h */,
+				B505A1741AC2DEC300986D7B /* paq.mm */,
+				B505A1751AC2DEC300986D7B /* paq.h */,
+				B505A1781AC2E59B00986D7B /* resolve.mm */,
+				B505A1791AC2E59B00986D7B /* resolve.h */,
 			);
 			path = paq;
 			sourceTree = "<group>";
@@ -231,6 +243,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B505A1761AC2DEC300986D7B /* paq.mm in Sources */,
+				B505A17A1AC2E59B00986D7B /* resolve.mm in Sources */,
 				B505A16E1AC2A82700986D7B /* traverse.mm in Sources */,
 				B505A1661AC2A26D00986D7B /* script.mm in Sources */,
 				B5B592341AC29EF500160D50 /* require.mm in Sources */,
@@ -243,6 +257,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B505A1771AC2DEC300986D7B /* paq.mm in Sources */,
+				B505A17B1AC2E59B00986D7B /* resolve.mm in Sources */,
 				B505A16F1AC2A82700986D7B /* traverse.mm in Sources */,
 				B505A1671AC2A26D00986D7B /* script.mm in Sources */,
 				B5B592351AC29EF600160D50 /* require.mm in Sources */,
