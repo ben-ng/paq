@@ -19,6 +19,9 @@ void Parser::parse(JSContext* ctx, NSString* code, void (^callback)(NSString *er
         }
     };
     
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^#![^\n]*\n" options:0 error:nil];
+    code = [regex stringByReplacingMatchesInString:code options:0 range:NSMakeRange(0, [code length]) withTemplate:@""];
+    
     JSValue *parseFunc = ctx[@"parse"];
     
     JSValue *evalResult = [parseFunc callWithArguments:@[code]];

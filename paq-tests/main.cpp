@@ -26,3 +26,13 @@ TEST_CASE( "Parser returns an error for invalid code", "[parser]" ) {
         REQUIRE(ast == nil);
     });
 }
+
+TEST_CASE( "Parser works on executable scripts", "[parser]" ) {
+    Parser::parse(Parser::createContext(), @"#!/usr/local/bin/node\n\nrequire(__dirname + 'path')", ^(NSString *err, NSDictionary *ast) {
+        REQUIRE(err == nil);
+        REQUIRE(ast[@"type"] != nil);
+        REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
+        REQUIRE([((NSArray *)ast[@"body"]) count] == 1);
+        REQUIRE([((NSString *) ast[@"body"][0][@"type"]) isEqualToString: @"ExpressionStatement"]);
+    });
+}
