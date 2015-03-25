@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B505A1661AC2A26D00986D7B /* script.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B505A1641AC2A26D00986D7B /* script.cpp */; };
-		B505A1671AC2A26D00986D7B /* script.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B505A1641AC2A26D00986D7B /* script.cpp */; };
-		B505A16E1AC2A82700986D7B /* traverse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.cpp */; };
-		B505A16F1AC2A82700986D7B /* traverse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.cpp */; };
+		B505A1661AC2A26D00986D7B /* script.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1641AC2A26D00986D7B /* script.mm */; };
+		B505A1671AC2A26D00986D7B /* script.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1641AC2A26D00986D7B /* script.mm */; };
+		B505A16E1AC2A82700986D7B /* traverse.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.mm */; };
+		B505A16F1AC2A82700986D7B /* traverse.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.mm */; };
 		B5081D771AC114F700D675E9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5081D761AC114F700D675E9 /* main.mm */; };
 		B5081D871AC118B500D675E9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5081D861AC118B500D675E9 /* main.mm */; };
 		B59884B51AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
@@ -43,9 +43,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		B505A1641AC2A26D00986D7B /* script.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = script.cpp; sourceTree = "<group>"; };
+		B505A1641AC2A26D00986D7B /* script.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = script.mm; sourceTree = "<group>"; };
 		B505A1651AC2A26D00986D7B /* script.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = script.h; sourceTree = "<group>"; };
-		B505A16C1AC2A82700986D7B /* traverse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = traverse.cpp; sourceTree = "<group>"; };
+		B505A16C1AC2A82700986D7B /* traverse.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = traverse.mm; sourceTree = "<group>"; };
 		B505A16D1AC2A82700986D7B /* traverse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = traverse.h; sourceTree = "<group>"; };
 		B5081D731AC114F700D675E9 /* paq */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = paq; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5081D761AC114F700D675E9 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
@@ -106,9 +106,9 @@
 				B59884B41AC263B7005929C3 /* parser.h */,
 				B5B592321AC29EF500160D50 /* require.mm */,
 				B5B592331AC29EF500160D50 /* require.h */,
-				B505A1641AC2A26D00986D7B /* script.cpp */,
+				B505A1641AC2A26D00986D7B /* script.mm */,
 				B505A1651AC2A26D00986D7B /* script.h */,
-				B505A16C1AC2A82700986D7B /* traverse.cpp */,
+				B505A16C1AC2A82700986D7B /* traverse.mm */,
 				B505A16D1AC2A82700986D7B /* traverse.h */,
 			);
 			path = paq;
@@ -231,8 +231,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B505A16E1AC2A82700986D7B /* traverse.cpp in Sources */,
-				B505A1661AC2A26D00986D7B /* script.cpp in Sources */,
+				B505A16E1AC2A82700986D7B /* traverse.mm in Sources */,
+				B505A1661AC2A26D00986D7B /* script.mm in Sources */,
 				B5B592341AC29EF500160D50 /* require.mm in Sources */,
 				B59884B51AC263B7005929C3 /* parser.mm in Sources */,
 				B5081D771AC114F700D675E9 /* main.mm in Sources */,
@@ -243,8 +243,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B505A16F1AC2A82700986D7B /* traverse.cpp in Sources */,
-				B505A1671AC2A26D00986D7B /* script.cpp in Sources */,
+				B505A16F1AC2A82700986D7B /* traverse.mm in Sources */,
+				B505A1671AC2A26D00986D7B /* script.mm in Sources */,
 				B5B592351AC29EF600160D50 /* require.mm in Sources */,
 				B59884B61AC263B7005929C3 /* parser.mm in Sources */,
 				B5081D871AC118B500D675E9 /* main.mm in Sources */,
