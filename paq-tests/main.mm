@@ -12,6 +12,7 @@
 #import "traverse.h"
 #import "require.h"
 #import "resolve.h"
+#import "paq.h"
 
 /**
  * Parser
@@ -152,4 +153,54 @@ TEST_CASE( "Resolves global", "[resolve]" ) {
     
     REQUIRE(resolved != nil);
     REQUIRE([resolved isEqualToString:@"http"]);
+}
+
+/**
+ * paq: deps
+ */
+
+TEST_CASE( "Creates a dependency map", "[deps]" ) {
+    Resolve *resolver = new Resolve(nil);
+    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js");
+    Paq *paq = new Paq(@[resolver->path_resolve(@[here, @"fixtures/index-js/entry.js"])], nil);
+    __block NSDictionary *dependencies;
+    
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    
+    paq->deps(^(NSDictionary *deps) {
+        dependencies = deps;
+        dispatch_semaphore_signal(sema);
+    });
+    
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+    
+    REQUIRE([dependencies count] == 4);
+    
+    [dependencies enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+        NSString *sourceFile = (NSString *) key;
+        NSArray *requirePairs = (NSArray *) obj;
+        
+        if([key hasSuffix:@"/index-js/entry.js"]) {
+            REQUIRE([requirePairs count] == 3);
+            
+            for (long i=0; i<3; ++i) {
+                NSString *requireExpr = requirePairs[i][0];
+                NSString *resolution = requirePairs[i][1];
+                
+                if([requireExpr isEqualToString:@"./mylib"]) {
+                    REQUIRE([resolution hasSuffix:@"/fixtures/index-js/mylib/index.js"]);
+                }
+                else if([requireExpr isEqualToString:@"waldo"]) {
+                    REQUIRE([resolution hasSuffix:@"/fixtures/index-js/node_modules/waldo/waldo/index.js"]);
+                }
+                else if([requireExpr isEqualToString:@"flamingo"]) {
+                    REQUIRE([resolution hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
+                }
+            }
+        }
+        else {
+            REQUIRE([requirePairs count] == 0);
+        }
+    }];
 }
