@@ -1,14 +1,14 @@
 sudo: false
 language: objective-c
 xcode_project: paq.xcodeproj # path to your xcodeproj folder
-xcode_scheme: travis-paq-tests
+xcode_scheme: paq-tests
 xcode_sdk: macosx
 
 before_install:
   - npm install
-  - xctool -scheme 'travis-paq-tests' CONFIGURATION_BUILD_DIR=$HOME
+  - xctool -scheme 'paq-tests' CONFIGURATION_BUILD_DIR=$HOME
 
 script:
-  - xctool -scheme 'travis-paq-tests' build
-  - $HOME/paq-tests
+  - xctool -project paq.xcodeproj -scheme paq-tests -sdk macosx build test
+  - $HOME/paq-tests --success --durations yes
 

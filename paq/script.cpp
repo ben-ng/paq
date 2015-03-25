@@ -17,13 +17,14 @@ JSContext * Script::loadEmbeddedBundle(std::string sectionName, NSString *afterL
     };
     
     unsigned long size;
-    char *JS_SOURCE = getsectdata("__TEXT", sectionName.c_str(), &size);
+    void *JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", sectionName.c_str(), &size);
     
-    if(size == 0 || strlen(JS_SOURCE) == 0) {
+    if(size == 0) {
         NSLog(@"The section \"%s\"  is missing from the __TEXT segment", sectionName.c_str());
     }
     else {
-        NSString *src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
+        NSString *src = [[NSString alloc] initWithBytes:JS_SOURCE length:size encoding:NSUTF8StringEncoding];
+        
         [ctx evaluateScript:src];
         
         if(afterLoad) {

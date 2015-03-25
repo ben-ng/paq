@@ -8,6 +8,7 @@
 
 #import <string>
 #import <mach-o/getsect.h>
+#import <mach-o/ldsyms.h>
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 
