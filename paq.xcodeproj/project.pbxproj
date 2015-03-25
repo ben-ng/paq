@@ -7,8 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B5081D771AC114F700D675E9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B5081D761AC114F700D675E9 /* main.cpp */; };
+		B5081D771AC114F700D675E9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5081D761AC114F700D675E9 /* main.mm */; };
 		B5081D871AC118B500D675E9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B5081D861AC118B500D675E9 /* main.cpp */; };
+		B59884B51AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
+		B59884B61AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
+		B59884B81AC2641A005929C3 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B59884B71AC2641A005929C3 /* JavaScriptCore.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -34,10 +37,13 @@
 
 /* Begin PBXFileReference section */
 		B5081D731AC114F700D675E9 /* paq */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = paq; sourceTree = BUILT_PRODUCTS_DIR; };
-		B5081D761AC114F700D675E9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		B5081D761AC114F700D675E9 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		B5081D841AC118B500D675E9 /* paq-tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "paq-tests"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5081D861AC118B500D675E9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		B5081D8D1AC1198600D675E9 /* catch.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = catch.hpp; sourceTree = "<group>"; };
+		B59884B31AC263B7005929C3 /* parser.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = parser.mm; sourceTree = "<group>"; };
+		B59884B41AC263B7005929C3 /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
+		B59884B71AC2641A005929C3 /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B59884B81AC2641A005929C3 /* JavaScriptCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,6 +68,7 @@
 		B5081D6A1AC114F700D675E9 = {
 			isa = PBXGroup;
 			children = (
+				B59884B71AC2641A005929C3 /* JavaScriptCore.framework */,
 				B5081D751AC114F700D675E9 /* paq */,
 				B5081D851AC118B500D675E9 /* paq-tests */,
 				B5081D741AC114F700D675E9 /* Products */,
@@ -79,7 +87,9 @@
 		B5081D751AC114F700D675E9 /* paq */ = {
 			isa = PBXGroup;
 			children = (
-				B5081D761AC114F700D675E9 /* main.cpp */,
+				B5081D761AC114F700D675E9 /* main.mm */,
+				B59884B31AC263B7005929C3 /* parser.mm */,
+				B59884B41AC263B7005929C3 /* parser.h */,
 			);
 			path = paq;
 			sourceTree = "<group>";
@@ -100,6 +110,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5081D7A1AC114F700D675E9 /* Build configuration list for PBXNativeTarget "paq" */;
 			buildPhases = (
+				B59884C11AC26EF0005929C3 /* ShellScript */,
 				B5081D6F1AC114F700D675E9 /* Sources */,
 				B5081D701AC114F700D675E9 /* Frameworks */,
 				B5081D711AC114F700D675E9 /* CopyFiles */,
@@ -165,12 +176,29 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		B59884C11AC26EF0005929C3 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "PATH=${PATH}:/usr/local/bin\n$PROJECT_DIR/node_modules/uglifyjs/bin/uglifyjs $PROJECT_DIR/node_modules/acorn/acorn.js > $PROJECT_DIR/paq/acorn-min.js";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		B5081D6F1AC114F700D675E9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B5081D771AC114F700D675E9 /* main.cpp in Sources */,
+				B59884B51AC263B7005929C3 /* parser.mm in Sources */,
+				B5081D771AC114F700D675E9 /* main.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +206,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B59884B61AC263B7005929C3 /* parser.mm in Sources */,
 				B5081D871AC118B500D675E9 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -206,6 +235,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -247,6 +277,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -262,14 +293,21 @@
 		B5081D7B1AC114F700D675E9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn-min.js";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
 		B5081D7C1AC114F700D675E9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				OTHER_LDFLAGS = "-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn-min.js";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -277,17 +315,22 @@
 		B5081D891AC118B500D675E9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
 		B5081D8A1AC118B500D675E9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

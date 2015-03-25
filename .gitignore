@@ -46,3 +46,6 @@ DerivedData
 *.out
 *.app
 
+# Node
+node_modules
+
