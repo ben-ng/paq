@@ -97,9 +97,39 @@ TEST_CASE( "Creates node_module paths", "[resolve]" ) {
 TEST_CASE( "Resolves lookup paths", "[resolve]" ) {
     Resolve *resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
-    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/main-module-entry/entry.js");
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js/entry.js");
     NSArray *paths = resolver->_resolveLookupPaths(@"lodash", parent);
     
     REQUIRE([paths count] == 2);
     REQUIRE([paths[1] count] > 6); // This should be pretty long
+}
+
+TEST_CASE( "Resolves relative file", "[resolve]" ) {
+    Resolve *resolver = new Resolve(nil);
+    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js/entry.js");
+    NSString *resolved = resolver->_resolveFilename(@"./mylib/index.js", parent);
+    
+    REQUIRE(resolved != nil);
+    REQUIRE([resolved hasSuffix:@"/fixtures/index-js/mylib/index.js"]);
+}
+
+TEST_CASE( "Resolves relative directory", "[resolve]" ) {
+    Resolve *resolver = new Resolve(nil);
+    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js/entry.js");
+    NSString *resolved = resolver->_resolveFilename(@"./mylib", parent);
+    
+    REQUIRE(resolved != nil);
+    REQUIRE([resolved hasSuffix:@"/fixtures/index-js/mylib/index.js"]);
+}
+
+TEST_CASE( "Resolves dependency with user defined main script", "[resolve]" ) {
+    Resolve *resolver = new Resolve(nil);
+    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js/entry.js");
+    NSString *resolved = resolver->_resolveFilename(@"waldo", parent);
+    
+    REQUIRE(resolved != nil);
+    REQUIRE([resolved hasSuffix:@"/fixtures/index-js/node_modules/waldo/waldo/index.js"]);
 }

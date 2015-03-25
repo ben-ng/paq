@@ -10,6 +10,8 @@
 
 Resolve::Resolve(NSDictionary *options) {
     _pathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
+    _realPathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
+    _packageMainCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _nativeModules = @[@"assert",
                        @"buffer_ieee754",
                        @"buffer",
@@ -74,11 +76,37 @@ Resolve::Resolve(NSDictionary *options) {
         }
     }
     
-    NSLog(@"execPath: %@", process_execPath);
-    NSLog(@"homeDir: %@", homeDir);
-    
     _modulePaths = paths;
 };
+
+NSString* Resolve::_resolveFilename(NSString *request, NSMutableDictionary *parent) {
+    if(_nativeModuleExists(request)) {
+        return request;
+    }
+    
+    NSArray *resolvedModule = _resolveLookupPaths(request, parent);
+    NSString *id = resolvedModule[0];
+    NSArray *paths = resolvedModule[1];
+    
+    NSString *filename = _findPath(request, paths);
+    
+    if(!filename) {
+        NSLog(@"Cannot find module \"%@\"", request);
+        NSLog(@"  id: %@", id);
+        
+        if(parent && parent[@"filename"]) {
+            NSLog(@"  parent: \"%@\"", parent[@"filename"]);
+        }
+        
+        for(unsigned long i = 0, ii = [paths count]; i<ii; ++i) {
+            NSLog(@"tried: %@", paths[i]);
+        }
+        
+        return nil;
+    }
+    
+    return filename;
+}
 
 NSArray* Resolve::_nodeModulePaths(NSString *from) {
     NSString *sep = @"/";
@@ -86,9 +114,8 @@ NSArray* Resolve::_nodeModulePaths(NSString *from) {
     
     // guarantee that 'from' is absolute
     if(![from isAbsolutePath]) {
-        unsigned long proto = [@"file://" length];
         NSString *absstr = [[NSURL URLWithString:from relativeToURL:_cwd] absoluteString];
-        from = [absstr substringWithRange:NSMakeRange(proto, [absstr length] - proto)];
+        from = pathWithoutFileScheme(absstr);
     }
     
     // Posix only. I doubt this project will ever run on windows anyway.
@@ -149,6 +176,52 @@ NSArray* Resolve::_resolveLookupPaths(NSString *request, NSMutableDictionary *pa
     return @[id, @[[parent[@"filename"] stringByDeletingLastPathComponent]]];
 }
 
+NSString* Resolve::_findPath(NSString *request, NSArray *paths) {
+    NSArray *exts = @[@".js"];
+    
+    if([request characterAtIndex:0] == '/') {
+        paths = @[@""];
+    }
+    
+    BOOL trailingSlash = [request hasSuffix:@"/"];
+    
+    NSString *cacheKey = [[@[request] arrayByAddingObjectsFromArray:paths] componentsJoinedByString:@"\0"];
+    if(_pathCache[cacheKey] != nil) {
+        return _pathCache[cacheKey];
+    }
+    
+    for(unsigned long i=0, PL = [paths count]; i < PL; i++) {
+        NSString *basePath = path_resolve(@[paths[i], request]);
+        NSString *filename;
+        
+        if(!trailingSlash) {
+            // try to join the request to the path
+            filename = tryFile(basePath);
+            
+            if (!filename && !trailingSlash) {
+                // try it with each of the extensions
+                filename = tryExtensions(basePath, exts);
+            }
+        }
+        
+        if (!filename) {
+            filename = tryPackage(basePath, exts);
+        }
+        
+        if (!filename) {
+            // try it with each of the extensions at "index"
+            filename = tryExtensions(path_resolve(@[basePath, @"index"]), exts);
+        }
+        
+        if (filename) {
+            _pathCache[cacheKey] = filename;
+            return filename;
+        }
+    }
+    
+    return nil;
+}
+
 BOOL Resolve::_nativeModuleExists(NSString *request) {
     return [_nativeModules containsObject:@"request"];
 }
@@ -158,10 +231,10 @@ NSString* Resolve::path_resolve(NSArray *args) {
     BOOL resolvedAbsolute = NO;
     
     for(long i = [args count] -1; i >= -1 && !resolvedAbsolute; i--) {
-        NSString *path = (i >= 0) ? args[i] : _cwd.absoluteString;
+        NSString *path = (i >= 0) ? args[i] : pathWithoutFileScheme(_cwd.absoluteString);
         
         // Skip empty and invalid entries
-        if(path == nil) {
+        if(path == nil || [path length] == 0) {
             continue;
         }
         
@@ -173,12 +246,10 @@ NSString* Resolve::path_resolve(NSArray *args) {
     // handle relative paths to be safe (might happen when process.cwd() fails)
     
     // Normalize the path
-    resolvedPath = [normalizeArray([resolvedPath componentsSeparatedByString:@"/"], !resolvedAbsolute) componentsJoinedByString:@"/"];
+    resolvedPath = [resolvedPath stringByStandardizingPath];
     
-    NSString *ret = [NSString stringWithFormat:@"%@%@", (resolvedAbsolute ? @"/" : @""), resolvedPath];
-    
-    if([ret isNotEqualTo:@""]) {
-        return ret;
+    if([resolvedPath isNotEqualTo:@""]) {
+        return resolvedPath;
     }
     else {
         return @".";
@@ -186,8 +257,9 @@ NSString* Resolve::path_resolve(NSArray *args) {
 }
 
 NSMutableDictionary *Resolve::makeModuleStub(NSString *filename) {
+    filename = path_resolve(@[filename]);
     return [[NSMutableDictionary alloc] initWithDictionary:@{
-            @"id": @".", @"filename": filename, @"paths": _nodeModulePaths([filename stringByDeletingLastPathComponent])}];
+            @"id": filename, @"filename": filename, @"paths": _nodeModulePaths([filename stringByDeletingLastPathComponent])}];
 }
 
 NSArray* Resolve::normalizeArray(NSArray *parts, BOOL allowAboveRoot) {
@@ -214,4 +286,108 @@ NSArray* Resolve::normalizeArray(NSArray *parts, BOOL allowAboveRoot) {
     }
     
     return res;
+}
+
+NSString* Resolve::tryFile(NSString *requestPath) {
+    BOOL isDirectory;
+    BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:requestPath isDirectory:&isDirectory];
+    
+    if(exists && !isDirectory) {
+        char *_realPath = realpath([requestPath cStringUsingEncoding:NSUTF8StringEncoding], NULL);
+        
+        if(_realPath == NULL) {
+            NSLog(@"Warning: realpath returned NULL for %@", requestPath);
+            
+            return nil;
+        }
+        else {
+            NSString *realPath = [NSString stringWithCString:_realPath encoding:NSUTF8StringEncoding];
+            free(_realPath);
+            _realPathCache[requestPath] = realPath;
+            return realPath;
+        }
+    }
+    return nil;
+}
+
+NSString* Resolve::tryExtensions(NSString *p, NSArray *exts) {
+    for(unsigned long i =0, EL = [exts count]; i < EL; i++) {
+        NSString *filename = tryFile([p stringByAppendingString:exts[i]]);
+        
+        if(filename != nil) {
+            return filename;
+        }
+    }
+    
+    return nil;
+}
+
+NSString* Resolve::tryPackage(NSString *requestPath, NSArray *exts) {
+    NSDictionary *pkg = readPackage(requestPath);
+    
+    if(pkg == nil) {
+        return nil;
+    }
+    
+    NSString *filename = path_resolve(@[requestPath, pkg]);
+    NSString *temp;
+    
+    temp = tryFile(filename);
+    
+    if(temp != nil) {
+        return temp;
+    }
+    
+    temp = tryExtensions(filename, exts);
+    
+    if(temp != nil) {
+        return temp;
+    }
+    
+    temp = tryExtensions(path_resolve(@[filename, @"index"]), exts);
+    
+    return temp;
+}
+
+NSDictionary* Resolve::readPackage(NSString *requestPath) {
+    if(_packageMainCache[requestPath] != nil) {
+        return _packageMainCache[requestPath];
+    }
+    
+    NSString *jsonPath = path_resolve(@[requestPath, @"package.json"]);
+    NSError *error;
+    NSData *json = [NSData dataWithContentsOfFile:jsonPath options:0 error:&error];
+    
+    if(error) {
+        // NSLog(@"Encountered an error reading %@: %@", jsonPath, [error localizedDescription]);
+        return nil;
+    }
+    
+    id object = [NSJSONSerialization JSONObjectWithData:json options:0 error:&error];
+    
+    if(error) {
+        NSLog(@"Encountered an error parsing %@: %@", jsonPath, [error localizedDescription]);
+        return nil;
+    }
+    
+    if([object isKindOfClass:[NSDictionary class]]) {
+        _packageMainCache[requestPath] = ((NSDictionary *) object)[@"main"];
+        return _packageMainCache[requestPath];
+    }
+    else {
+        NSLog(@"Parsed %@ but did not get a dictionary: %@", jsonPath, [error localizedDescription]);
+        return nil;
+    }
+}
+
+NSString* Resolve::pathWithoutFileScheme(NSString *path) {
+    unsigned long proto = [@"file://" length];
+    NSString *substr = [path substringWithRange:NSMakeRange(proto, [path length] - proto)];
+    
+    if([substr hasPrefix:@"//"]) {
+        return [substr substringWithRange:NSMakeRange(1, [substr length] - 1)];
+    }
+    else {
+        return substr;
+    }
 }
