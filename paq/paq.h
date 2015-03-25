@@ -12,6 +12,8 @@
 #import "require.h"
 #import "resolve.h"
 
+NSString * JSONString(NSString *astring);
+
 class Paq {
 private:
     unsigned int _max_parser_contexts;
@@ -51,9 +53,15 @@ private:
     void _findRequires(NSString *file, NSDictionary *ast, void (^callback)(NSArray *requires));
     void _resolveRequires(NSArray *requires, NSMutableDictionary *parent, void (^callback)(NSArray *resolved));
 public:
-    NSString * JSONString(NSString *astring);
     Paq(NSArray *entry, NSDictionary *options);
-    void bundle(void (^callback)(NSError *error, NSString *bundle));
+    
+    
+    /*
+     * The main interface between this class and the outside world
+     * [options]
+     *   [BOOL eval] - If true, the bundle will return the entry script's export
+     */
+    void bundle(NSDictionary *options, void (^callback)(NSError *error, NSString *bundle));
     void deps(void (^callback)(NSDictionary *dependencies));
 };
 

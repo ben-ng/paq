@@ -8,6 +8,18 @@
 
 #import "paq.h"
 
+NSString * JSONString(NSString *astring) {
+    NSMutableString *s = [NSMutableString stringWithString:astring];
+    [s replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"/" withString:@"\\/" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\n" withString:@"\\n" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\b" withString:@"\\b" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\f" withString:@"\\f" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\r" withString:@"\\r" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\t" withString:@"\\t" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    return [NSString stringWithString:s];
+}
+
 Paq::Paq(NSArray *entry, NSDictionary *options) {
     if(entry == nil) {
         [NSException raise:@"INVALID_ARGUMENT" format:@"Paq must be initialized with an NSArray of NSString entry file paths"];
@@ -53,7 +65,7 @@ void Paq::deps(void (^callback)(NSDictionary *dependencies)) {
     }
 }
 
-void Paq::bundle(void (^callback)(NSError *error, NSString *bundle)) {
+void Paq::bundle(NSDictionary *options, void (^callback)(NSError *error, NSString *bundle)) {
     _bundle_callback = [callback copy];
     
     // See header file for the structure of the deps callback argument
@@ -116,6 +128,14 @@ void Paq::bundle(void (^callback)(NSError *error, NSString *bundle)) {
         
         [output appendString:[[NSString alloc] initWithData:serialized encoding:NSUTF8StringEncoding]];
         [output appendString:@")"];
+        
+        if(options != nil && [options[@"eval"] boolValue]) {
+            if([_entry count] != 1) {
+                return callback([NSError errorWithDomain:@"com.benng.paq" code:3 userInfo:@{NSLocalizedDescriptionKey: @"The eval option can only be used when there is one entry script"}], nil);
+            }
+            
+            [output appendFormat:@"(\"%@\")", JSONString(_entry[0])];
+        }
         
         callback(nil, output);
     });
@@ -235,16 +255,4 @@ void Paq::_resolveRequires(NSArray *requires, NSMutableDictionary *parent, void 
         
         callback(resolved);
     });
-}
-
-NSString * Paq::JSONString(NSString *astring) {
-    NSMutableString *s = [NSMutableString stringWithString:astring];
-    [s replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"/" withString:@"\\/" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\n" withString:@"\\n" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\b" withString:@"\\b" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\f" withString:@"\\f" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\r" withString:@"\\r" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\t" withString:@"\\t" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
-    return [NSString stringWithString:s];
 }

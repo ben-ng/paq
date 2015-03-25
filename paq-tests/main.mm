@@ -221,7 +221,7 @@ TEST_CASE( "Creates a bundle", "[bundle]" ) {
     
     dispatch_semaphore_t semab = dispatch_semaphore_create(0);
     
-    paq->bundle(^(NSError *error, NSString *bundle) {
+    paq->bundle(@{@"eval": @YES}, ^(NSError *error, NSString *bundle) {
         bundled = bundle;
         dispatch_semaphore_signal(semab);
     });
@@ -236,7 +236,7 @@ TEST_CASE( "Creates a bundle", "[bundle]" ) {
         NSLog(@"JS Error: %@", [exception toString]);
     };
     
-    JSValue *result = [ctx evaluateScript:[bundled stringByAppendingFormat:@"(\"%@\")", paq->JSONString(entry)]];
+    JSValue *result = [ctx evaluateScript:bundled];
     
     REQUIRE([[result toString] isEqualToString:@"Custom Lib You found waldo! flamingo"]);
  }
