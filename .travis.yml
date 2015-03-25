@@ -1,7 +1,7 @@
 sudo: false
 language: objective-c
 xcode_project: paq.xcodeproj # path to your xcodeproj folder
-xcode_scheme: paq-tests
+xcode_scheme: travis-paq-tests
 xcode_sdk: macosx
 
 before_install:

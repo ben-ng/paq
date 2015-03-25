@@ -60,15 +60,15 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "--durations yes"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
             argument = "--warn NoAssertions"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--success"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--durations yes"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
