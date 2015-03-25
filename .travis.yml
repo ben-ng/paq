@@ -4,7 +4,3 @@ xcode_project: paq.xcodeproj # path to your xcodeproj folder
 xcode_scheme: paq-tests
 xcode_sdk: macosx
 
-before_install:
-  - brew update
-  - brew install node
-
