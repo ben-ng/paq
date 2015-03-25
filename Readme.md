@@ -5,7 +5,7 @@
 Paq implements a subset of [Browserify](http://browserify.org)'s features with full multithreading support. For impatient people who have to deal with large codebases.
 
 I post updates on Twitter:
-[![Follow @_benng](http://i.imgur.com/ytWUNob.jpg)](https://twitter.com/_benng)
+[![Follow @_benng](http://i.imgur.com/FImwJ9n.png)](https://twitter.com/_benng)
 
 # Caveats
 
