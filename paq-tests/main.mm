@@ -161,9 +161,7 @@ TEST_CASE( "Resolves global", "[resolve]" ) {
 
 TEST_CASE( "Creates a dependency map", "[deps]" ) {
     Resolve *resolver = new Resolve(nil);
-    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
-    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js");
-    Paq *paq = new Paq(@[resolver->path_resolve(@[here, @"fixtures/index-js/entry.js"])], nil);
+    Paq *paq = new Paq(@[@"fixtures/index-js/entry.js"], nil);
     __block NSDictionary *dependencies;
     
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
@@ -205,7 +203,7 @@ TEST_CASE( "Creates a dependency map", "[deps]" ) {
             REQUIRE([requirePairs count] == 0);
         }
     }];
-}
+ }
 
 /**
  * paq: bundle
@@ -213,10 +211,7 @@ TEST_CASE( "Creates a dependency map", "[deps]" ) {
 
 TEST_CASE( "Creates a bundle", "[bundle]" ) {
     Resolve *resolver = new Resolve(nil);
-    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
-    NSMutableDictionary *parent = resolver->makeModuleStub(@"fixtures/index-js");
-    NSString *entry = resolver->path_resolve(@[here, @"fixtures/index-js/entry.js"]);
-    Paq *paq = new Paq(@[entry], nil);
+    Paq *paq = new Paq(@[@"fixtures/index-js/entry.js"], nil);
     __block NSString *bundled;
     
     dispatch_semaphore_t semab = dispatch_semaphore_create(0);

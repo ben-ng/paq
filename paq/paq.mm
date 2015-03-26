@@ -1,3 +1,4 @@
+
 //
 //  paq.mm
 //  paq
@@ -28,7 +29,6 @@ Paq::Paq(NSArray *entry, NSDictionary *options) {
     _max_parser_contexts = 6;
     _max_require_contexts = 2;
     _unprocessed = 0;
-    _entry = entry;
     _resolve = new Resolve(nil);
     _module_map = [[NSMutableDictionary alloc] initWithCapacity:1000];
     
@@ -41,6 +41,14 @@ Paq::Paq(NSArray *entry, NSDictionary *options) {
     for(int i = 0; i < _max_require_contexts; i++) {
         [_available_require_contexts addObject:Require::createContext()];
     }
+    
+    NSMutableArray *mutableEntries = [[NSMutableArray alloc] initWithCapacity:[entry count]];
+    
+    for(unsigned long i = 0, ii = [entry count]; i<ii; ++i) {
+        [mutableEntries addObject:_resolve->path_resolve(@[entry[i]])];
+    }
+    
+    _entry = mutableEntries;
     
     _parser_contexts = dispatch_semaphore_create(_max_parser_contexts);
     _require_contexts = dispatch_semaphore_create(_max_require_contexts);
