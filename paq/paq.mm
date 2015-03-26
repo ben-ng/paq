@@ -15,13 +15,28 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
         [NSException raise:@"INVALID_ARGUMENT" format:@"Paq must be initialized with an NSArray of NSString entry file paths"];
     }
 
+    // Parser contexts are JSContexts with acorn loaded up inside them
     _max_parser_contexts = 6;
+
+    // Require contexts are JSContexts with escodegen loaded up inside them
     _max_require_contexts = 2;
+
+    // When this reaches zero, bundling is done
     _unprocessed = 0;
+
+    // The resolve instance has caches that make resolution faster
     _resolve = new Resolve(nil);
+
+    // The module map keeps track of what modules have been resolved,
+    // what requires are contained in each module, if the module is
+    // an entry script, and the id of the module, which is typically
+    // the filename.
     _module_map = [[NSMutableDictionary alloc] initWithCapacity:1000];
 
     _available_parser_contexts = [[NSMutableArray alloc] initWithCapacity:_max_parser_contexts];
+
+    // For some reason, if you comment out the following line, shit still works!
+    _available_require_contexts = [[NSMutableArray alloc] initWithCapacity:_max_require_contexts];
 
     for (int i = 0; i < _max_parser_contexts; i++) {
         [_available_parser_contexts addObject:Parser::createContext()];
