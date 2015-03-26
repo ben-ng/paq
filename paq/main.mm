@@ -20,7 +20,7 @@ int main(int argc, const char * argv[]) {
     
     NSMutableDictionary *options = [[NSMutableDictionary alloc] init];
     
-    for(unsigned long i = 0, ii = [args count]; i<ii; ++i) {
+    for(unsigned long i = 1, ii = [args count]; i<ii; ++i) {
         if ([args[i] hasPrefix:@"-"] && !snipped) {
             entry = [args subarrayWithRange:NSMakeRange(0, i)];
             snipped = YES;
@@ -32,7 +32,7 @@ int main(int argc, const char * argv[]) {
     }
     
     if(!snipped && [args count]) {
-        entry = args;
+        entry = [args subarrayWithRange:NSMakeRange(1, [args count]-1)];
     }
     
     if(entry == nil) {
