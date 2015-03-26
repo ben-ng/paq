@@ -20,7 +20,7 @@
     "url": "https://github.com/ben-ng/paq/issues"
   },
   "homepage": "https://github.com/ben-ng/paq",
-  "dependencies": {
+  "devDependencies": {
     "acorn": "^0.12.0",
     "brfs": "^1.4.0",
     "browser-pack": "^4.0.1",
