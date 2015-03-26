@@ -8,43 +8,44 @@
 
 #import "parser.h"
 
-NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error) {
-    
+NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error)
+{
     __block bool errored = NO;
-    
-    ctx.exceptionHandler = ^(JSContext *context, JSValue *exception) {
+
+    ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
         errored = YES;
         
         if(error) {
-            *error = [NSError errorWithDomain:@"com.benng.paq" code:1 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
+            *error = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
         }
     };
-    
-    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^#![^\n]*\n" options:0 error:nil];
+
+    NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:@"^#![^\n]*\n" options:0 error:nil];
     code = [regex stringByReplacingMatchesInString:code options:0 range:NSMakeRange(0, [code length]) withTemplate:@""];
-    
-    JSValue *parseFunc = ctx[@"parse"];
-    
-    JSValue *evalResult = [parseFunc callWithArguments:@[code]];
-    
-    if(errored) {
+
+    JSValue* parseFunc = ctx[@"parse"];
+
+    JSValue* evalResult = [parseFunc callWithArguments:@[ code ]];
+
+    if (errored) {
         return nil;
     }
-    
-    if([evalResult isObject]) {
+
+    if ([evalResult isObject]) {
         return [evalResult toDictionary];
     }
-    else if([evalResult isString]) {
-        *error = [NSError errorWithDomain:@"com.benng.paq" code:1 userInfo:@{NSLocalizedDescriptionKey: [evalResult toString]}];
+    else if ([evalResult isString]) {
+        *error = [NSError errorWithDomain:@"com.benng.paq" code:3 userInfo:@{ NSLocalizedDescriptionKey : [evalResult toString] }];
     }
     else {
-        *error = [NSError errorWithDomain:@"com.benng.paq" code:1 userInfo:@{NSLocalizedDescriptionKey: @"An unknown error occurred, there was no exception and an invalid return value from Acorn"}];
+        *error = [NSError errorWithDomain:@"com.benng.paq" code:4 userInfo:@{ NSLocalizedDescriptionKey : @"An unknown error occurred, there was no exception and an invalid return value from Acorn" }];
     }
-    
+
     return nil;
 }
 
-JSContext* Parser::createContext() {
+JSContext* Parser::createContext()
+{
     return Script::loadEmbeddedBundle("__acorn_src", @"\
                                       function defined () {\
                                       for (var i = 0; i < arguments.length; i++) {\

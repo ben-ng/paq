@@ -8,27 +8,29 @@
 
 #import "traverse.h"
 
-void Traverse::walk(NSDictionary *root, void (^callback)(NSDictionary *node)) {
+void Traverse::walk(NSDictionary* root, void (^callback)(NSDictionary* node))
+{
     traverse(root, callback);
 }
 
-void Traverse::traverse(NSObject *node, void (^callback)(NSDictionary *node)) {
-    if([node isKindOfClass:NSArray.class]) {
-        NSArray *arrNode = (NSArray *) node;
-        
-        for(unsigned long i=0, ii = [arrNode count]; i<ii; ++i) {
-            if(arrNode[i] != nil) {
+void Traverse::traverse(NSObject* node, void (^callback)(NSDictionary* node))
+{
+    if ([node isKindOfClass:NSArray.class]) {
+        NSArray* arrNode = (NSArray*)node;
+
+        for (unsigned long i = 0, ii = [arrNode count]; i < ii; ++i) {
+            if (arrNode[i] != nil) {
                 traverse(arrNode[i], callback);
             }
         }
     }
     else if (node && [node isKindOfClass:NSDictionary.class]) {
-        NSDictionary *dictNode = (NSDictionary *) node;
-        
+        NSDictionary* dictNode = (NSDictionary*)node;
+
         callback(dictNode);
-        
-        [dictNode enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+
+        [dictNode enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL* stop) {
             traverse(obj, callback);
-         }];
+        }];
     }
 }

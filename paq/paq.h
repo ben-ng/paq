@@ -11,19 +11,18 @@
 #import "parser.h"
 #import "require.h"
 #import "resolve.h"
-
-NSString * JSONString(NSString *astring);
+#import "pack.h"
 
 class Paq {
 private:
     unsigned int _max_parser_contexts;
     unsigned int _max_require_contexts;
-    NSMutableDictionary *_module_map;
+    NSMutableDictionary* _module_map;
     unsigned long _unprocessed;
-    NSMutableArray *_available_parser_contexts;
-    NSMutableArray *_available_require_contexts;
-    NSArray *_entry;
-    Resolve *_resolve;
+    NSMutableArray* _available_parser_contexts;
+    NSMutableArray* _available_require_contexts;
+    NSArray* _entry;
+    Resolve* _resolve;
     dispatch_semaphore_t _parser_contexts;
     dispatch_semaphore_t _require_contexts;
     dispatch_queue_t _parserCtxQ;
@@ -31,9 +30,8 @@ private:
     dispatch_queue_t _resolveQ;
     dispatch_queue_t _serialQ;
     dispatch_queue_t _concurrentQ;
-    void (^_bundle_callback)(NSError *error, NSString *bundle);
-    
-    
+    void (^_bundle_callback)(NSError* error, NSString* bundle);
+
     /*
      * This is a map like
      * {
@@ -46,22 +44,21 @@ private:
      *      }
      *  }
      */
-    void (^_deps_callback)(NSDictionary *deps);
-    
-    void deps(NSString *file, NSMutableDictionary *parent, BOOL isEntry);
-    void _getAST(NSString *file, void (^callback)(NSDictionary *ast, NSString *source));
-    void _findRequires(NSString *file, NSDictionary *ast, void (^callback)(NSArray *requires));
-    void _resolveRequires(NSArray *requires, NSMutableDictionary *parent, void (^callback)(NSArray *resolved));
+    void (^_deps_callback)(NSDictionary* deps);
+
+    void deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry);
+    void _getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* source));
+    void _findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSArray* requires));
+    void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
+
 public:
-    Paq(NSArray *entry, NSDictionary *options);
-    
-    
+    Paq(NSArray* entry, NSDictionary* options);
+
     /*
      * The main interface between this class and the outside world
      * [options]
      *   [BOOL eval] - If true, the bundle will return the entry script's export
      */
-    void bundle(NSDictionary *options, void (^callback)(NSError *error, NSString *bundle));
-    void deps(void (^callback)(NSDictionary *dependencies));
+    void bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle));
+    void deps(void (^callback)(NSDictionary* dependencies));
 };
-

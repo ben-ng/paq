@@ -1,5 +1,5 @@
 //
-//  require.cpp
+//  require.mm
 //  paq
 //
 //  Created by Ben on 3/25/15.
@@ -8,10 +8,11 @@
 
 #import "require.h"
 
-NSArray* Require::findRequires(JSContext *ctx, NSString *path, NSDictionary *ast, NSError **error) {
-    __block NSMutableArray *modules = [[NSMutableArray alloc] initWithCapacity:10];
-    
-    Traverse::walk(ast, ^(NSDictionary *node) {
+NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast, NSError** error)
+{
+    __block NSMutableArray* modules = [[NSMutableArray alloc] initWithCapacity:10];
+
+    Traverse::walk(ast, ^(NSDictionary* node) {
         if(!Require::isRequire(node))
             return;
         
@@ -29,7 +30,7 @@ NSArray* Require::findRequires(JSContext *ctx, NSString *path, NSDictionary *ast
                     NSLog(@"%@", errStr);
                     
                     if(error) {
-                        *error = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: errStr}];
+                        *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
                     }
                     
                     errored = YES;
@@ -43,19 +44,21 @@ NSArray* Require::findRequires(JSContext *ctx, NSString *path, NSDictionary *ast
             }
         }
     });
-    
+
     return modules;
 };
 
-JSContext* Require::createContext() {
+JSContext* Require::createContext()
+{
     return Script::loadEmbeddedBundle("__escodegen_src", @"generate = escodegen.generate;");
 };
 
-bool Require::isRequire(NSDictionary *node) {
-    NSDictionary *c = node[@"callee"];
-    
+bool Require::isRequire(NSDictionary* node)
+{
+    NSDictionary* c = node[@"callee"];
+
     return c != nil &&
-            [node[@"type"] isEqualToString:@"CallExpression"] &&
-            [c[@"type"] isEqualToString:@"Identifier"] &&
-            [c[@"name"] isEqualToString:@"require"];
+        [node[@"type"] isEqualToString:@"CallExpression"] &&
+        [c[@"type"] isEqualToString:@"Identifier"] &&
+        [c[@"name"] isEqualToString:@"require"];
 }
