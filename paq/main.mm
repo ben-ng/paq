@@ -46,7 +46,7 @@ int main(int argc, const char * argv[]) {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         paq->bundle(options, ^(NSError *error, NSString *bundle) {
-            NSLog(@"%@", bundle);
+            [bundle writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
             dispatch_semaphore_signal(sem);
         });
     });
