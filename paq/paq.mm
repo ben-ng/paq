@@ -48,7 +48,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 
     NSMutableArray* mutableEntries = [[NSMutableArray alloc] initWithCapacity:[entry count]];
 
-    for (unsigned long i = 0, ii = [entry count]; i < ii; ++i) {
+    for (NSUInteger i = 0, ii = [entry count]; i < ii; ++i) {
         [mutableEntries addObject:_resolve->path_resolve(@[ entry[i] ])];
     }
 
@@ -115,7 +115,7 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
                         
                         // Dispatch new tasks
                         NSMutableDictionary *parent = _resolve->makeModuleStub(file);
-                        for(unsigned long i = 0, ii = [resolved count]; i<ii; ++i) {
+                        for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
                             if(_module_map[resolved[i]] == nil) {
                                 _unprocessed++;
                                 _module_map[resolved[i]] = [NSNumber numberWithBool:NO];

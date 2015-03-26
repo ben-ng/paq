@@ -21,7 +21,7 @@ int main(int argc, const char* argv[])
 
     NSMutableDictionary* options = [[NSMutableDictionary alloc] init];
 
-    for (unsigned long i = 1, ii = [args count]; i < ii; ++i) {
+    for (NSUInteger i = 1, ii = [args count]; i < ii; ++i) {
         if ([args[i] hasPrefix:@"-"] && !snipped) {
             entry = [args subarrayWithRange:NSMakeRange(0, i)];
             snipped = YES;

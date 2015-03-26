@@ -131,5 +131,8 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
         [output appendFormat:@"(\"%@\")", JSONString(entry[0])];
     }
 
+    // Close with a string
+    [output appendString:@"\n"];
+
     callback(nil, output);
 }

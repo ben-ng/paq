@@ -18,7 +18,7 @@ void Traverse::traverse(NSObject* node, void (^callback)(NSDictionary* node))
     if ([node isKindOfClass:NSArray.class]) {
         NSArray* arrNode = (NSArray*)node;
 
-        for (unsigned long i = 0, ii = [arrNode count]; i < ii; ++i) {
+        for (NSUInteger i = 0, ii = [arrNode count]; i < ii; ++i) {
             if (arrNode[i] != nil) {
                 traverse(arrNode[i], callback);
             }

@@ -100,7 +100,7 @@ NSString* Resolve::_resolveFilename(NSString* request, NSMutableDictionary* pare
             NSLog(@"  parent: \"%@\"", parent[@"filename"]);
         }
 
-        for (unsigned long i = 0, ii = [paths count]; i < ii; ++i) {
+        for (NSUInteger i = 0, ii = [paths count]; i < ii; ++i) {
             NSLog(@"tried: %@", paths[i]);
         }
 
@@ -195,7 +195,7 @@ NSString* Resolve::_findPath(NSString* request, NSArray* paths)
         return _pathCache[cacheKey];
     }
 
-    for (unsigned long i = 0, PL = [paths count]; i < PL; i++) {
+    for (NSUInteger i = 0, PL = [paths count]; i < PL; i++) {
         NSString* basePath = path_resolve(@[ paths[i], request ]);
         NSString* filename;
 
@@ -325,7 +325,7 @@ NSString* Resolve::tryFile(NSString* requestPath)
 
 NSString* Resolve::tryExtensions(NSString* p, NSArray* exts)
 {
-    for (unsigned long i = 0, EL = [exts count]; i < EL; i++) {
+    for (NSUInteger i = 0, EL = [exts count]; i < EL; i++) {
         NSString* filename = tryFile([p stringByAppendingString:exts[i]]);
 
         if (filename != nil) {
