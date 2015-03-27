@@ -10,14 +10,10 @@
 
 NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error)
 {
-    __block bool errored = NO;
+    __block NSError* err;
 
     ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-        errored = YES;
-        
-        if(error) {
-            *error = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
-        }
+        err = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
     };
 
     NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:@"^#![^\n]*\n" options:0 error:nil];
@@ -27,7 +23,14 @@ NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error)
 
     JSValue* evalResult = [parseFunc callWithArguments:@[ code ]];
 
-    if (errored) {
+    if (parseFunc == nil) {
+        err = [NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : @"A context without a parse function was given to Parser::parse" }];
+    }
+
+    if (err) {
+        if (error) {
+            *error = err;
+        }
         return nil;
     }
 
@@ -46,7 +49,7 @@ NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error)
 
 JSContext* Parser::createContext()
 {
-    return Script::loadEmbeddedBundle("__acorn_src", @"\
+    JSContext* ctx = Script::loadEmbeddedBundle("__acorn_src", @"\
                                       function defined () {\
                                       for (var i = 0; i < arguments.length; i++) {\
                                       if (arguments[i] !== undefined) return arguments[i];\
@@ -65,4 +68,10 @@ JSContext* Parser::createContext()
                                       forbidReserved: defined(opts.forbidReserved, false)\
                                       });\
                                       }");
+
+    if (ctx[@"parse"] == nil) {
+        [NSException raise:@"Fatal Exception" format:@"A parser context was created without a parse function"];
+    }
+
+    return ctx;
 };

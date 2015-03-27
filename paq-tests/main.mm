@@ -20,7 +20,7 @@
 TEST_CASE("Parser returns a valid AST for valid code", "[parser]")
 {
     NSError* err;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", &err);
+    NSDictionary* ast = Parser::parse(Parser::createContext(), @"require(path.join(__dirname, 'path'))", &err);
 
     REQUIRE(err == nil);
     REQUIRE(ast[@"type"] != nil);
@@ -79,21 +79,21 @@ TEST_CASE("Extracts literal requires", "[require]")
 
     REQUIRE(err == nil);
 
-    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, &err);
+    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, nil, &err);
 
     REQUIRE([err localizedDescription] == nil);
     REQUIRE([requires count] == 1);
     REQUIRE([requires[0] isEqualToString:@"tofu"]);
 }
 
-TEST_CASE("Evaluates require expressions", "[require]")
+TEST_CASE("Evaluates require expressions with the path module available", "[require]")
 {
     NSError* err;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"'use unstrict'; require(__dirname + '/compound');", &err);
+    NSDictionary* ast = Parser::parse(Parser::createContext(), @"'use unstrict'; require(path.join(__dirname, 'compound'));", &err);
 
     REQUIRE(err == nil);
 
-    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, &err);
+    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, nil, &err);
 
     REQUIRE([err localizedDescription] == nil);
     REQUIRE([requires count] == 1);
@@ -251,4 +251,14 @@ TEST_CASE("Inserts module globals", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
     REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
+}
+
+TEST_CASE("Ignores unevaluated expressions", "[bundle]")
+{
+    // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
+    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnevaluatedExpressions" : [NSNumber numberWithBool:YES] });
+    NSError* error;
+    NSString* bundle = paq->bundleSync(nil, &error);
+    REQUIRE(error == nil);
+    REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
 }

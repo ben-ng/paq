@@ -28,6 +28,7 @@
     "browserify": "^9.0.3",
     "concat-stream": "^1.4.7",
     "escodegen": "^1.6.1",
+    "handlebars": "^3.0.1",
     "hbsfy": "^2.2.1",
     "uglifyjs": "^2.4.10"
   }

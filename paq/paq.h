@@ -22,6 +22,7 @@ private:
     NSMutableArray* _available_parser_contexts;
     NSMutableArray* _available_require_contexts;
     NSArray* _entry;
+    NSDictionary* _options;
     Resolve* _resolve;
     NSDictionary* _nativeModules;
     dispatch_semaphore_t _parser_contexts;
@@ -49,7 +50,7 @@ private:
 
     void deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry);
     void _getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* source));
-    void _findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSArray* requires));
+    void _findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires));
     void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
     NSString* _insertGlobals(NSString* file, NSString* source);
 
@@ -62,6 +63,7 @@ public:
      *   [BOOL eval] - If true, the bundle will return the entry script's export
      */
     void bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle));
+    NSString* bundleSync(NSDictionary* options, NSError** error);
     NSString* evalToString();
     void deps(void (^callback)(NSDictionary* dependencies));
     static NSDictionary* getNativeBuiltins();

@@ -19,6 +19,6 @@ private:
     static bool isRequire(NSDictionary* node);
 
 public:
-    static NSArray* findRequires(JSContext* ctx, NSString* path, NSDictionary* ast, NSError** error);
+    static NSArray* findRequires(JSContext* ctx, NSString* path, NSDictionary* ast, NSDictionary* options, NSError** error);
     static JSContext* createContext(NSString* pathModuleSrc);
 };

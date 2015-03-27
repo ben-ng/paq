@@ -56,6 +56,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     _entry = mutableEntries;
+    _options = options;
 
     // Are there any transforms we need to set up?
     if (options && options[@"transforms"]) {
@@ -111,7 +112,13 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
         _getAST(file, ^(NSDictionary *ast, NSString *source) {
             // Here we are in the parser context queue
             // After this, findRequires enters the require ctx queue
-            _findRequires(file, ast, ^(NSArray *requires) {
+            _findRequires(file, ast, ^(NSError* error, NSArray *requires) {
+                // Probably some problem with evaluating a require expression or something
+                if(error) {
+                    NSLog(@"%@", error.localizedDescription);
+                    exit(EXIT_FAILURE);
+                }
+                
                 // Here we are in the require context queue
                 // This will go into the resolve queue
                 _resolveRequires(requires, parent, ^(NSArray *resolved) {
@@ -133,9 +140,9 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
                         _unprocessed--;
                         
                         // Dispatch new tasks
-                        NSMutableDictionary *parent = _resolve->makeModuleStub(file);
                         for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
                             if(_module_map[resolved[i]] == nil) {
+                                NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
                                 _unprocessed++;
                                 _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
                                 deps(resolved[i], parent, NO);
@@ -209,6 +216,12 @@ void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* 
         JSContext *parserCtx = (JSContext *) [_available_parser_contexts lastObject];
         [_available_parser_contexts removeLastObject];
         
+        // Replace broken contexts with new ones
+        // FIXME: Why the fuck does this even happen?? I think its when an exception happens. Everything just breaks inside the context.
+        if([parserCtx globalObject] == nil) {
+            parserCtx = Parser::createContext();
+        }
+        
         dispatch_async(_concurrentQ, ^{
             NSError *error;
             NSString *source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
@@ -235,25 +248,33 @@ void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* 
     });
 };
 
-void Paq::_findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSArray* requires))
+void Paq::_findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires))
 {
     dispatch_async(_requireCtxQ, ^{
         dispatch_semaphore_wait(_require_contexts, 60 * NSEC_PER_SEC);
         JSContext *requireCtx = (JSContext *) [_available_require_contexts lastObject];
         [_available_require_contexts removeLastObject];
         
+        // Replace broken contexts with new ones
+        // FIXME: Why the fuck does this even happen?? I think its when an exception happens. Everything just breaks inside the context.
+        if([requireCtx globalObject] == nil) {
+            requireCtx = Require::createContext(_nativeModules[@"path"]);
+        }
+        
         dispatch_async(_concurrentQ, ^{
             NSError *error;
-            NSArray *requires = Require::findRequires(requireCtx, file, ast, &error);
-            
-            if(error) {
-                [NSException raise:@"Fatal Exception" format:@"Failed to find requires in %@: %@", file, error.localizedDescription];
-            }
+            NSArray *requires = Require::findRequires(requireCtx, file, ast, _options, &error);
             
             dispatch_async(_requireCtxQ, ^{
                 [_available_require_contexts addObject:requireCtx];
                 dispatch_semaphore_signal(_require_contexts);
-                callback(requires);
+                
+                if(error) {
+                    callback(error, nil);
+                }
+                else {
+                    callback(nil, requires);
+                }
             });
         });
     });
@@ -297,26 +318,56 @@ NSDictionary* Paq::getNativeBuiltins()
     return out;
 }
 
-NSString* Paq::evalToString()
+NSString* Paq::bundleSync(NSDictionary* options, NSError** error)
 {
     __block NSString* bundled;
+    __block NSError* err;
 
     dispatch_semaphore_t semab = dispatch_semaphore_create(0);
 
-    bundle(@{ @"eval" : @YES }, ^(NSError* error, NSString* bundle) {
-        bundled = bundle;
+    bundle(@{ @"eval" : @YES }, ^(NSError* erred, NSString* bundle) {
+        if(erred) {
+            err = erred;
+        }
+        else {
+            bundled = bundle;
+        }
         dispatch_semaphore_signal(semab);
     });
 
     dispatch_semaphore_wait(semab, DISPATCH_TIME_FOREVER);
 
+    if (err) {
+        if (error) {
+            *error = err;
+        }
+        else {
+            NSLog(@"Error bundling: %@", err.localizedDescription);
+        }
+        return nil;
+    }
+    else {
+        return bundled;
+    }
+}
+
+NSString* Paq::evalToString()
+{
+    NSError* error;
+    __block NSString* except;
+    NSString* bundle = bundleSync(@{ @"eval" : [NSNumber numberWithBool:YES] }, &error);
+
+    if (error) {
+        return error.localizedDescription;
+    }
+
     JSContext* ctx = [[JSContext alloc] init];
 
     ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-        NSLog(@"JS Error: %@", [exception toString]);
+        except = [exception toString];
     };
 
-    JSValue* result = [ctx evaluateScript:bundled];
+    JSValue* result = [ctx evaluateScript:bundle];
 
-    return [result toString];
+    return except ? except : [result toString];
 }

@@ -30,6 +30,10 @@ int main(int argc, const char* argv[])
         if ([args[i] isEqualToString:@"--eval"]) {
             options[@"eval"] = [NSNumber numberWithBool:YES];
         }
+
+        if ([args[i] isEqualToString:@"--ignoreUnevaluatedExpressions"]) {
+            options[@"ignoreUnevaluatedExpressions"] = [NSNumber numberWithBool:YES];
+        }
     }
 
     if (!snipped && [args count]) {

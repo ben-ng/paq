@@ -57,17 +57,17 @@ NSString* Resolve::_resolveFilename(NSString* request, NSMutableDictionary* pare
     }
 
     NSArray* resolvedModule = _resolveLookupPaths(request, parent);
-    NSString* id = resolvedModule[0];
+    NSString* fileId = resolvedModule[0];
     NSArray* paths = resolvedModule[1];
 
     NSString* filename = _findPath(request, paths);
 
     if (!filename) {
-        NSLog(@"Cannot find module \"%@\"", request);
-        NSLog(@"  id: %@", id);
+        NSLog(@"Cannot resolve module \"%@\"", request);
+        NSLog(@"from: %@", fileId);
 
         if (parent && parent[@"filename"]) {
-            NSLog(@"  parent: \"%@\"", parent[@"filename"]);
+            NSLog(@"required from: \"%@\"", parent[@"filename"]);
         }
 
         for (NSUInteger i = 0, ii = [paths count]; i < ii; ++i) {
@@ -138,16 +138,25 @@ NSArray* Resolve::_resolveLookupPaths(NSString* request, NSMutableDictionary* pa
     // Is the parent an index module?
     // We can assume the parent has a valid extension,
     // as it already has been accepted as a module.
+    /* 
+     * This is in the actual node source, but I don't think it works when the entry file is an index module
+     * because in node, there is a root module, and that makes this behave differently
+     
     NSPredicate* isIndexTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", @"^index\\.\\w+?$"];
     BOOL isIndex = [isIndexTest evaluateWithObject:[parent[@"filename"] lastPathComponent]];
     NSString* parentIdPath = isIndex ? parent[@"id"] : [parent[@"id"] stringByDeletingLastPathComponent];
-    NSString* id = path_resolve(@[ parentIdPath, request ]);
+     
+     */
 
-    if ([parentIdPath isEqualToString:@"."] && [id rangeOfString:@"/"].location == NSNotFound) {
-        id = [@"./" stringByAppendingString:id];
+    // We basically just want the directory, so just do this. If the parent id is file, get its directory. If it isn't, then it already is a directory, and use that.
+    NSString* parentIdPath = [[parent[@"id"] lastPathComponent] rangeOfString:@"."].location == NSNotFound ? parent[@"id"] : [parent[@"id"] stringByDeletingLastPathComponent];
+    NSString* fileId = path_resolve(@[ parentIdPath, request ]);
+
+    if ([parentIdPath isEqualToString:@"."] && [fileId rangeOfString:@"/"].location == NSNotFound) {
+        fileId = [@"./" stringByAppendingString:fileId];
     }
 
-    return @[ id, @[ [parent[@"filename"] stringByDeletingLastPathComponent] ] ];
+    return @[ fileId, @[ [parent[@"filename"] stringByDeletingLastPathComponent] ] ];
 }
 
 NSString* Resolve::_findPath(NSString* request, NSArray* paths)
