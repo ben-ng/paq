@@ -6,7 +6,6 @@ xcode_sdk: macosx
 
 before_install:
   - npm install
-  - xctool -scheme 'paq-tests' CONFIGURATION_BUILD_DIR=$HOME
 
 script:
   - make run-test

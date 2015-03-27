@@ -1,8 +1,4 @@
-ifdef $TRAVIS
-	d = $HOME
-else
-	d = $$(xcodebuild -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-)
-endif
+d = $$(xcodebuild -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-)
 
 all: js cli
 
