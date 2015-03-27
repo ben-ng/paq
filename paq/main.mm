@@ -6,38 +6,35 @@
 //  Copyright (c) 2015 Ben Ng. All rights reserved.
 //
 
-#import <stdio.h>
-#import <iostream>
+#import <Foundation/Foundation.h>
 #import "paq.h"
 #import "resolve.h"
 
 int main(int argc, const char* argv[])
 {
-
-    NSArray* args = [[NSProcessInfo processInfo] arguments];
-    NSArray* entry;
+    NSMutableArray* entry = [[NSMutableArray alloc] init];
 
     BOOL snipped = NO;
 
     NSMutableDictionary* options = [[NSMutableDictionary alloc] init];
 
-    for (NSUInteger i = 1, ii = [args count]; i < ii; ++i) {
-        if ([args[i] hasPrefix:@"-"] && !snipped) {
-            entry = [args subarrayWithRange:NSMakeRange(0, i)];
+    // NSProcessInfo does NOT work in this main method when building in release mode for whatever reason
+    for (int i = 1; i < argc; i++) {
+        NSString* arg = [NSString stringWithCString:argv[i] encoding:NSUTF8StringEncoding];
+
+        if (![arg hasPrefix:@"-"] && !snipped) {
+            [entry addObject:arg];
+        }
+
+        if ([arg isEqualToString:@"--eval"]) {
+            options[@"eval"] = [NSNumber numberWithBool:YES];
             snipped = YES;
         }
 
-        if ([args[i] isEqualToString:@"--eval"]) {
-            options[@"eval"] = [NSNumber numberWithBool:YES];
-        }
-
-        if ([args[i] isEqualToString:@"--ignoreUnevaluatedExpressions"]) {
+        if ([arg isEqualToString:@"--ignoreUnevaluatedExpressions"]) {
             options[@"ignoreUnevaluatedExpressions"] = [NSNumber numberWithBool:YES];
+            snipped = YES;
         }
-    }
-
-    if (!snipped && [args count]) {
-        entry = [args subarrayWithRange:NSMakeRange(1, [args count] - 1)];
     }
 
     if (entry == nil || [entry count] == 0) {
