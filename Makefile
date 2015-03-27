@@ -4,9 +4,13 @@ js: paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json
 
 cli: bin/paq
 
-test: js
+test: compile-test run-test
+
+compile-test: js
 	@echo "Compiling Tests..."
 	@xctool -project paq.xcodeproj -scheme paq-tests -sdk macosx -configuration Release build
+
+run-test:
 	@echo "Running Tests..."
 	@t="/paq-tests" && \
 	d=$$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && \
