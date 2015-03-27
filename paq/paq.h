@@ -51,6 +51,7 @@ private:
     void _getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* source));
     void _findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSArray* requires));
     void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
+    NSString* _insertGlobals(NSString* file, NSString* source);
 
 public:
     Paq(NSArray* entry, NSDictionary* options);
@@ -61,6 +62,7 @@ public:
      *   [BOOL eval] - If true, the bundle will return the entry script's export
      */
     void bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle));
+    NSString* evalToString();
     void deps(void (^callback)(NSDictionary* dependencies));
     static NSDictionary* getNativeBuiltins();
 };

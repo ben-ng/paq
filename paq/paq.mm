@@ -144,6 +144,54 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
     });
 }
 
+NSString* Paq::_insertGlobals(NSString* file, NSString* source)
+{
+    NSMutableArray* globalKeysToDefine = [[NSMutableArray alloc] init];
+    NSMutableArray* globalValuesToDefine = [[NSMutableArray alloc] init];
+
+    // Not sure if its worth parsing the AST more smartly or not.
+
+    if ([source rangeOfString:@"process"].location != NSNotFound) {
+        [globalKeysToDefine addObject:@"process"];
+        [globalValuesToDefine addObject:@"require('process')"];
+    }
+
+    if ([source rangeOfString:@"global"].location != NSNotFound) {
+        [globalKeysToDefine addObject:@"global"];
+        [globalValuesToDefine addObject:@"typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : {}"];
+    }
+
+    if ([source rangeOfString:@"Buffer"].location != NSNotFound) {
+        [globalKeysToDefine addObject:@"Buffer"];
+        [globalValuesToDefine addObject:@"require('buffer').Buffer"];
+    }
+
+    if ([source rangeOfString:@"__filename"].location != NSNotFound) {
+        [globalKeysToDefine addObject:@"__filename"];
+        [globalValuesToDefine addObject:[NSString stringWithFormat:@"\"%@\"", JSONString(file)]];
+    }
+
+    if ([source rangeOfString:@"__dirname"].location != NSNotFound) {
+        [globalKeysToDefine addObject:@"__dirname"];
+        [globalValuesToDefine addObject:[NSString stringWithFormat:@"\"%@\"", JSONString([file stringByDeletingLastPathComponent])]];
+    }
+
+    if ([globalKeysToDefine count] > 0) {
+        // r as in replacement
+        NSMutableString* r = [[NSMutableString alloc] init];
+        [r appendString:@"(function ("];
+        [r appendString:[globalKeysToDefine componentsJoinedByString:@","]];
+        [r appendString:@"){\n"];
+        [r appendString:source];
+        [r appendString:@"\n}).call(this,"];
+        [r appendString:[globalValuesToDefine componentsJoinedByString:@","]];
+        [r appendString:@")\n"];
+        return r;
+    }
+
+    return source;
+}
+
 void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* source))
 {
     dispatch_async(_parserCtxQ, ^{
@@ -154,6 +202,9 @@ void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* 
         dispatch_async(_concurrentQ, ^{
             NSError *error;
             NSString *source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
+            
+            // Insert globals now, because the replacements have require calls in them
+            source = _insertGlobals(file, source);
             
             if(error) {
                 [NSException raise:@"Fatal Exception" format:@"Failed to read source code from %@: %@", file, error.localizedDescription];
@@ -234,4 +285,28 @@ NSDictionary* Paq::getNativeBuiltins()
     }
 
     return out;
+}
+
+NSString* Paq::evalToString()
+{
+    __block NSString* bundled;
+
+    dispatch_semaphore_t semab = dispatch_semaphore_create(0);
+
+    bundle(@{ @"eval" : @YES }, ^(NSError* error, NSString* bundle) {
+        bundled = bundle;
+        dispatch_semaphore_signal(semab);
+    });
+
+    dispatch_semaphore_wait(semab, DISPATCH_TIME_FOREVER);
+
+    JSContext* ctx = [[JSContext alloc] init];
+
+    ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
+        NSLog(@"JS Error: %@", [exception toString]);
+    };
+
+    JSValue* result = [ctx evaluateScript:bundled];
+
+    return [result toString];
 }

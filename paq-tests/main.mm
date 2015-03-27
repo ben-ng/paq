@@ -225,53 +225,17 @@ TEST_CASE("Creates a dependency map", "[deps]")
 TEST_CASE("Creates a basic bundle", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
-    __block NSString* bundled;
-
-    dispatch_semaphore_t semab = dispatch_semaphore_create(0);
-
-    paq->bundle(@{ @"eval" : @YES }, ^(NSError* error, NSString* bundle) {
-        bundled = bundle;
-        dispatch_semaphore_signal(semab);
-    });
-
-    dispatch_semaphore_wait(semab, DISPATCH_TIME_FOREVER);
-
-    REQUIRE(bundled != nil);
-
-    JSContext* ctx = [[JSContext alloc] init];
-
-    ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-        NSLog(@"JS Error: %@", [exception toString]);
-    };
-
-    JSValue* result = [ctx evaluateScript:bundled];
-
-    REQUIRE([[result toString] isEqualToString:@"Custom Lib You found waldo! flamingo"]);
+    REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo"]);
 }
 
 TEST_CASE("Bundles node core modules", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
-    __block NSString* bundled;
+    REQUIRE([paq->evalToString() isEqualToString:@"a/b"]);
+}
 
-    dispatch_semaphore_t semab = dispatch_semaphore_create(0);
-
-    paq->bundle(@{ @"eval" : @YES }, ^(NSError* error, NSString* bundle) {
-        bundled = bundle;
-        dispatch_semaphore_signal(semab);
-    });
-
-    dispatch_semaphore_wait(semab, DISPATCH_TIME_FOREVER);
-
-    REQUIRE(bundled != nil);
-
-    JSContext* ctx = [[JSContext alloc] init];
-
-    ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-        NSLog(@"JS Error: %@", [exception toString]);
-    };
-
-    JSValue* result = [ctx evaluateScript:bundled];
-
-    REQUIRE([[result toString] isEqualToString:@"a/b"]);
+TEST_CASE("Inserts module globals", "[bundle]")
+{
+    Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
+    REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
 }
