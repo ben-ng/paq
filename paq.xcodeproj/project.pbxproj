@@ -226,7 +226,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Debug\ncp -R ${PROJECT_DIR}/node_modules/hbsfy ${BUILD_DIR}/Debug/fixtures/node_modules\ncp -R ${PROJECT_DIR}/node_modules/handlebars ${BUILD_DIR}/Debug/fixtures/node_modules\n";
+			shellScript = "cp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Debug\nmkdir -p ${BUILD_DIR}/Debug/fixtures/node_modules\ncp -R ${PROJECT_DIR}/node_modules/hbsfy ${BUILD_DIR}/Debug/fixtures/node_modules\ncp -R ${PROJECT_DIR}/node_modules/handlebars ${BUILD_DIR}/Debug/fixtures/node_modules\n";
 		};
 		B505A1631AC2A0CF00986D7B /* Compile Embedded Javascript */ = {
 			isa = PBXShellScriptBuildPhase;
