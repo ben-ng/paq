@@ -14,6 +14,9 @@ run-test:
 	@echo "Running Tests..."
 	@t="/paq-tests" && \
 	d=$$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && \
+	cp -R fixtures $$d \
+	cp -R node_modules/hbsfy $$d/fixtures/node_modules \
+	cp -R node_modules/handlebars $$d/fixtures/node_modules \
 	cd $$d && \
 	eval "$$d$$t"
 
