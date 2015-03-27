@@ -26,7 +26,7 @@ paq/escodegen.bundle.js: node_modules/escodegen/package.json node_modules/uglify
 	@node node_modules/browserify/bin/cmd.js -s escodegen node_modules/escodegen | node node_modules/uglifyjs/bin/uglifyjs > paq/escodegen.bundle.js
 
 bin/paq:
-	@echo "Compiling..."
+	@echo "Compiling paq..."
 	@t="/paq" && \
 	d=$$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && \
 	c=$$d$$t && \
