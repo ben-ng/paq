@@ -7,8 +7,8 @@
     "paq": "./bin/paq"
   },
   "scripts": {
-    "test": "t=\"/paq-tests\" && d=$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && c=$d$t && f=\"${c/Release/Debug}\" && xctool -project paq.xcodeproj -scheme paq-tests -sdk macosx build && eval \"$f\"",
-    "compile": "t=\"/paq\" && d=$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && c=$d$t && xctool -project paq.xcodeproj -configuration release -scheme paq -sdk macosx build  && mkdir -p bin && mv $c bin"
+    "test": "make test",
+    "compile": "make all"
   },
   "repository": {
     "type": "git",

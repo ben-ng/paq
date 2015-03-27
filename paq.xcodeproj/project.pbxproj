@@ -139,7 +139,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5081D7A1AC114F700D675E9 /* Build configuration list for PBXNativeTarget "paq" */;
 			buildPhases = (
-				B505A1731AC2B65100986D7B /* ShellScript */,
+				B505A1731AC2B65100986D7B /* Compile Embedded Javascript */,
 				B5081D6F1AC114F700D675E9 /* Sources */,
 				B5081D701AC114F700D675E9 /* Frameworks */,
 				B5081D711AC114F700D675E9 /* CopyFiles */,
@@ -233,20 +233,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PATH=${PATH}:/usr/local/bin\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s escodegen ${PROJECT_DIR}/node_modules/escodegen | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/escodegen.bundle.js\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s acorn ${PROJECT_DIR}/node_modules/acorn | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/acorn.bundle.js\n";
+			shellScript = "PATH=${PATH}:/usr/local/bin\nmake js";
 		};
-		B505A1731AC2B65100986D7B /* ShellScript */ = {
+		B505A1731AC2B65100986D7B /* Compile Embedded Javascript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
+			name = "Compile Embedded Javascript";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PATH=${PATH}:/usr/local/bin\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s escodegen ${PROJECT_DIR}/node_modules/escodegen | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/escodegen.bundle.js\nnode ${PROJECT_DIR}/node_modules/browserify/bin/cmd.js -s acorn ${PROJECT_DIR}/node_modules/acorn | node ${PROJECT_DIR}/node_modules/uglifyjs/bin/uglifyjs > ${PROJECT_DIR}/paq/acorn.bundle.js";
+			shellScript = "PATH=${PATH}:/usr/local/bin\nmake js";
 		};
 /* End PBXShellScriptBuildPhase section */
 

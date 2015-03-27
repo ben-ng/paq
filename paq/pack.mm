@@ -8,6 +8,9 @@
 
 #import "pack.h"
 
+/**
+ * Escapes the string for use in double quotes in js code
+ */
 NSString* JSONString(NSString* astring)
 {
     NSMutableString* s = [NSMutableString stringWithString:astring];
@@ -42,6 +45,11 @@ NSString* JSONString(NSString* astring)
     return [NSString stringWithString:s];
 }
 
+/**
+ * Given an entry file, the dependency map, and some options,
+ * returns a bundle that can be used in any javascript environment,
+ * including a browser.
+ */
 void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
     void (^callback)(NSError* error, NSString* bundle))
 {
