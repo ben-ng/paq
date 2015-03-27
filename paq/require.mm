@@ -10,6 +10,30 @@
 
 NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast, NSError** error)
 {
+    __block bool errored = NO;
+
+    void (^compilationHandler)(JSContext* context, JSValue* exception) = ^(JSContext* context, JSValue* exception) {
+        NSString *errStr = [NSString stringWithFormat:@"JS Error compiling expression: %@", [exception toString]];
+        NSLog(@"%@", errStr);
+        
+        if(error) {
+            *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
+        }
+        
+        errored = YES;
+    };
+
+    void (^evaluationHandler)(JSContext* context, JSValue* exception) = ^(JSContext* context, JSValue* exception) {
+        NSString *errStr = [NSString stringWithFormat:@"JS Error evaluating expression: %@", [exception toString]];
+        NSLog(@"%@", errStr);
+        
+        if(error) {
+            *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
+        }
+        
+        errored = YES;
+    };
+
     __block NSMutableArray* modules = [[NSMutableArray alloc] initWithCapacity:10];
 
     Traverse::walk(ast, ^(NSDictionary* node) {
@@ -23,23 +47,23 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
                 [modules addObject:args[0][@"value"]];
             }
             else {
-                __block bool errored = NO;
+                ctx.exceptionHandler = compilationHandler;
+                JSValue *compiledEspression = [ctx[@"generate"] callWithArguments:@[args[0]]];
+                ctx.exceptionHandler = evaluationHandler;
+                // TODO: Also handle process.env since people like to use that
+                NSString *wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
+                JSValue *evaluatedExpression = [ctx evaluateScript:wrappedExpr];
                 
-                ctx.exceptionHandler = ^(JSContext *context, JSValue *exception) {
-                    NSString *errStr = [NSString stringWithFormat:@"JS Error compiling expression: %@", [exception toString]];
-                    NSLog(@"%@", errStr);
-                    
+                if(![evaluatedExpression isString]) {
                     if(error) {
-                        *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
+                        *error = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{NSLocalizedDescriptionKey: @"The evaluated expression did not result in a string value"}];
                     }
                     
                     errored = YES;
-                };
-                
-                JSValue *compiledEspression = [ctx[@"generate"] callWithArguments:@[args[0]]];
+                }
                 
                 if(!errored && [compiledEspression isString]) {
-                    [modules addObject:[compiledEspression toString]];
+                    [modules addObject:[evaluatedExpression toString]];
                 }
             }
         }
@@ -48,9 +72,17 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
     return modules;
 };
 
-JSContext* Require::createContext()
+JSContext* Require::createContext(NSString* pathModuleSrc)
 {
-    return Script::loadEmbeddedBundle("__escodegen_src", @"generate = escodegen.generate;");
+    JSContext* ctx = Script::loadEmbeddedBundle("__escodegen_src", @"generate = escodegen.generate; global = {};");
+
+    // This is a standalone browserify module, so it will appear at global.path
+    [ctx evaluateScript:pathModuleSrc];
+
+    // Move it to the path variable
+    [ctx evaluateScript:@"_path = global.path; delete global.path; global = undefined;"];
+
+    return ctx;
 };
 
 bool Require::isRequire(NSDictionary* node)

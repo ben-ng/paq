@@ -9,8 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <mach-o/getsect.h>
 #import <mach-o/ldsyms.h>
-
-NSString* JSONString(NSString* astring);
+#import "json.h"
 
 class Pack {
 public:

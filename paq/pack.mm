@@ -9,43 +9,6 @@
 #import "pack.h"
 
 /**
- * Escapes the string for use in double quotes in js code
- */
-NSString* JSONString(NSString* astring)
-{
-    NSMutableString* s = [NSMutableString stringWithString:astring];
-    [s replaceOccurrencesOfString:@"\""
-                        withString:@"\\\""
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"/"
-                        withString:@"\\/"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\n"
-                        withString:@"\\n"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\b"
-                        withString:@"\\b"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\f"
-                        withString:@"\\f"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\r"
-                        withString:@"\\r"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\t"
-                        withString:@"\\t"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    return [NSString stringWithString:s];
-}
-
-/**
  * Given an entry file, the dependency map, and some options,
  * returns a bundle that can be used in any javascript environment,
  * including a browser.
@@ -74,7 +37,7 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
                                                 BOOL* stop) {
     counter++;
 
-    [output appendFormat:@"\"%@\"", JSONString(key)];
+    [output appendString:JSONString(key)];
     [output appendString:@": [function (require, module, exports) {\n"];
     [output appendString:obj[@"source"]];
     [output appendString:@"\n}, "];
@@ -128,7 +91,7 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
                 nil);
         }
 
-        [output appendFormat:@"(\"%@\")", JSONString(entry[0])];
+        [output appendFormat:@"(%@)", JSONString(entry[0])];
     }
 
     // Close with a string

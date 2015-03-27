@@ -72,19 +72,32 @@ TEST_CASE("Traverses an AST", "[traverse]")
  * Require
  */
 
-TEST_CASE("Extracts requires", "[require]")
+TEST_CASE("Extracts literal requires", "[require]")
 {
     NSError* err;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"require(__dirname + '/compound'); if(1) { require('tofu'); }", &err);
+    NSDictionary* ast = Parser::parse(Parser::createContext(), @"if(1) { require('tofu'); }", &err);
 
     REQUIRE(err == nil);
 
-    NSArray* requires = Require::findRequires(Require::createContext(), @"/fake", ast, &err);
+    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, &err);
 
     REQUIRE([err localizedDescription] == nil);
-    REQUIRE([requires count] == 2);
-    REQUIRE([requires[0] isEqualToString:@"__dirname + '/compound'"]);
-    REQUIRE([requires[1] isEqualToString:@"tofu"]);
+    REQUIRE([requires count] == 1);
+    REQUIRE([requires[0] isEqualToString:@"tofu"]);
+}
+
+TEST_CASE("Evaluates require expressions", "[require]")
+{
+    NSError* err;
+    NSDictionary* ast = Parser::parse(Parser::createContext(), @"'use unstrict'; require(__dirname + '/compound');", &err);
+
+    REQUIRE(err == nil);
+
+    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, &err);
+
+    REQUIRE([err localizedDescription] == nil);
+    REQUIRE([requires count] == 1);
+    REQUIRE([requires[0] isEqualToString:@"/fakedir/compound"]);
 }
 
 /**

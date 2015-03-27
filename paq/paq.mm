@@ -46,7 +46,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     for (int i = 0; i < _max_require_contexts; i++) {
-        [_available_require_contexts addObject:Require::createContext()];
+        [_available_require_contexts addObject:Require::createContext(_nativeModules[@"path"])];
     }
 
     NSMutableArray* mutableEntries = [[NSMutableArray alloc] initWithCapacity:[entry count]];
@@ -168,12 +168,12 @@ NSString* Paq::_insertGlobals(NSString* file, NSString* source)
 
     if ([source rangeOfString:@"__filename"].location != NSNotFound) {
         [globalKeysToDefine addObject:@"__filename"];
-        [globalValuesToDefine addObject:[NSString stringWithFormat:@"\"%@\"", JSONString(file)]];
+        [globalValuesToDefine addObject:JSONString(file)];
     }
 
     if ([source rangeOfString:@"__dirname"].location != NSNotFound) {
         [globalKeysToDefine addObject:@"__dirname"];
-        [globalValuesToDefine addObject:[NSString stringWithFormat:@"\"%@\"", JSONString([file stringByDeletingLastPathComponent])]];
+        [globalValuesToDefine addObject:JSONString([file stringByDeletingLastPathComponent])];
     }
 
     if ([globalKeysToDefine count] > 0) {

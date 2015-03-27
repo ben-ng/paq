@@ -12,6 +12,7 @@
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "script.h"
 #import "traverse.h"
+#import "json.h"
 
 class Require {
 private:
@@ -19,5 +20,5 @@ private:
 
 public:
     static NSArray* findRequires(JSContext* ctx, NSString* path, NSDictionary* ast, NSError** error);
-    static JSContext* createContext();
+    static JSContext* createContext(NSString* pathModuleSrc);
 };
