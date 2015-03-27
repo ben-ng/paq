@@ -167,7 +167,7 @@
 				B505A1631AC2A0CF00986D7B /* Compile Embedded Javascript */,
 				B5081D801AC118B500D675E9 /* Sources */,
 				B5081D811AC118B500D675E9 /* Frameworks */,
-				B50339861AC34E17004E1389 /* Copy Test Fixtures To Release */,
+				B50339861AC34E17004E1389 /* Copy Test Fixtures To Build Directories */,
 			);
 			buildRules = (
 			);
@@ -214,14 +214,14 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		B50339861AC34E17004E1389 /* Copy Test Fixtures To Release */ = {
+		B50339861AC34E17004E1389 /* Copy Test Fixtures To Build Directories */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Copy Test Fixtures To Release";
+			name = "Copy Test Fixtures To Build Directories";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;

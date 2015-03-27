@@ -6,12 +6,12 @@ cli: bin/paq
 
 test: js
 	@echo "Compiling Tests..."
-	@xctool -project paq.xcodeproj -scheme paq-tests -sdk macosx build
+	@xctool -project paq.xcodeproj -scheme paq-tests -sdk macosx -configuration Release build
 	@echo "Running Tests..."
 	@t="/paq-tests" && \
 	d=$$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && \
-	c=$$d$$t && f="$${c/Release/Debug}" && \
-	eval "$$f"
+	cd $$d && \
+	eval "$$d$$t"
 
 paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.js
 	@echo "Compiling builtins..."
