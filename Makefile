@@ -14,7 +14,7 @@ test: js
 	eval "$$f"
 
 paq/acorn.bundle.js: node_modules/acorn/package.json node_modules/uglifyjs/package.json
-	@node node_modules/browserify/bin/cmd.js -s escodegen node_modules/acorn | node node_modules/uglifyjs/bin/uglifyjs > paq/acorn.bundle.js
+	@node node_modules/browserify/bin/cmd.js -s acorn node_modules/acorn | node node_modules/uglifyjs/bin/uglifyjs > paq/acorn.bundle.js
 
 paq/escodegen.bundle.js: node_modules/escodegen/package.json node_modules/uglifyjs/package.json
 	@node node_modules/browserify/bin/cmd.js -s escodegen node_modules/escodegen | node node_modules/uglifyjs/bin/uglifyjs > paq/escodegen.bundle.js
