@@ -167,7 +167,7 @@
 				B505A1631AC2A0CF00986D7B /* Compile Embedded Javascript */,
 				B5081D801AC118B500D675E9 /* Sources */,
 				B5081D811AC118B500D675E9 /* Frameworks */,
-				B50339861AC34E17004E1389 /* Copy Test Fixtures To Build Directories */,
+				B50339861AC34E17004E1389 /* Copy Fixtures To Release */,
 			);
 			buildRules = (
 			);
@@ -214,19 +214,19 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		B50339861AC34E17004E1389 /* Copy Test Fixtures To Build Directories */ = {
+		B50339861AC34E17004E1389 /* Copy Fixtures To Release */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Copy Test Fixtures To Build Directories";
+			name = "Copy Fixtures To Release";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Travis tests in release mode\ncp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Release\ncp -R ${PROJECT_DIR}/node_modules/hbsfy ${BUILD_DIR}/Release/fixtures/node_modules\ncp -R ${PROJECT_DIR}/node_modules/handlebars ${BUILD_DIR}/Release/fixtures/node_modules\n\n# Xcode runs by default in debug mode\ncp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Debug\ncp -R ${PROJECT_DIR}/node_modules/hbsfy ${BUILD_DIR}/Debug/fixtures/node_modules\ncp -R ${PROJECT_DIR}/node_modules/handlebars ${BUILD_DIR}/Debug/fixtures/node_modules\n";
+			shellScript = "# Tests should always be run in release mode\ncp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Release\ncp -R ${PROJECT_DIR}/node_modules/hbsfy ${BUILD_DIR}/Release/fixtures/node_modules\ncp -R ${PROJECT_DIR}/node_modules/handlebars ${BUILD_DIR}/Release/fixtures/node_modules\n";
 		};
 		B505A1631AC2A0CF00986D7B /* Compile Embedded Javascript */ = {
 			isa = PBXShellScriptBuildPhase;
