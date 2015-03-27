@@ -12,14 +12,14 @@ async.map(Object.keys(builtins)
 , function (key, next) {
 
   var b = new browserify(builtins[key], {standalone: key})
-    , mutatedKey
+    , mutatedKey = key
 
   if(key.charAt(0) == '_') {
     mutatedKey = key.substring(1).split('_').join('/')
   }
 
   b.bundle(function (err, buff) {
-    next(err, err ? null : [key, buff.toString()])
+    next(err, err ? null : [mutatedKey, buff.toString()])
   })
 
 }, function (err, bundles) {
