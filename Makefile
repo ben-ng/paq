@@ -1,3 +1,9 @@
+ifdef $TRAVIS
+	d = $HOME
+else
+	d = $$(xcodebuild -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-)
+endif
+
 all: js cli
 
 js: paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json
@@ -8,17 +14,23 @@ test: compile-test run-test
 
 compile-test: js
 	@echo "Compiling Tests..."
-	@xctool -project paq.xcodeproj -scheme paq-tests -sdk macosx -configuration Release build
+	@xctool -scheme paq-tests -sdk macosx -configuration Release build
 
-run-test:
+copy-fixtures:
+	@echo "Copying Fixtures To $d/fixtures..."
+	-@ed="$d" && \
+	rm -rf $$ed/fixtures || true && \
+	mkdir -p "$$ed/fixtures" && \
+	cp -rf fixtures "$$ed" && \
+	cp -rf node_modules/hbsfy "$$ed/fixtures/node_modules" && \
+	cp -rf node_modules/handlebars "$$ed/fixtures/node_modules"
+
+run-test: copy-fixtures
 	@echo "Running Tests..."
-	@t="/paq-tests" && \
-	d=$$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && \
-	cp -R fixtures $$d \
-	cp -R node_modules/hbsfy $$d/fixtures/node_modules \
-	cp -R node_modules/handlebars $$d/fixtures/node_modules \
-	cd $$d && \
-	eval "$$d$$t"
+	@ed="$d" && \
+	echo "Running tests from $$ed" && \
+	cd $$ed && \
+	./paq-tests
 
 paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.js
 	@echo "Compiling builtins..."
@@ -34,12 +46,11 @@ paq/escodegen.bundle.js: node_modules/escodegen/package.json node_modules/uglify
 
 bin/paq:
 	@echo "Compiling paq..."
-	@t="/paq" && \
-	d=$$(xcodebuild -project paq.xcodeproj -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-) && \
-	c=$$d$$t && \
-	xctool -project paq.xcodeproj -configuration release -scheme paq -sdk macosx build && \
+	@ed="$d" && \
+	c="$$ed/paq" && \
+	xctool -configuration release -scheme paq -sdk macosx build && \
 	mkdir -p bin && \
 	mv $$c bin
 
 clean:
-	rm -f paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json bin/paq
+	rm -rf paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json bin/paq $(d)/fixtures

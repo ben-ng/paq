@@ -226,7 +226,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Tests should always be run in release mode\n# If these fail, then its probably on travis, so ignore the errors\ncp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Release || true\ncp -R ${PROJECT_DIR}/node_modules/hbsfy ${BUILD_DIR}/Release/fixtures/node_modules || true\ncp -R ${PROJECT_DIR}/node_modules/handlebars ${BUILD_DIR}/Release/fixtures/node_modules || true\n";
+			shellScript = "make copy-fixtures";
 		};
 		B505A1631AC2A0CF00986D7B /* Compile Embedded Javascript */ = {
 			isa = PBXShellScriptBuildPhase;
