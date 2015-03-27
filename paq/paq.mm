@@ -36,9 +36,8 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     // The resolve instance has caches that make resolution faster
     _resolve = new Resolve(@{ @"nativeModules" : _nativeModules });
 
+    // Create JSContexts for parsing and require parsing
     _available_parser_contexts = [[NSMutableArray alloc] initWithCapacity:_max_parser_contexts];
-
-    // For some reason, if you comment out the following line, shit still works!
     _available_require_contexts = [[NSMutableArray alloc] initWithCapacity:_max_require_contexts];
 
     for (int i = 0; i < _max_parser_contexts; i++) {
@@ -49,6 +48,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
         [_available_require_contexts addObject:Require::createContext(_nativeModules[@"path"])];
     }
 
+    // Resolve paths to entry files
     NSMutableArray* mutableEntries = [[NSMutableArray alloc] initWithCapacity:[entry count]];
 
     for (NSUInteger i = 0, ii = [entry count]; i < ii; ++i) {
@@ -57,6 +57,16 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 
     _entry = mutableEntries;
 
+    // Are there any transforms we need to set up?
+    if (options && options[@"transforms"]) {
+        if (![options[@"transforms"] isKindOfClass:NSArray.class]) {
+            [NSException raise:@"Fatal Exception" format:@"The transforms option must be an NSArray"];
+        }
+
+        // paq each transform
+    }
+
+    // Initialize multithreading stuff
     _parser_contexts = dispatch_semaphore_create(_max_parser_contexts);
     _require_contexts = dispatch_semaphore_create(_max_require_contexts);
 
@@ -203,12 +213,12 @@ void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* 
             NSError *error;
             NSString *source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
             
-            // Insert globals now, because the replacements have require calls in them
-            source = _insertGlobals(file, source);
-            
             if(error) {
                 [NSException raise:@"Fatal Exception" format:@"Failed to read source code from %@: %@", file, error.localizedDescription];
             }
+            
+            // Insert globals now, because the replacements have require calls in them
+            source = _insertGlobals(file, source);
             
             NSDictionary *ast = Parser::parse(parserCtx, source, &error);
             
@@ -278,7 +288,7 @@ NSDictionary* Paq::getNativeBuiltins()
     }
 
     NSError* error;
-    NSDictionary* out = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size] options:0 error:&error];
+    NSDictionary* out = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size freeWhenDone:NO] options:0 error:&error];
 
     if (error) {
         [NSException raise:@"Fatal Exception" format:@"Could not parse the __builtins_src data as JSON"];

@@ -36,7 +36,7 @@ int main(int argc, const char* argv[])
         entry = [args subarrayWithRange:NSMakeRange(1, [args count] - 1)];
     }
 
-    if (entry == nil) {
+    if (entry == nil || [entry count] == 0) {
         NSLog(@"Usage: paq [entry files] {options}");
         exit(EXIT_SUCCESS);
     }
