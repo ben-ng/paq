@@ -51,7 +51,7 @@ DerivedData
 *.app
 
 # Node
-./node_modules/*
+node_modules/*
 
 # Mac
 .DS_Store
