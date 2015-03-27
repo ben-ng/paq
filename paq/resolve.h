@@ -7,13 +7,15 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <mach-o/getsect.h>
+#import <mach-o/ldsyms.h>
 
 class Resolve {
 private:
     NSMutableDictionary* _pathCache;
     NSMutableDictionary* _realPathCache;
     NSMutableDictionary* _packageMainCache;
-    NSArray* _nativeModules;
+    NSDictionary* _nativeModules;
     NSArray* _modulePaths;
     NSURL* _cwd;
     BOOL _nativeModuleExists(NSString* request);

@@ -1,7 +1,6 @@
 # paq
-paq/escodegen.bundle.js
-paq/acorn.bundle.js
-paq/prelude.bundle.js
+paq/*.bundle.js
+paq/*.bundle.json
 
 # XCode
 _Store

@@ -53,22 +53,14 @@ NSString* JSONString(NSString* astring)
 void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
     void (^callback)(NSError* error, NSString* bundle))
 {
-    NSString* prelude;
     unsigned long size;
     void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__prelude_src", &size);
 
     if (size == 0) {
-        NSLog(@"The section \"%s\"  is missing from the __TEXT segment",
-            "__prelude_src");
-    }
-    else {
-        prelude = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE
-                                                 length:size
-                                               encoding:NSUTF8StringEncoding
-                                           freeWhenDone:NO];
+        return callback([NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : @"Prelude is missing from __TEXT segment" }], nil);
     }
 
-    NSMutableString* output = [[NSMutableString alloc] initWithString:prelude];
+    NSMutableString* output = [[NSMutableString alloc] initWithBytes:JS_SOURCE length:size encoding:NSUTF8StringEncoding];
 
     [output appendString:@"({\n"];
 

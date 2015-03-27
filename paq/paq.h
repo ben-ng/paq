@@ -23,6 +23,7 @@ private:
     NSMutableArray* _available_require_contexts;
     NSArray* _entry;
     Resolve* _resolve;
+    NSDictionary* _nativeModules;
     dispatch_semaphore_t _parser_contexts;
     dispatch_semaphore_t _require_contexts;
     dispatch_queue_t _parserCtxQ;
@@ -61,4 +62,5 @@ public:
      */
     void bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle));
     void deps(void (^callback)(NSDictionary* dependencies));
+    static NSDictionary* getNativeBuiltins();
 };

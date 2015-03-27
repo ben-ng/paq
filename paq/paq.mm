@@ -24,14 +24,17 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     // When this reaches zero, bundling is done
     _unprocessed = 0;
 
-    // The resolve instance has caches that make resolution faster
-    _resolve = new Resolve(nil);
-
     // The module map keeps track of what modules have been resolved,
     // what requires are contained in each module, if the module is
     // an entry script, and the id of the module, which is typically
     // the filename.
     _module_map = [[NSMutableDictionary alloc] initWithCapacity:1000];
+
+    // Load up the shims for node core modules
+    _nativeModules = getNativeBuiltins();
+
+    // The resolve instance has caches that make resolution faster
+    _resolve = new Resolve(@{ @"nativeModules" : _nativeModules });
 
     _available_parser_contexts = [[NSMutableArray alloc] initWithCapacity:_max_parser_contexts];
 
@@ -91,7 +94,7 @@ void Paq::bundle(NSDictionary* options, void (^callback)(NSError* error, NSStrin
 void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
 {
     if (!file.isAbsolutePath) {
-        [NSException raise:@"Fatal Exception" format:@"Paq::process must always be called with absolute paths to avoid infinite recursion. You called it with \"%@\"", file];
+        [NSException raise:@"Fatal Exception" format:@"Paq::deps must always be called with absolute paths to avoid infinite recursion. You called it with \"%@\"", file];
     }
 
     dispatch_async(_serialQ, ^{
@@ -109,7 +112,13 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
                         NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
                         for(long i=0, ii=[resolved count]; i<ii; ++i) {
                             zip[requires[i]] = resolved[i];
+                            
+                            // Add native modules to the map as they are discovered
+                            if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
+                                _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
+                            }
                         }
+                        
                         _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
                         _unprocessed--;
                         
@@ -206,4 +215,23 @@ void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void 
         
         callback(resolved);
     });
+}
+
+NSDictionary* Paq::getNativeBuiltins()
+{
+    unsigned long size;
+    void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__builtins_src", &size);
+
+    if (size == 0) {
+        [NSException raise:@"Fatal Exception" format:@"The __builtins_src section is missing"];
+    }
+
+    NSError* error;
+    NSDictionary* out = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size] options:0 error:&error];
+
+    if (error) {
+        [NSException raise:@"Fatal Exception" format:@"Could not parse the __builtins_src data as JSON"];
+    }
+
+    return out;
 }

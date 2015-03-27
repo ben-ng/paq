@@ -13,42 +13,12 @@ Resolve::Resolve(NSDictionary* options)
     _pathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _realPathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _packageMainCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
-    _nativeModules = @[ @"assert",
-        @"buffer_ieee754",
-        @"buffer",
-        @"child_process",
-        @"cluster",
-        @"console",
-        @"constants",
-        @"crypto",
-        @"_debugger",
-        @"dgram",
-        @"dns",
-        @"domain",
-        @"events",
-        @"freelist",
-        @"fs",
-        @"http",
-        @"https",
-        @"_linklist",
-        @"module",
-        @"net",
-        @"os",
-        @"path",
-        @"punycode",
-        @"querystring",
-        @"readline",
-        @"repl",
-        @"stream",
-        @"string_decoder",
-        @"sys",
-        @"timers",
-        @"tls",
-        @"tty",
-        @"url",
-        @"util",
-        @"vm",
-        @"zlib" ];
+
+    if (![options[@"nativeModules"] isKindOfClass:NSDictionary.class]) {
+        [NSException raise:@"Fatal Exception" format:@"The nativeModules argument is required and must be an NSDictionary"];
+    }
+
+    _nativeModules = options[@"nativeModules"];
 
     if (options != nil && options[@"cwd"]) {
         _cwd = options[@"cwd"];
@@ -229,7 +199,7 @@ NSString* Resolve::_findPath(NSString* request, NSArray* paths)
 
 BOOL Resolve::_nativeModuleExists(NSString* request)
 {
-    return [_nativeModules containsObject:request];
+    return _nativeModules[request] != nil;
 }
 
 NSString* Resolve::path_resolve(NSArray* args)
