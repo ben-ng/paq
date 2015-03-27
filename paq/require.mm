@@ -12,28 +12,6 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
 {
     __block bool errored = NO;
 
-    void (^compilationHandler)(JSContext* context, JSValue* exception) = ^(JSContext* context, JSValue* exception) {
-        NSString *errStr = [NSString stringWithFormat:@"JS Error compiling expression: %@", [exception toString]];
-        NSLog(@"%@", errStr);
-        
-        if(error) {
-            *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
-        }
-        
-        errored = YES;
-    };
-
-    void (^evaluationHandler)(JSContext* context, JSValue* exception) = ^(JSContext* context, JSValue* exception) {
-        NSString *errStr = [NSString stringWithFormat:@"JS Error evaluating expression: %@", [exception toString]];
-        NSLog(@"%@", errStr);
-        
-        if(error) {
-            *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
-        }
-        
-        errored = YES;
-    };
-
     __block NSMutableArray* modules = [[NSMutableArray alloc] initWithCapacity:10];
 
     Traverse::walk(ast, ^(NSDictionary* node) {
@@ -47,23 +25,51 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
                 [modules addObject:args[0][@"value"]];
             }
             else {
-                ctx.exceptionHandler = compilationHandler;
-                JSValue *compiledEspression = [ctx[@"generate"] callWithArguments:@[args[0]]];
-                ctx.exceptionHandler = evaluationHandler;
-                // TODO: Also handle process.env since people like to use that
-                NSString *wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
-                JSValue *evaluatedExpression = [ctx evaluateScript:wrappedExpr];
                 
-                if(![evaluatedExpression isString]) {
+                ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
+                    NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while compiling the expression: %@", [exception toString], path];
+                    NSLog(@"%@", errStr);
+                    
                     if(error) {
-                        *error = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{NSLocalizedDescriptionKey: @"The evaluated expression did not result in a string value"}];
+                        *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
                     }
                     
                     errored = YES;
-                }
+                };
                 
-                if(!errored && [compiledEspression isString]) {
-                    [modules addObject:[evaluatedExpression toString]];
+                
+                JSValue *compiledEspression = [ctx[@"generate"] callWithArguments:@[args[0]]];
+                
+                if(!errored) {
+                    // TODO: Also handle process.env since people like to use that
+                    NSString *wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
+                    
+                    ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
+                        NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], compiledEspression, path];
+                        NSLog(@"%@", errStr);
+                        
+                        if(error) {
+                            *error = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
+                        }
+                        
+                        errored = YES;
+                    };
+                    
+                    JSValue *evaluatedExpression = [ctx evaluateScript:wrappedExpr];
+                    
+                    if(!errored) {
+                        if(![evaluatedExpression isString]) {
+                            if(error) {
+                                *error = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{NSLocalizedDescriptionKey: @"The evaluated expression did not result in a string value"}];
+                            }
+                            
+                            errored = YES;
+                        }
+                        
+                        if(!errored && [compiledEspression isString]) {
+                            [modules addObject:[evaluatedExpression toString]];
+                        }
+                    }
                 }
             }
         }
