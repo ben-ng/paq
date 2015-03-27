@@ -22,6 +22,7 @@
   "homepage": "https://github.com/ben-ng/paq",
   "devDependencies": {
     "acorn": "^0.12.0",
+    "async": "^0.9.0",
     "brfs": "^1.4.0",
     "browser-pack": "^4.0.1",
     "browserify": "^9.0.3",
