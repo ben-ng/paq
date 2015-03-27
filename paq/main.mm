@@ -7,47 +7,66 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <stdio.h>
+#import <iostream>
+#import "optionparser.hpp"
 #import "paq.h"
 #import "resolve.h"
+
+enum optionIndex {
+    UNKNOWN,
+    EVAL,
+    IGNORE_UNRESOLVED_EXPR
+};
+
+const option::Descriptor usage[] = {
+    { UNKNOWN, 0, "", "", option::Arg::None, "USAGE: paq <entry files> [options]\n\n"
+                                             "Options:" },
+    { EVAL, 0, "", "eval", option::Arg::None, "  --eval  \tReturns a function that when evaluated, returns the entry file's export" },
+    { IGNORE_UNRESOLVED_EXPR, 0, "", "ignoreUnresolvableExpressions", option::Arg::None, "  --ignoreUnresolvableExpressions  \tIgnores expressions in require statements that cannot be statically evaluated" },
+    // This just means that we're done defining the usage
+    { 0, 0, 0, 0, 0, 0 }
+};
 
 int main(int argc, const char* argv[])
 {
     NSMutableArray* entry = [[NSMutableArray alloc] init];
 
-    BOOL snipped = NO;
+    // Parse up to the first option
+    int i;
 
-    NSMutableDictionary* options = [[NSMutableDictionary alloc] init];
-
-    // NSProcessInfo does NOT work in this main method when building in release mode for whatever reason
-    for (int i = 1; i < argc; i++) {
-        NSString* arg = [NSString stringWithCString:argv[i] encoding:NSUTF8StringEncoding];
-
-        if (![arg hasPrefix:@"-"] && !snipped) {
-            [entry addObject:arg];
+    for (i = 1; i < argc; ++i) {
+        if (*argv[i] != '-') {
+            [entry addObject:[NSString stringWithCString:argv[i] encoding:NSUTF8StringEncoding]];
         }
-
-        if ([arg isEqualToString:@"--eval"]) {
-            options[@"eval"] = [NSNumber numberWithBool:YES];
-            snipped = YES;
-        }
-
-        if ([arg isEqualToString:@"--ignoreUnevaluatedExpressions"]) {
-            options[@"ignoreUnevaluatedExpressions"] = [NSNumber numberWithBool:YES];
-            snipped = YES;
+        else {
+            break;
         }
     }
 
+    argc -= i;
+    argv += i;
+    option::Stats stats(usage, argc, argv);
+    option::Option* options = new option::Option[stats.buffer_max];
+    option::Option* buffer = new option::Option[stats.buffer_max];
+    option::Parser parse(usage, argc, argv, options, buffer);
+
+    NSDictionary* optsDict = @{
+        @"eval" : [NSNumber numberWithBool:options[EVAL].desc != NULL],
+        @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:options[IGNORE_UNRESOLVED_EXPR].desc != NULL]
+    };
+
     if (entry == nil || [entry count] == 0) {
-        NSLog(@"Usage: paq [entry files] {options}");
+        option::printUsage(std::cout, usage);
         exit(EXIT_SUCCESS);
     }
 
-    Paq* paq = new Paq(entry, options);
+    Paq* paq = new Paq(entry, optsDict);
 
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        paq->bundle(options, ^(NSError *error, NSString *bundle) {
+        paq->bundle(optsDict, ^(NSError *error, NSString *bundle) {
             [bundle writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
             dispatch_semaphore_signal(sem);
         });

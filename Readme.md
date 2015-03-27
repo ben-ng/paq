@@ -7,6 +7,18 @@ paq implements a subset of [Browserify](http://browserify.org)'s features with f
 Get updates by following me on Twitter:
 [![Follow @_benng](http://i.imgur.com/FImwJ9n.png)](https://twitter.com/_benng)
 
+## Usage
+
+```
+USAGE: paq <entry files> [options]
+
+Options:
+  --eval                           Returns a function that when evaluated,
+                                   returns the entry file's export
+  --ignoreUnresolvableExpressions  Ignores expressions in require statements
+                                   that cannot be statically evaluated
+```
+
 ## Under The Hood
 
  * Written in Objective-C++

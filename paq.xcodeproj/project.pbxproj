@@ -59,6 +59,7 @@
 		B51283971AC472DC008C2E0A /* pack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pack.h; sourceTree = "<group>"; };
 		B512839A1AC5078B008C2E0A /* json.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = json.mm; sourceTree = "<group>"; };
 		B512839B1AC5078B008C2E0A /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		B512839F1AC5C248008C2E0A /* optionparser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = optionparser.hpp; sourceTree = "<group>"; };
 		B59884B31AC263B7005929C3 /* parser.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = parser.mm; sourceTree = "<group>"; };
 		B59884B41AC263B7005929C3 /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
 		B59884B71AC2641A005929C3 /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -125,6 +126,7 @@
 				B51283971AC472DC008C2E0A /* pack.h */,
 				B512839A1AC5078B008C2E0A /* json.mm */,
 				B512839B1AC5078B008C2E0A /* json.h */,
+				B512839F1AC5C248008C2E0A /* optionparser.hpp */,
 			);
 			path = paq;
 			sourceTree = "<group>";

@@ -46,7 +46,7 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
                     
                     ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
                         NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], compiledEspression, path];
-                        err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnevaluatedExpressions to continue"}];
+                        err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
                     };
                     
                     JSValue *evaluatedExpression = [ctx evaluateScript:wrappedExpr];
@@ -65,7 +65,7 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
         }
         
         if(err) {
-            if(err.code == 9 && !options[@"ignoreUnevaluatedExpressions"]) {
+            if(err.code == 9 && !options[@"ignoreUnresolvableExpressions"]) {
                 errored = YES;
             }
             

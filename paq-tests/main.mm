@@ -256,7 +256,7 @@ TEST_CASE("Inserts module globals", "[bundle]")
 TEST_CASE("Ignores unevaluated expressions", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
-    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnevaluatedExpressions" : [NSNumber numberWithBool:YES] });
+    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
     NSError* error;
     NSString* bundle = paq->bundleSync(nil, &error);
     REQUIRE(error == nil);
