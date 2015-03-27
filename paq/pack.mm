@@ -94,6 +94,73 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
         [output appendFormat:@"(%@)", JSONString(entry[0])];
     }
 
+    if (options != nil && [options[@"standalone"] boolValue]) {
+        if ([entry count] != 1) {
+            return callback([NSError errorWithDomain:@"com.benng.paq"
+                                                code:13
+                                            userInfo:@{
+                                                NSLocalizedDescriptionKey :
+                                                    @"The standalone option can only be used "
+                                                @"when there is one entry script"
+                                            }],
+                nil);
+        }
+
+        output = [NSMutableString stringWithFormat:@"module.exports=%@(%@)", output, JSONString(entry[0])];
+    }
+
+    if (options != nil && [options[@"convertBrowserifyTransform"] boolValue]) {
+        if ([entry count] != 1) {
+            return callback([NSError errorWithDomain:@"com.benng.paq"
+                                                code:14
+                                            userInfo:@{
+                                                NSLocalizedDescriptionKey :
+                                                    @"The convertBrowserifyTransform option can only be used "
+                                                @"when there is one entry script"
+                                            }],
+                nil);
+        }
+
+        unsigned long size;
+        void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__concats_src", &size);
+
+        if (size == 0) {
+            return callback([NSError errorWithDomain:@"com.benng.paq"
+                                                code:15
+                                            userInfo:@{
+                                                NSLocalizedDescriptionKey :
+                                                    @"The concat-stream source is missing"
+                                            }],
+                nil);
+        }
+
+        NSString* concat_src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
+
+        // Provides a global object and the concat-stream module to the wrapped transform
+        // Holy shit this is terrible
+        output = [NSMutableString stringWithFormat:@"\n\n"
+                                  @"// Create a fake commonjs context for concat-stream\n"
+                                  @"var s=module;\n"
+                                  @"module={exports:global};\n"
+                                  @"%@;\n"
+                                  @"var _concatstream=module.exports;\n\n"
+                                  @"// Restore the real commonjs context after the module has loaded\n"
+                                  @"module=s;\n"
+                                  @"exports=module.exports;\n\n"
+                                  @"// Load up the transform function into this variable\n"
+                                  @"var t = %@(%@);\n"
+                                  @"return module.exports=(\n\n"
+                                  @"// Wrap the exported function in its own scope for safety\n"
+                                  @"function scoped (global, concatstream){\n"
+                                  @"  return function wrapped (file, src, cb){\n"
+                                  @"    var s=t(file);\n"
+                                  @"    s.pipe(concatstream(function (data){cb(null,data)}));\n"
+                                  @"    s.end(src);\n"
+                                  @"  };\n"
+                                  @"}({}, _concatstream));\n",
+                                  concat_src, output, JSONString(entry[0])];
+    }
+
     // Close with a string
     [output appendString:@"\n"];
 

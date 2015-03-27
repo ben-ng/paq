@@ -2,7 +2,7 @@ d = $$(xcodebuild -showBuildSettings 2> /dev/null | grep CONFIGURATION_BUILD_DIR
 
 all: js cli
 
-js: paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json
+js: paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json paq/concat-stream.bundle.js
 
 cli: bin/paq
 
@@ -45,11 +45,15 @@ paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.
 	@echo "Compiling builtins..."
 	@node scripts/builtins.js > paq/builtins.bundle.json
 
-paq/acorn.bundle.js: node_modules/acorn/package.json node_modules/uglifyjs/package.json
+paq/acorn.bundle.js: node_modules/acorn/package.json
 	@echo "Compiling acorn..."
 	@node node_modules/browserify/bin/cmd.js -s acorn node_modules/acorn | node node_modules/uglifyjs/bin/uglifyjs > paq/acorn.bundle.js
 
-paq/escodegen.bundle.js: node_modules/escodegen/package.json node_modules/uglifyjs/package.json
+paq/concat-stream.bundle.js: node_modules/concat-stream/package.json
+	@echo "Compiling concat-stream..."
+	@node node_modules/browserify/bin/cmd.js -s concat node_modules/concat-stream | node node_modules/uglifyjs/bin/uglifyjs > paq/concat-stream.bundle.js
+
+paq/escodegen.bundle.js: node_modules/escodegen/package.json
 	@echo "Compiling escodegen..."
 	@node node_modules/browserify/bin/cmd.js -s escodegen node_modules/escodegen | node node_modules/uglifyjs/bin/uglifyjs > paq/escodegen.bundle.js
 

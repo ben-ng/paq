@@ -241,6 +241,22 @@ TEST_CASE("Creates a basic bundle", "[bundle]")
     REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo"]);
 }
 
+TEST_CASE("Transforms browserify bundles", "[bundle]")
+{
+    Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
+    NSError* error;
+    NSString* bundle = paq->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &error);
+    JSContext* ctx = [[JSContext alloc] init];
+    JSValue* transform = [ctx evaluateScript:bundle];
+
+    REQUIRE(![transform isNull]);
+
+    JSValue* transformed = [transform callWithArguments:@[ @"test.hbs", @"{{name}}" ]];
+
+    REQUIRE(![transformed isNull]);
+    REQUIRE([[transformed toString] rangeOfString:@"require('hbsfy/runtime')"].location != NSNotFound);
+}
+
 TEST_CASE("Bundles node core modules", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
@@ -267,11 +283,13 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
 TEST_CASE("Uses hbsfy transform", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
-    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES],
-        @"transforms" : @"hbsfy" });
+    Paq* paq = new Paq(@[ @"fixtures/hbs-app/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES],
+        @"transforms" : @[ @"hbsfy" ] });
+
     NSError* error;
     NSString* bundle = paq->bundleSync(nil, &error);
     REQUIRE(error == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
+    REQUIRE([paq->evalToString() isEqualToString:@"Hello World!"]);
 }
-*/
+ */

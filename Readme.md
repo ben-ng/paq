@@ -7,6 +7,19 @@ paq implements a subset of [Browserify](http://browserify.org)'s features with f
 Get updates by following me on Twitter:
 [![Follow @_benng](http://i.imgur.com/FImwJ9n.png)](https://twitter.com/_benng)
 
+## What's Working
+
+ * `require('./relative/path')`
+ * `require('some-module')`
+ * `require('node-core-module')`
+ * `require(path.join(__dirname, 'some_module'))` (or any other statically resolvable expression, like `__dirname + '/path'`)
+ * Exporting a standalone bundle
+ * Converting transforms like `hbsfy` for use with `paq`
+
+## What's Not Working
+ * `paq` can't actually run transforms yet. Almost there!
+ * Replacement of `process.env` with actual environment vars.
+
 ## Usage
 
 ```
@@ -15,6 +28,10 @@ USAGE: paq <entry files> [options]
 Options:
   --eval                           Returns a function that when evaluated,
                                    returns the entry file's export
+  --standalone                     Returns a module that exports the entry
+                                   file's export
+  --convertBrowserifyTransform     Returns a module that wraps a browserify
+                                   transform for use with paq
   --ignoreUnresolvableExpressions  Ignores expressions in require statements
                                    that cannot be statically evaluated
 ```
