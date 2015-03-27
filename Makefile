@@ -1,4 +1,4 @@
-d = $$(xcodebuild -showBuildSettings | grep CONFIGURATION_BUILD_DIR | cut -c31-)
+d = $$(xcodebuild -showBuildSettings 2> /dev/null | grep CONFIGURATION_BUILD_DIR | cut -c31-)
 
 all: js cli
 
@@ -21,12 +21,25 @@ copy-fixtures:
 	cp -rf node_modules/hbsfy "$$ed/fixtures/node_modules" && \
 	cp -rf node_modules/handlebars "$$ed/fixtures/node_modules"
 
-run-test: 
+run-test:
 	@echo "Running Tests..."
 	@ed="$d" && \
 	echo "Running tests from $$ed" && \
 	cd $$ed && \
 	./paq-tests
+
+submit-coverage:
+	@echo "Submitting Coverage Report..."
+	@ed="$d" && \
+	bd=$$(dirname "$$ed") && \
+	bd=$$(dirname "$$bd") && \
+	echo "Build Dir: $$bd" && \
+	echo "service_name: travis-ci\n\
+	coverage_service: coveralls\n\
+	xcodeproj: paq.xcodeproj\n\
+	ignore:\n\
+	  - paq-tests/catch.hpp" > .slather.yml
+	slather coverage -b $$bd -s paq.xcodeproj
 
 paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.js
 	@echo "Compiling builtins..."

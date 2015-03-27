@@ -2,7 +2,10 @@
 paq/*.bundle.js
 paq/*.bundle.json
 
-# XCode
+# Xcoverage
+Coverage.xcov2
+
+# Xcode
 _Store
 build/
 *.pbxuser
@@ -70,4 +73,7 @@ lib-cov
 pids
 logs
 results
+
+# Ruby shit
+Gemfile.lock
 

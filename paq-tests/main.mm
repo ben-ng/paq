@@ -262,3 +262,16 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     REQUIRE(error == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
 }
+
+/*
+TEST_CASE("Uses hbsfy transform", "[bundle]")
+{
+    // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
+    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES],
+        @"transforms" : @"hbsfy" });
+    NSError* error;
+    NSString* bundle = paq->bundleSync(nil, &error);
+    REQUIRE(error == nil);
+    REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
+}
+*/
