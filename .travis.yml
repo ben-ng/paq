@@ -8,4 +8,4 @@ before_install:
   - npm install
 
 script:
-  - make run-test
+  - make test
