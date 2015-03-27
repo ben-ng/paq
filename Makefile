@@ -8,7 +8,7 @@ cli: bin/paq
 
 test: compile-test run-test
 
-compile-test: js
+compile-test:
 	@echo "Compiling Tests..."
 	@xctool -scheme paq-tests -sdk macosx -configuration Release build
 
@@ -21,7 +21,7 @@ copy-fixtures:
 	cp -rf node_modules/hbsfy "$$ed/fixtures/node_modules" && \
 	cp -rf node_modules/handlebars "$$ed/fixtures/node_modules"
 
-run-test: copy-fixtures
+run-test: 
 	@echo "Running Tests..."
 	@ed="$d" && \
 	echo "Running tests from $$ed" && \
