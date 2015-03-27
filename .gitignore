@@ -52,4 +52,22 @@ DerivedData
 
 # Node
 node_modules
+npm-debug.log
+
+# generic system files to ignore
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+*.patch
+*.swp
+.DS_store
+
+pids
+logs
+results
 
