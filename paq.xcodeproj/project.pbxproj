@@ -149,6 +149,7 @@
 				B5081D6F1AC114F700D675E9 /* Sources */,
 				B5081D701AC114F700D675E9 /* Frameworks */,
 				B5081D711AC114F700D675E9 /* CopyFiles */,
+				B512839E1AC579D8008C2E0A /* Copy Fixtures To Release */,
 			);
 			buildRules = (
 			);
@@ -254,6 +255,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "PATH=${PATH}:/usr/local/bin\nmake js";
+		};
+		B512839E1AC579D8008C2E0A /* Copy Fixtures To Release */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Fixtures To Release";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Release";
 		};
 /* End PBXShellScriptBuildPhase section */
 
