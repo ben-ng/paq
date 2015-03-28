@@ -1,16 +1,18 @@
 sudo: false
 language: objective-c
-xcode_project: paq.xcodeproj # path to your xcodeproj folder
+xcode_project: paq.xcodeproj
 xcode_scheme: paq-tests
 xcode_sdk: macosx
 
 before_install:
   - npm install
-  - bundle
+  - sudo easy_install cpp-coveralls
+  - brew uninstall xctool
+  - brew update
+  - brew install xctool --HEAD
 
 script:
   - make test
 
 after_success:
-  - sleep 10
-  - make submit-coverage
+  - ./scripts/coveralls.sh

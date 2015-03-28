@@ -1,5 +1,0 @@
-service_name: travis-ci
-coverage_service: coveralls
-xcodeproj: paq.xcodeproj
-ignore:
-  - paq-tests/catch.hpp

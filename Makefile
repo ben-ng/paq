@@ -10,7 +10,12 @@ test: compile-test run-test
 
 compile-test:
 	@echo "Compiling Tests..."
-	@xctool -scheme paq-tests -sdk macosx -configuration GCov_Build build
+	@xctool build -scheme paq-tests \
+	-sdk macosx \
+	-configuration GCov_Build \
+	ONLY_ACTIVE_ARCH=NO \
+	GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES \
+	GCC_GENERATE_TEST_COVERAGE_FILES=YES
 
 copy-fixtures:
 	@e=$d && \
@@ -29,19 +34,6 @@ run-test:
 	echo "Running tests from $$e" && \
 	cd $$e && \
 	./paq-tests
-
-submit-coverage:
-	@echo "Submitting Coverage Report..."
-	@e=$d && \
-	b=$$(dirname "$$e") && \
-	b=$$(dirname "$$b") && \
-	echo "Build Dir: $$b" && \
-	echo "service_name: travis-ci\n\
-	coverage_service: coveralls\n\
-	xcodeproj: paq.xcodeproj\n\
-	ignore:\n\
-	  - paq-tests/catch.hpp" > .slather.yml
-	slather coverage -b $$b -s paq.xcodeproj
 
 paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.js
 	@echo "Compiling builtins..."
