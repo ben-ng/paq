@@ -29,7 +29,8 @@ copy-gcov-fixtures:
 	cp -rf node_modules/hbsfy "$$e/fixtures/node_modules" && \
 	cp -rf node_modules/handlebars "$$e/fixtures/node_modules" && \
 	cp -rf node_modules/babelify "$$e/fixtures/node_modules" && \
-	cp -rf node_modules/babel-runtime "$$e/fixtures/node_modules"
+	cp -rf node_modules/babel-runtime "$$e/fixtures/node_modules" && \
+	mv "$$e/fixtures/babel-core-patch.js" "$$e/fixtures/node_modules/babelify/node_modules/babel-core/lib/babel/api/register/node.js"
 
 copy-debug-fixtures:
 	@e=$d && \
@@ -41,7 +42,8 @@ copy-debug-fixtures:
 	cp -rf node_modules/hbsfy "$$e/fixtures/node_modules" && \
 	cp -rf node_modules/handlebars "$$e/fixtures/node_modules" && \
 	cp -rf node_modules/babelify "$$e/fixtures/node_modules" && \
-	cp -rf node_modules/babel-runtime "$$e/fixtures/node_modules"
+	cp -rf node_modules/babel-runtime "$$e/fixtures/node_modules" && \
+	mv "$$e/fixtures/babel-core-patch.js" "$$e/fixtures/node_modules/babelify/node_modules/babel-core/lib/babel/api/register/node.js"
 
 run-test:
 	@echo "Running Tests..."

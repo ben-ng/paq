@@ -33,7 +33,6 @@ private:
     dispatch_queue_t _resolveQ;
     dispatch_queue_t _serialQ;
     dispatch_queue_t _concurrentQ;
-    void (^_bundle_callback)(NSError* error, NSString* bundle);
 
     /*
      * This is a map like

@@ -128,17 +128,18 @@ int main(int argc, const char* argv[])
     }
 
     Paq* paq = new Paq(entry, optsDict);
-
-    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+    __block bool bundled = NO;
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         paq->bundle(optsDict, ^(NSError *error, NSString *bundle) {
             [bundle writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
-            dispatch_semaphore_signal(sem);
+            bundled = YES;
         });
     });
 
-    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+    while (!bundled) {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+    }
 
     return 0;
 }

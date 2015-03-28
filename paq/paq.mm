@@ -102,8 +102,6 @@ void Paq::deps(void (^callback)(NSDictionary* dependencies))
 
 void Paq::bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle))
 {
-    _bundle_callback = [callback copy];
-
     // See header file for the structure of the deps callback argument
     deps(^void(NSDictionary* deps) {
         Pack::pack(_entry, deps, options, callback);
@@ -160,7 +158,7 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
                         if(_unprocessed == 0) {
                             // See header file for the structure of the deps callback argument
                             _deps_callback(_module_map);
-                            Block_release(_deps_callback);
+                            _deps_callback = nil;
                         }
                     });
                 });
@@ -386,4 +384,5 @@ NSString* Paq::evalToString()
 
 Paq::~Paq()
 {
+    delete _resolve;
 }
