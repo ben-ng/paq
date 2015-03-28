@@ -11,7 +11,7 @@ before_install:
 
 script:
   - make test
-  -
 
 after_success:
+  - make show-build-dir
   - slather
