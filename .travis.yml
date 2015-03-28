@@ -3,7 +3,6 @@ language: objective-c
 
 before_install:
   - npm install
-  - gem i cocoapods --no-ri --no-rdoc
   - gem i slather --no-ri --no-rdoc
   - brew uninstall xctool
   - brew install xctool --HEAD
