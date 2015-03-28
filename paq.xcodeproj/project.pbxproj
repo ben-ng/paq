@@ -278,7 +278,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "// By default, this target only runs in Release mode\nmkdir -p ${BUILD_DIR}/Release/fixtures/node_modules\ncp -R ${PROJECT_DIR}/fixtures ${BUILD_DIR}/Release\ncp -R ${PROJECT_DIR}/node_modules/hbsfy ${BUILD_DIR}/Release/fixtures/node_modules\ncp -R ${PROJECT_DIR}/node_modules/handlebars ${BUILD_DIR}/Release/fixtures/node_modules\n";
+			shellScript = "make copy-fixtures";
+			showEnvVarsInLog = 0;
 		};
 		B51283A01AC5F3E3008C2E0A /* Wipe Coverage Files */ = {
 			isa = PBXShellScriptBuildPhase;
