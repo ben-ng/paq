@@ -1,18 +1,15 @@
 sudo: false
 language: objective-c
-xcode_project: paq.xcodeproj
-xcode_scheme: paq-tests
-xcode_sdk: macosx
 
 before_install:
-  - npm install
-  - gem i cocoapods --no-ri --no-rdoc
-  - gem i slather --no-ri --no-rdoc
-  - brew uninstall xctool
-  - brew install xctool --HEAD
+- npm install
+- gem i cocoapods --no-ri --no-rdoc
+- gem i slather --no-ri --no-rdoc
+- brew uninstall xctool
+- brew install xctool --HEAD
 
 script:
-  - make test
+- make test
 
 after_success:
-  - slather
+- slather
