@@ -5,7 +5,11 @@ before_install:
   - npm install
   - gem i cocoapods --no-ri --no-rdoc
   - gem i slather --no-ri --no-rdoc
-  - brew uninstall xctool; brew install xctool --HEAD;
+  - brew uninstall xctool
+  - brew install xctool --HEAD
 
-script: make test
-after_success: slather
+script:
+  - make test
+
+after_success:
+  -slather
