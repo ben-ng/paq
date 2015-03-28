@@ -17,7 +17,19 @@ compile-test:
 	GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES \
 	GCC_GENERATE_TEST_COVERAGE_FILES=YES
 
-copy-fixtures: copy-gcov-fixtures copy-debug-fixtures
+copy-fixtures: copy-gcov-fixtures copy-debug-fixtures copy-release-fixtures
+
+copy-release-fixtures:
+	@e=$d && \
+	echo "Copying Fixtures To $$e/fixtures..." && \
+	rm -rf $$e/fixtures || true && \
+	mkdir -p "$$e/fixtures" && \
+	cp -rf fixtures "$$e" && \
+	cp -rf node_modules/hbsfy "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/handlebars "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/babelify "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/babel-runtime "$$e/fixtures/node_modules" && \
+	mv "$$e/fixtures/babel-core-patch.js" "$$e/fixtures/node_modules/babelify/node_modules/babel-core/lib/babel/api/register/node.js"
 
 copy-gcov-fixtures:
 	@e=$d && \
