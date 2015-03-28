@@ -12,4 +12,5 @@ script:
   - make test
 
 after_success:
+  - sleep 10
   - make submit-coverage

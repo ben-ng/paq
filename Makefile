@@ -1,4 +1,4 @@
-d = $$(xcodebuild -showBuildSettings 2> /dev/null | grep CONFIGURATION_BUILD_DIR | cut -c31-)
+d=$$(xcodebuild -showBuildSettings 2> /dev/null | grep CONFIGURATION_BUILD_DIR | cut -c31-)
 
 all: js cli
 
@@ -10,36 +10,38 @@ test: compile-test run-test
 
 compile-test:
 	@echo "Compiling Tests..."
-	@xctool -scheme paq-tests -sdk macosx -configuration Release build
+	@xctool -scheme paq-tests -sdk macosx -configuration GCov_Build build
 
 copy-fixtures:
-	@echo "Copying Fixtures To $d/fixtures..."
-	-@ed="$d" && \
-	rm -rf $$ed/fixtures || true && \
-	mkdir -p "$$ed/fixtures" && \
-	cp -rf fixtures "$$ed" && \
-	cp -rf node_modules/hbsfy "$$ed/fixtures/node_modules" && \
-	cp -rf node_modules/handlebars "$$ed/fixtures/node_modules"
+	@e=$d && \
+	e="$${e/Release/GCov_Build}" && \
+	echo "Copying Fixtures To $$e/fixtures..." && \
+	rm -rf $$e/fixtures || true && \
+	mkdir -p "$$e/fixtures" && \
+	cp -rf fixtures "$$e" && \
+	cp -rf node_modules/hbsfy "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/handlebars "$$e/fixtures/node_modules"
 
 run-test:
 	@echo "Running Tests..."
-	@ed="$d" && \
-	echo "Running tests from $$ed" && \
-	cd $$ed && \
+	@e=$d && \
+	e="$${e/Release/GCov_Build}" && \
+	echo "Running tests from $$e" && \
+	cd $$e && \
 	./paq-tests
 
 submit-coverage:
 	@echo "Submitting Coverage Report..."
-	@ed="$d" && \
-	bd=$$(dirname "$$ed") && \
-	bd=$$(dirname "$$bd") && \
-	echo "Build Dir: $$bd" && \
+	@e=$d && \
+	b=$$(dirname "$$e") && \
+	b=$$(dirname "$$b") && \
+	echo "Build Dir: $$b" && \
 	echo "service_name: travis-ci\n\
 	coverage_service: coveralls\n\
 	xcodeproj: paq.xcodeproj\n\
 	ignore:\n\
 	  - paq-tests/catch.hpp" > .slather.yml
-	slather coverage -b $$bd -s paq.xcodeproj
+	slather coverage -b $$b -s paq.xcodeproj
 
 paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.js
 	@echo "Compiling builtins..."

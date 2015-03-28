@@ -6,9 +6,8 @@
 //  Copyright (c) 2015 Ben Ng. All rights reserved.
 //
 
-extern void __gcov_flush();
-
 #define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
+#import <Foundation/Foundation.h>
 #import "catch.hpp"
 #import "parser.h"
 #import "traverse.h"
@@ -295,17 +294,3 @@ TEST_CASE("Uses hbsfy transform", "[bundle]")
     REQUIRE([paq->evalToString() isEqualToString:@"Hello World!"]);
 }
  */
-
-/**
- * Teardown Code
- */
-
-TEST_CASE("Teardown", "[]")
-{
-    // Flush coverage files
-    __gcov_flush();
-
-    // Needed so the "no assertions" thing doesn't throw
-    // Better than turning off the warning for all tests!
-    REQUIRE(1 == 1);
-}

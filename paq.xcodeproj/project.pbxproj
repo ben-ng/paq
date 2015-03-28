@@ -432,7 +432,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
 					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
@@ -450,7 +451,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
@@ -468,8 +470,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
-				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = YES;
+				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -491,8 +493,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
-				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = YES;
+				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
 					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
@@ -505,6 +507,91 @@
 			};
 			name = Release;
 		};
+		B51283A71AC6312B008C2E0A /* GCov_Build */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = GCov_Build;
+		};
+		B51283A81AC6312B008C2E0A /* GCov_Build */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				OTHER_LDFLAGS = (
+					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
+					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
+					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = GCov_Build;
+		};
+		B51283A91AC6312B008C2E0A /* GCov_Build */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				OTHER_LDFLAGS = (
+					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
+					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
+					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = GCov_Build;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -512,6 +599,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B5081D781AC114F700D675E9 /* Debug */,
+				B51283A71AC6312B008C2E0A /* GCov_Build */,
 				B5081D791AC114F700D675E9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -521,6 +609,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B5081D7B1AC114F700D675E9 /* Debug */,
+				B51283A81AC6312B008C2E0A /* GCov_Build */,
 				B5081D7C1AC114F700D675E9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -530,6 +619,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B5081D891AC118B500D675E9 /* Debug */,
+				B51283A91AC6312B008C2E0A /* GCov_Build */,
 				B5081D8A1AC118B500D675E9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
