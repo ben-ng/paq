@@ -4,13 +4,9 @@ language: objective-c
 before_install:
   - npm install
   - gem i slather --no-ri --no-rdoc
-  - brew uninstall xctool
-  - brew install xctool --HEAD
-  - brew install tree
 
 script:
   - make test
 
 after_success:
-  - make show-build-dir
   - make slather
