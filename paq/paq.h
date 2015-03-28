@@ -57,7 +57,7 @@ private:
 
 public:
     Paq(NSArray* entry, NSDictionary* options);
-
+    ~Paq();
     /*
      * The main interface between this class and the outside world
      * [options]

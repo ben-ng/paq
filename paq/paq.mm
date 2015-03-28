@@ -16,10 +16,10 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     // Parser contexts are JSContexts with acorn loaded up inside them
-    _max_parser_contexts = options[@"parserTasks"] ? [options[@"parserTasks"] intValue] : 6;
+    _max_parser_contexts = options[@"parserTasks"] ? [options[@"parserTasks"] intValue] : 2;
 
     // Require contexts are JSContexts with escodegen loaded up inside them
-    _max_require_contexts = options[@"requireTasks"] ? [options[@"requireTasks"] intValue] : 6;
+    _max_require_contexts = options[@"requireTasks"] ? [options[@"requireTasks"] intValue] : 2;
 
     if (_max_parser_contexts <= 0) {
         _max_parser_contexts = 1;
@@ -382,4 +382,8 @@ NSString* Paq::evalToString()
     JSValue* result = [ctx evaluateScript:bundle];
 
     return except ? except : [result toString];
+}
+
+Paq::~Paq()
+{
 }

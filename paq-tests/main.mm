@@ -21,28 +21,28 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
 {
     __block BOOL callbackWasCalled = NO;
     __block NSString* cbData = nil;
+    JSContext* ctx = JSContextExtensions::create();
+
+    NSString* wrappedBundle = [NSString stringWithFormat:@"var global = {}, exports = {}, module={exports:exports};%@;", transformString];
+
+    ctx.exceptionHandler = ^(JSContext* ctx, JSValue* e) {
+        NSLog(@"JS Error: %@", [e toString]);
+    };
+
+    [ctx evaluateScript:wrappedBundle];
+
+    ctx[@"transformCb"] = ^(JSValue* err, JSValue* data) {
+        cbData = [data toString];
+        callbackWasCalled = YES;
+    };
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        JSContext* ctx = JSContextExtensions::create();
-        NSString* wrappedBundle = [NSString stringWithFormat:@"var global = {}, exports = {}, module={exports:exports};%@;", transformString];
-
-        ctx.exceptionHandler = ^(JSContext* ctx, JSValue* e) {
-            NSLog(@"JS Error: %@", [e toString]);
-        };
-
-        [ctx evaluateScript:wrappedBundle];
-
-        ctx[@"transformCb"] = ^(JSValue* err, JSValue* data) {
-            cbData = [data toString];
-			callbackWasCalled = YES;
-        };
-
         [ctx evaluateScript:[NSString stringWithFormat:@"module.exports(%@, %@, transformCb)", JSONString(file), JSONString(source)]];
     });
 
-	while (!callbackWasCalled) {
-		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
-	}
+    while (!callbackWasCalled) {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+    }
 
     return cbData;
 }
