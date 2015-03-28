@@ -33,35 +33,34 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
     NSMutableArray* entryFiles =
         [[NSMutableArray alloc] initWithCapacity:[entry count]];
 
-    [deps enumerateKeysAndObjectsUsingBlock:^(NSString* key, NSDictionary* obj,
-                                                BOOL* stop) {
-    counter++;
+    [deps enumerateKeysAndObjectsUsingBlock:^(NSString* key, NSDictionary* obj, BOOL* stop) {
+        counter++;
 
-    [output appendString:JSONString(key)];
-    [output appendString:@": [function (require, module, exports) {\n"];
-    [output appendString:obj[@"source"]];
-    [output appendString:@"\n}, "];
+        [output appendString:JSONString(key)];
+        [output appendString:@": [function (require, module, exports) {\n"];
+        [output appendString:obj[@"source"]];
+        [output appendString:@"\n}, "];
 
-    NSError *error;
-    NSData *serialized = [NSJSONSerialization dataWithJSONObject:obj[@"deps"]
-                                                         options:0
-                                                           error:&error];
+        NSError *error;
+        NSData *serialized = [NSJSONSerialization dataWithJSONObject:obj[@"deps"]
+                                                             options:0
+                                                               error:&error];
 
-    if (error) {
-     return callback([NSError errorWithDomain:@"com.benng.paq" code:6 userInfo:@{NSLocalizedDescriptionKey: @"The dependency object could not be serialized"}], nil);
-    }
+        if (error) {
+            return callback([NSError errorWithDomain:@"com.benng.paq" code:6 userInfo:@{NSLocalizedDescriptionKey: @"The dependency object could not be serialized"}], nil);
+        }
 
-    [output appendString:[[NSString alloc] initWithData:serialized
-                                               encoding:NSUTF8StringEncoding]];
-    [output appendString:@"]"];
+        [output appendString:[[NSString alloc] initWithData:serialized
+                                                   encoding:NSUTF8StringEncoding]];
+        [output appendString:@"]"];
 
-    if (counter < depscount) {
-      [output appendString:@",\n"];
-    }
+        if (counter < depscount) {
+          [output appendString:@",\n"];
+        }
 
-    if ([obj[@"entry"] boolValue]) {
-      [entryFiles addObject:key];
-    }
+        if ([obj[@"entry"] boolValue]) {
+          [entryFiles addObject:key];
+        }
     }];
 
     [output appendString:@"},{},"];

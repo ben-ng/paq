@@ -318,6 +318,15 @@ TEST_CASE("Creates a basic bundle", "[bundle]")
     delete paq;
 }
 
+TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
+{
+    Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], @{ @"parserTasks" : [NSNumber numberWithInt:1],
+        @"requireTasks" : [NSNumber numberWithInt:1] });
+    REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
+
+    delete paq;
+}
+
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });

@@ -99,7 +99,7 @@ bin/paq:
 	@echo "Compiling paq..."
 	@ed="$d" && \
 	c="$$ed/paq" && \
-	xctool -configuration release -scheme paq -sdk macosx build && \
+	xctool -configuration Release -scheme paq -sdk macosx build && \
 	mkdir -p bin && \
 	mv $$c bin
 

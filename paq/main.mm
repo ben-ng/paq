@@ -130,18 +130,21 @@ int main(int argc, const char* argv[])
     }
 
     Paq* paq = new Paq(entry, optsDict);
-    __block bool bundled = NO;
+    NSError* error = nil;
+    NSString* bundle = paq->bundleSync(optsDict, &error);
 
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        paq->bundle(optsDict, ^(NSError *error, NSString *bundle) {
-            [bundle writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
-            bundled = YES;
-        });
-    });
+    if (bundle == nil) {
+        if (error != nil) {
+            NSLog(@"%@", error.localizedDescription);
+        }
+        else {
+            NSLog(@"An unknown error occurred");
+        }
 
-    while (!bundled) {
-        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+        exit(EXIT_FAILURE);
     }
+
+    [bundle writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
 
     return 0;
 }

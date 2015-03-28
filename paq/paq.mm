@@ -102,9 +102,20 @@ void Paq::deps(void (^callback)(NSDictionary* dependencies))
 
 void Paq::bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle))
 {
+    int timeout = 60;
+    __block void (^cbref)(NSError*, NSString* bundle) = [callback copy];
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), _serialQ, ^{
+        if(_unprocessed != 0) {
+            NSLog(@"Bundling took longer than %d seconds with %lu to go, this is likely a bug in paq", timeout, _unprocessed);
+            exit(EXIT_FAILURE);
+        }
+    });
+
     // See header file for the structure of the deps callback argument
     deps(^void(NSDictionary* deps) {
-        Pack::pack(_entry, deps, options, callback);
+        Pack::pack(_entry, deps, options, cbref);
+        cbref = nil;
     });
 };
 
