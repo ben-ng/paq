@@ -17,7 +17,9 @@ compile-test:
 	GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES \
 	GCC_GENERATE_TEST_COVERAGE_FILES=YES
 
-copy-fixtures:
+copy-fixtures: copy-gcov-fixtures copy-debug-fixtures
+
+copy-gcov-fixtures:
 	@e=$d && \
 	e="$${e/Release/GCov_Build}" && \
 	echo "Copying Fixtures To $$e/fixtures..." && \
@@ -25,7 +27,21 @@ copy-fixtures:
 	mkdir -p "$$e/fixtures" && \
 	cp -rf fixtures "$$e" && \
 	cp -rf node_modules/hbsfy "$$e/fixtures/node_modules" && \
-	cp -rf node_modules/handlebars "$$e/fixtures/node_modules"
+	cp -rf node_modules/handlebars "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/babelify "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/babel-runtime "$$e/fixtures/node_modules"
+
+copy-debug-fixtures:
+	@e=$d && \
+	e="$${e/Release/Debug}" && \
+	echo "Copying Fixtures To $$e/fixtures..." && \
+	rm -rf $$e/fixtures || true && \
+	mkdir -p "$$e/fixtures" && \
+	cp -rf fixtures "$$e" && \
+	cp -rf node_modules/hbsfy "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/handlebars "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/babelify "$$e/fixtures/node_modules" && \
+	cp -rf node_modules/babel-runtime "$$e/fixtures/node_modules"
 
 run-test:
 	@echo "Running Tests..."

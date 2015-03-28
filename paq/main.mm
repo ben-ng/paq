@@ -21,7 +21,8 @@ enum optionIndex {
     EVAL,
     STANDALONE,
     CONVERT_BROWSERIFY_TRANSFORM,
-    IGNORE_UNRESOLVED_EXPR
+    IGNORE_UNRESOLVED_EXPR,
+    NUM_OPTIONS
 };
 
 const option::Descriptor usage[] = {
@@ -55,11 +56,11 @@ int main(int argc, const char* argv[])
     argc -= i;
     argv += i;
     option::Stats stats(usage, argc, argv);
-    option::Option options[5];
-    option::Option buffer[5];
+    option::Option options[NUM_OPTIONS];
+    option::Option buffer[NUM_OPTIONS];
     option::Parser parse(usage, argc, argv, options, buffer);
 
-    int requireTasks;
+    int requireTasks = 0;
 
     if (options[REQUIRE_TASKS].desc != NULL) {
         if (options[REQUIRE_TASKS].arg == NULL) {
@@ -79,7 +80,7 @@ int main(int argc, const char* argv[])
         }
     }
 
-    int parserTasks;
+    int parserTasks = 0;
 
     if (options[PARSER_TASKS].desc != NULL) {
         if (options[PARSER_TASKS].arg == NULL) {
@@ -108,11 +109,11 @@ int main(int argc, const char* argv[])
         @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:options[IGNORE_UNRESOLVED_EXPR].desc != NULL]
     }];
 
-    if (parserTasks) {
+    if (parserTasks > 0) {
         optsDict[@"parserTasks"] = [NSNumber numberWithInt:parserTasks];
     }
 
-    if (requireTasks) {
+    if (requireTasks > 0) {
         optsDict[@"requireTasks"] = [NSNumber numberWithInt:requireTasks];
     }
 

@@ -22,7 +22,7 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
         if(!Require::isRequire(node))
             return;
         
-        __block NSError* err;
+        __block NSError* err = nil;
         
         NSArray *args = (NSArray *) node[@"arguments"];
         

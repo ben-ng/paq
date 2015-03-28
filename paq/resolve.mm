@@ -148,11 +148,11 @@ NSArray* Resolve::_resolveLookupPaths(NSString* request, NSMutableDictionary* pa
      
      */
 
-    // We basically just want the directory, so just do this. If the parent id is file, get its directory. If it isn't, then it already is a directory, and use that.
-    NSString* parentIdPath = [[parent[@"id"] lastPathComponent] rangeOfString:@"."].location == NSNotFound ? parent[@"id"] : [parent[@"id"] stringByDeletingLastPathComponent];
-    NSString* fileId = path_resolve(@[ parentIdPath, request ]);
+    // We basically just want the directory, so just do this.
+    NSString* fileId = path_resolve(@[ [parent[@"filename"] stringByDeletingLastPathComponent], request ]);
 
-    if ([parentIdPath isEqualToString:@"."] && [fileId rangeOfString:@"/"].location == NSNotFound) {
+    // Root module?
+    if ([parent[@"id"] isEqualToString:@"."] && [fileId rangeOfString:@"/"].location == NSNotFound) {
         fileId = [@"./" stringByAppendingString:fileId];
     }
 
@@ -317,7 +317,7 @@ NSString* Resolve::tryExtensions(NSString* p, NSArray* exts)
 
 NSString* Resolve::tryPackage(NSString* requestPath, NSArray* exts)
 {
-    NSDictionary* pkg = readPackage(requestPath);
+    NSString* pkg = readPackage(requestPath);
 
     if (pkg == nil) {
         return nil;
@@ -343,31 +343,34 @@ NSString* Resolve::tryPackage(NSString* requestPath, NSArray* exts)
     return temp;
 }
 
-NSDictionary* Resolve::readPackage(NSString* requestPath)
+NSString* Resolve::readPackage(NSString* requestPath)
 {
     if (_packageMainCache[requestPath] != nil) {
-        return _packageMainCache[requestPath];
+        NSString* mainFile = _packageMainCache[requestPath];
+        return [mainFile length] == 0 ? nil : mainFile;
     }
 
     NSString* jsonPath = path_resolve(@[ requestPath, @"package.json" ]);
-    NSError* error;
-    NSData* json = [NSData dataWithContentsOfFile:jsonPath options:0 error:&error];
+    NSError* error = nil;
+    NSString* jsonString = [[NSString stringWithContentsOfFile:jsonPath encoding:NSUTF8StringEncoding error:&error] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
-    if (error) {
-        // NSLog(@"Encountered an error reading %@: %@", jsonPath, [error localizedDescription]);
+    if (jsonString == nil) {
         return nil;
     }
 
+    NSData* json = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+
     id object = [NSJSONSerialization JSONObjectWithData:json options:0 error:&error];
 
-    if (error) {
-        NSLog(@"Encountered an error parsing %@: %@", jsonPath, [error localizedDescription]);
+    if (object == nil) {
+        NSLog(@"Could not parse package.json as json: %@ (%@)\n%@", jsonPath, error.localizedDescription, jsonString);
         return nil;
     }
 
     if ([object isKindOfClass:[NSDictionary class]]) {
-        _packageMainCache[requestPath] = ((NSDictionary*)object)[@"main"];
-        return _packageMainCache[requestPath];
+        NSString* mainFile = ((NSDictionary*)object)[@"main"];
+        _packageMainCache[requestPath] = mainFile ? mainFile : @"";
+        return mainFile;
     }
     else {
         NSLog(@"Parsed %@ but did not get a dictionary: %@", jsonPath, [error localizedDescription]);

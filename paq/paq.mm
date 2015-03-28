@@ -234,12 +234,12 @@ void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* 
             NSError *error;
             NSString *source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
             
-            if([file.pathExtension isEqualToString:@"json"]) {
-                source = [@"module.exports=" stringByAppendingString:source];
+            if(source == nil) {
+                [NSException raise:@"Fatal Exception" format:@"Failed to read source code from %@: %@", file, error.localizedDescription];
             }
             
-            if(error) {
-                [NSException raise:@"Fatal Exception" format:@"Failed to read source code from %@: %@", file, error.localizedDescription];
+            if([file.pathExtension isEqualToString:@"json"]) {
+                source = [@"module.exports=" stringByAppendingString:source];
             }
             
             // Insert globals now, because the replacements have require calls in them
@@ -247,7 +247,7 @@ void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* 
             
             NSDictionary *ast = Parser::parse(parserCtx, source, &error);
             
-            if(error) {
+            if(ast == nil) {
                 [NSException raise:@"Fatal Exception" format:@"Failed to parse source code from %@: %@", file, error.localizedDescription];
             }
             
@@ -281,7 +281,7 @@ void Paq::_findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSEr
                 [_available_require_contexts addObject:requireCtx];
                 dispatch_semaphore_signal(_require_contexts);
                 
-                if(error) {
+                if(requires == nil) {
                     callback(error, nil);
                 }
                 else {
@@ -320,10 +320,10 @@ NSDictionary* Paq::getNativeBuiltins()
         [NSException raise:@"Fatal Exception" format:@"The __builtins_src section is missing"];
     }
 
-    NSError* error;
-    NSDictionary* out = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size freeWhenDone:NO] options:0 error:&error];
+    NSError* err = nil;
+    NSDictionary* out = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size freeWhenDone:NO] options:0 error:&err];
 
-    if (error) {
+    if (out == nil) {
         [NSException raise:@"Fatal Exception" format:@"Could not parse the __builtins_src data as JSON"];
     }
 
@@ -333,11 +333,11 @@ NSDictionary* Paq::getNativeBuiltins()
 NSString* Paq::bundleSync(NSDictionary* options, NSError** error)
 {
     __block NSString* bundled;
-    __block NSError* err;
+    __block NSError* err = nil;
 
     dispatch_semaphore_t semab = dispatch_semaphore_create(0);
 
-    bundle(@{ @"eval" : @YES }, ^(NSError* erred, NSString* bundle) {
+    bundle(options, ^(NSError* erred, NSString* bundle) {
         if(erred) {
             err = erred;
         }
@@ -365,15 +365,15 @@ NSString* Paq::bundleSync(NSDictionary* options, NSError** error)
 
 NSString* Paq::evalToString()
 {
-    NSError* error;
+    NSError* err = nil;
     __block NSString* except;
-    NSString* bundle = bundleSync(@{ @"eval" : [NSNumber numberWithBool:YES] }, &error);
+    NSString* bundle = bundleSync(@{ @"eval" : [NSNumber numberWithBool:YES] }, &err);
 
-    if (error) {
-        return error.localizedDescription;
+    if (bundle == nil) {
+        return err.localizedDescription;
     }
 
-    JSContext* ctx = [[JSContext alloc] init];
+    JSContext* ctx = JSContextExtensions::create();
 
     ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
         except = [exception toString];

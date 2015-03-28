@@ -23,6 +23,8 @@
 		B51283A11AC5F403008C2E0A /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5081D861AC118B500D675E9 /* main.mm */; };
 		B51283A41AC5F5BF008C2E0A /* transform.mm in Sources */ = {isa = PBXBuildFile; fileRef = B51283A21AC5F5BF008C2E0A /* transform.mm */; };
 		B51283A51AC5F5BF008C2E0A /* transform.mm in Sources */ = {isa = PBXBuildFile; fileRef = B51283A21AC5F5BF008C2E0A /* transform.mm */; };
+		B573FFE01AC7175C0046282D /* JSContextExtensions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */; };
+		B573FFE11AC7175C0046282D /* JSContextExtensions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */; };
 		B59884B51AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
 		B59884B61AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
 		B59884B81AC2641A005929C3 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B59884B71AC2641A005929C3 /* JavaScriptCore.framework */; };
@@ -64,6 +66,8 @@
 		B512839F1AC5C248008C2E0A /* optionparser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = optionparser.hpp; sourceTree = "<group>"; };
 		B51283A21AC5F5BF008C2E0A /* transform.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = transform.mm; sourceTree = "<group>"; };
 		B51283A31AC5F5BF008C2E0A /* transform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = transform.h; sourceTree = "<group>"; };
+		B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSContextExtensions.cpp; sourceTree = "<group>"; };
+		B573FFDF1AC7175C0046282D /* JSContextExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSContextExtensions.h; sourceTree = "<group>"; };
 		B59884B31AC263B7005929C3 /* parser.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = parser.mm; sourceTree = "<group>"; };
 		B59884B41AC263B7005929C3 /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
 		B59884B71AC2641A005929C3 /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -133,6 +137,8 @@
 				B512839F1AC5C248008C2E0A /* optionparser.hpp */,
 				B51283A21AC5F5BF008C2E0A /* transform.mm */,
 				B51283A31AC5F5BF008C2E0A /* transform.h */,
+				B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */,
+				B573FFDF1AC7175C0046282D /* JSContextExtensions.h */,
 			);
 			path = paq;
 			sourceTree = "<group>";
@@ -326,6 +332,7 @@
 				B5B592341AC29EF500160D50 /* require.mm in Sources */,
 				B59884B51AC263B7005929C3 /* parser.mm in Sources */,
 				B5081D771AC114F700D675E9 /* main.mm in Sources */,
+				B573FFE01AC7175C0046282D /* JSContextExtensions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -343,6 +350,7 @@
 				B505A1671AC2A26D00986D7B /* script.mm in Sources */,
 				B5B592351AC29EF600160D50 /* require.mm in Sources */,
 				B59884B61AC263B7005929C3 /* parser.mm in Sources */,
+				B573FFE11AC7175C0046282D /* JSContextExtensions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <dispatch/dispatch.h>
+#import "JSContextExtensions.h"
 #import "parser.h"
 #import "require.h"
 #import "resolve.h"

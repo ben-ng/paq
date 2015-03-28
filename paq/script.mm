@@ -11,7 +11,7 @@
 JSContext* Script::loadEmbeddedBundle(std::string sectionName, NSString* afterLoad)
 {
 
-    JSContext* ctx = [[JSContext alloc] init];
+    JSContext* ctx = JSContextExtensions::create();
 
     ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
         NSLog(@"JS Error: %@", [exception toString]);

@@ -10,7 +10,7 @@
 
 NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error)
 {
-    __block NSError* err;
+    __block NSError* err = nil;
 
     ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
         err = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];

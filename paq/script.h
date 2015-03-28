@@ -11,6 +11,7 @@
 #import <mach-o/ldsyms.h>
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JavaScriptCore.h>
+#import "JSContextExtensions.h"
 
 class Script {
 public:

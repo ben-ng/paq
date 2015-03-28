@@ -149,7 +149,7 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
                                   @"exports=module.exports;\n\n"
                                   @"// Load up the transform function into this variable\n"
                                   @"var t = %@(%@);\n"
-                                  @"return module.exports=(\n\n"
+                                  @"module.exports=(\n\n"
                                   @"// Wrap the exported function in its own scope for safety\n"
                                   @"function scoped (global, concatstream){\n"
                                   @"  return function wrapped (file, src, cb){\n"

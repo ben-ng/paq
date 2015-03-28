@@ -23,6 +23,8 @@
   "devDependencies": {
     "acorn": "^0.12.0",
     "async": "^0.9.0",
+    "babel-runtime": "^5.0.0-beta1",
+    "babelify": "^5.0.4",
     "brfs": "^1.4.0",
     "browser-pack": "^4.0.1",
     "browserify": "^9.0.3",

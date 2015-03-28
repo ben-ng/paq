@@ -8,6 +8,8 @@
 
 #define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #import <Foundation/Foundation.h>
+#import "json.h"
+#import "JSContextExtensions.h"
 #import "catch.hpp"
 #import "parser.h"
 #import "traverse.h"
@@ -15,12 +17,44 @@
 #import "resolve.h"
 #import "paq.h"
 
+NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSString* source)
+{
+    __block BOOL callbackWasCalled = NO;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    __block NSString* cbData = nil;
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        JSContext* ctx = JSContextExtensions::create();
+        NSString* wrappedBundle = [NSString stringWithFormat:@"var global = {}, exports = {}, module={exports:exports};%@;", transformString];
+
+        ctx.exceptionHandler = ^(JSContext* ctx, JSValue* e) {
+            NSLog(@"JS Error: %@", [e toString]);
+        };
+
+        [ctx evaluateScript:wrappedBundle];
+
+        ctx[@"transformCb"] = ^(JSValue* err, JSValue* data) {
+            callbackWasCalled = YES;
+            cbData = [data toString];
+            dispatch_semaphore_signal(sema);
+        };
+
+        [ctx evaluateScript:[NSString stringWithFormat:@"module.exports(%@, %@, transformCb)", JSONString(file), JSONString(source)]];
+    });
+
+    /*
+     * Do run loop magic here
+     */
+
+    return cbData;
+}
+
 /**
  * Parser
  */
 TEST_CASE("Parser returns a valid AST for valid code", "[parser]")
 {
-    NSError* err;
+    NSError* err = nil;
     NSDictionary* ast = Parser::parse(Parser::createContext(), @"require(path.join(__dirname, 'path'))", &err);
 
     REQUIRE(err == nil);
@@ -32,7 +66,7 @@ TEST_CASE("Parser returns a valid AST for valid code", "[parser]")
 
 TEST_CASE("Parser returns an error for invalid code", "[parser]")
 {
-    NSError* err;
+    NSError* err = nil;
     NSDictionary* ast = Parser::parse(Parser::createContext(), @"var unbalanced = {", &err);
 
     REQUIRE(err != nil);
@@ -42,7 +76,7 @@ TEST_CASE("Parser returns an error for invalid code", "[parser]")
 
 TEST_CASE("Parser works on executable scripts", "[parser]")
 {
-    NSError* err;
+    NSError* err = nil;
     NSDictionary* ast = Parser::parse(Parser::createContext(), @"#!/usr/local/bin/node\nrequire(__dirname + 'path')", &err);
 
     REQUIRE(err == nil);
@@ -58,7 +92,7 @@ TEST_CASE("Parser works on executable scripts", "[parser]")
 
 TEST_CASE("Traverses an AST", "[traverse]")
 {
-    NSError* err;
+    NSError* err = nil;
     NSDictionary* ast = Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", &err);
     __block unsigned int nodeCounter = 0;
 
@@ -75,7 +109,7 @@ TEST_CASE("Traverses an AST", "[traverse]")
 
 TEST_CASE("Extracts literal requires", "[require]")
 {
-    NSError* err;
+    NSError* err = nil;
     NSDictionary* ast = Parser::parse(Parser::createContext(), @"if(1) { require('tofu'); }", &err);
 
     REQUIRE(err == nil);
@@ -89,7 +123,7 @@ TEST_CASE("Extracts literal requires", "[require]")
 
 TEST_CASE("Evaluates require expressions with the path module available", "[require]")
 {
-    NSError* err;
+    NSError* err = nil;
     NSDictionary* ast = Parser::parse(Parser::createContext(), @"'use unstrict'; require(path.join(__dirname, 'compound'));", &err);
 
     REQUIRE(err == nil);
@@ -211,7 +245,7 @@ TEST_CASE("Creates a dependency map", "[deps]")
 
     dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
 
-    REQUIRE([dependencies count] == 6);
+    REQUIRE([dependencies count] == 7);
 
     [dependencies enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL* stop) {
         NSString *sourceFile = (NSString *) key;
@@ -222,7 +256,7 @@ TEST_CASE("Creates a dependency map", "[deps]")
         
         if([key hasSuffix:@"/basic/entry.js"]) {
             REQUIRE([sourceData[@"entry"] boolValue] == YES);
-            REQUIRE([requirePairs count] == 4);
+            REQUIRE([requirePairs count] == 5);
             
             [requirePairs enumerateKeysAndObjectsUsingBlock:^(NSString *requireExpr, NSString *resolution, BOOL *stop) {
                 if([requireExpr isEqualToString:@"./mylib"]) {
@@ -233,6 +267,9 @@ TEST_CASE("Creates a dependency map", "[deps]")
                 }
                 else if([requireExpr isEqualToString:@"flamingo"]) {
                     REQUIRE([resolution hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
+                }
+                else if([requireExpr isEqualToString:@"flamingo/package"]) {
+                    REQUIRE([resolution hasSuffix:@"/fixtures/node_modules/flamingo/package.json"]);
                 }
                 else if([requireExpr isEqualToString:@"./deep/deeper/deepest/bottom"]) {
                     REQUIRE([resolution hasSuffix:@"/fixtures/basic/deep/deeper/deepest/bottom.js"]);
@@ -258,23 +295,37 @@ TEST_CASE("Creates a dependency map", "[deps]")
 TEST_CASE("Creates a basic bundle", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
-    REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing"]);
+    REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
 }
 
-TEST_CASE("Transforms browserify bundles", "[bundle]")
+TEST_CASE("Converts the hbsfy transform", "[bundle]")
 {
-    Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
-    NSError* error;
-    NSString* bundle = paq->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &error);
-    JSContext* ctx = [[JSContext alloc] init];
-    JSValue* transform = [ctx evaluateScript:bundle];
+    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
+    NSError* err = nil;
+    NSString* bundle = paq->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &err);
 
-    REQUIRE(![transform isNull]);
+    // Should have the hbsfy runtime somewhere in it
+    REQUIRE([bundle rangeOfString:@"require('hbsfy/runtime')"].location != NSNotFound);
 
-    JSValue* transformed = [transform callWithArguments:@[ @"test.hbs", @"{{name}}" ]];
+    NSString* evaluated = evaluateTransformSync(bundle, @"hbs", @"My name is {{name}}");
 
-    REQUIRE(![transformed isNull]);
-    REQUIRE([[transformed toString] rangeOfString:@"require('hbsfy/runtime')"].location != NSNotFound);
+    REQUIRE(evaluated != nil);
+    REQUIRE([evaluated rangeOfString:@"return \"My name is \""].location != NSNotFound);
+}
+
+TEST_CASE("Converts the babelify transform", "[bundle]")
+{
+    Paq* paq = new Paq(@[ @"fixtures/node_modules/babelify/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
+    NSError* err = nil;
+    NSString* bundle = paq->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &err);
+
+    // Should have references to JSX stuff somewhere in it
+    REQUIRE([bundle rangeOfString:@"JSXElement"].location != NSNotFound);
+
+    NSString* evaluated = evaluateTransformSync(bundle, @"hello.jsx", @"<div>Hello {this.props.name}</div>;");
+
+    REQUIRE(evaluated != nil);
+    REQUIRE([evaluated rangeOfString:@"React.createElement("].location != NSNotFound);
 }
 
 TEST_CASE("Bundles node core modules", "[bundle]")
@@ -293,9 +344,9 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
     Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
-    NSError* error;
-    NSString* bundle = paq->bundleSync(nil, &error);
-    REQUIRE(error == nil);
+    NSError* err = nil;
+    NSString* bundle = paq->bundleSync(nil, &err);
+    REQUIRE(err == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
 }
 
@@ -306,7 +357,7 @@ TEST_CASE("Uses hbsfy transform", "[bundle]")
     Paq* paq = new Paq(@[ @"fixtures/hbs-app/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES],
         @"transforms" : @[ @"hbsfy" ] });
 
-    NSError* error;
+    NSError* err = nil;
     NSString* bundle = paq->bundleSync(nil, &error);
     REQUIRE(error == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);

@@ -22,7 +22,7 @@ private:
     NSString* tryFile(NSString* requestPath);
     NSString* tryExtensions(NSString* p, NSArray* exts);
     NSString* tryPackage(NSString* requestPath, NSArray* exts);
-    NSDictionary* readPackage(NSString* requestPath);
+    NSString* readPackage(NSString* requestPath);
     NSString* pathWithoutFileScheme(NSString* path);
 
 public:

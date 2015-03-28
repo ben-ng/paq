@@ -7,3 +7,10 @@
 //
 
 #import "transform.h"
+
+/**
+ * The transform string is a compiled transformer
+ */
+Transform::Transform(NSString* transform)
+{
+}

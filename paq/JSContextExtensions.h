@@ -1,18 +1,15 @@
 //
-//  transform.h
+//  JSContextExtensions.h
 //  paq
 //
-//  Created by Ben on 3/27/15.
+//  Created by Ben on 3/28/15.
 //  Copyright (c) 2015 Ben Ng. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 
-class Transform {
-private:
-    JSContext* _ctx;
-
+class JSContextExtensions {
 public:
-    Transform(NSString* transform);
+    static JSContext* create();
 };
