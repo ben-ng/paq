@@ -26,8 +26,9 @@ Get updates by following me on Twitter:
 USAGE: paq <entry files> [options]
 
 Options:
-  --eval                           Returns a function that when evaluated,
-                                   returns the entry file's export
+  --parserTasks=<integer>          The maximum number of concurrent AST parsers
+  --requireTasks=<integer>         The maximum number of concurrent require
+                                   evaluations
   --standalone                     Returns a module that exports the entry
                                    file's export
   --convertBrowserifyTransform     Returns a module that wraps a browserify

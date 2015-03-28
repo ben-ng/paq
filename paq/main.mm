@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <stdio.h>
 #import <iostream>
+#import <string>
 #import "optionparser.hpp"
 #import "paq.h"
 #import "resolve.h"
@@ -26,8 +27,8 @@ enum optionIndex {
 const option::Descriptor usage[] = {
     { UNKNOWN, 0, "", "", option::Arg::None, "USAGE: paq <entry files> [options]\n\n"
                                              "Options:" },
-    { PARSER_TASKS, 0, "", "parserTasks", option::Arg::Optional, "  --parserTasks  \tThe maximum number of concurrent AST parsers" },
-    { REQUIRE_TASKS, 0, "", "requireTasks", option::Arg::Optional, "  --requireTasks  \tThe maximum number of concurrent require evaluations" },
+    { PARSER_TASKS, 0, "", "parserTasks", option::Arg::Optional, "  --parserTasks=<integer>  \tThe maximum number of concurrent AST parsers" },
+    { REQUIRE_TASKS, 0, "", "requireTasks", option::Arg::Optional, "  --requireTasks=<integer>  \tThe maximum number of concurrent require evaluations" },
     { STANDALONE, 0, "", "standalone", option::Arg::None, "  --standalone  \tReturns a module that exports the entry file's export" },
     { CONVERT_BROWSERIFY_TRANSFORM, 0, "", "convertBrowserifyTransform", option::Arg::None, "  --convertBrowserifyTransform  \tReturns a module that wraps a browserify transform for use with paq" },
     { IGNORE_UNRESOLVED_EXPR, 0, "", "ignoreUnresolvableExpressions", option::Arg::None, "  --ignoreUnresolvableExpressions  \tIgnores expressions in require statements that cannot be statically evaluated" },
@@ -58,13 +59,62 @@ int main(int argc, const char* argv[])
     option::Option buffer[5];
     option::Parser parse(usage, argc, argv, options, buffer);
 
-    NSDictionary* optsDict = @{
+    int requireTasks;
+
+    if (options[REQUIRE_TASKS].desc != NULL) {
+        if (options[REQUIRE_TASKS].arg == NULL) {
+            NSLog(@"Invalid option format, you probably meant to do something like --requireTasks=6");
+            exit(EXIT_FAILURE);
+        }
+
+        try {
+            if (requireTasks < 1 || requireTasks > 49) {
+                NSLog(@"requireTasks must be an integer x where 0 < x < 50");
+                exit(EXIT_FAILURE);
+            }
+        }
+        catch (std::invalid_argument arg) {
+            NSLog(@"requireTasks expects a numeric argument");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    int parserTasks;
+
+    if (options[PARSER_TASKS].desc != NULL) {
+        if (options[PARSER_TASKS].arg == NULL) {
+            NSLog(@"Invalid option format, you probably meant to do something like --parserTasks=6");
+            exit(EXIT_FAILURE);
+        }
+
+        try {
+            parserTasks = std::stoi(options[PARSER_TASKS].arg);
+
+            if (parserTasks < 1 || parserTasks > 49) {
+                NSLog(@"parserTasks must be an integer x where 0 < x < 50");
+                exit(EXIT_FAILURE);
+            }
+        }
+        catch (std::invalid_argument) {
+            NSLog(@"parserTasks expects a numeric argument");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    NSMutableDictionary* optsDict = [[NSMutableDictionary alloc] initWithDictionary:@{
         @"eval" : [NSNumber numberWithBool:options[EVAL].desc != NULL],
         @"standalone" : [NSNumber numberWithBool:options[STANDALONE].desc != NULL],
         @"convertBrowserifyTransform" : [NSNumber numberWithBool:options[CONVERT_BROWSERIFY_TRANSFORM].desc != NULL],
-        @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:options[IGNORE_UNRESOLVED_EXPR].desc != NULL],
-        @"requireTasks" : [NSNumber numberWithBool:options[IGNORE_UNRESOLVED_EXPR].desc != NULL],
-    };
+        @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:options[IGNORE_UNRESOLVED_EXPR].desc != NULL]
+    }];
+
+    if (parserTasks) {
+        optsDict[@"parserTasks"] = [NSNumber numberWithInt:parserTasks];
+    }
+
+    if (requireTasks) {
+        optsDict[@"requireTasks"] = [NSNumber numberWithInt:requireTasks];
+    }
 
     if (([optsDict[@"standalone"] boolValue] ? 1 : 0) + ([optsDict[@"eval"] boolValue] ? 1 : 0) + ([optsDict[@"convertBrowserifyTransform"] boolValue] ? 1 : 0) > 1) {
         NSLog(@"--eval, --standalone, and --convertBrowserifyTransform cannot be used together");

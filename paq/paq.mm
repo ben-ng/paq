@@ -16,10 +16,18 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     // Parser contexts are JSContexts with acorn loaded up inside them
-    _max_parser_contexts = 6;
+    _max_parser_contexts = options[@"parserTasks"] ? [options[@"parserTasks"] intValue] : 6;
 
     // Require contexts are JSContexts with escodegen loaded up inside them
-    _max_require_contexts = 2;
+    _max_require_contexts = options[@"requireTasks"] ? [options[@"requireTasks"] intValue] : 6;
+
+    if (_max_parser_contexts <= 0) {
+        _max_parser_contexts = 1;
+    }
+
+    if (_max_require_contexts <= 0) {
+        _max_require_contexts = 1;
+    }
 
     // When this reaches zero, bundling is done
     _unprocessed = 0;
