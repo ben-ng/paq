@@ -20,7 +20,6 @@
 NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSString* source)
 {
     __block BOOL callbackWasCalled = NO;
-    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     __block NSString* cbData = nil;
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -34,17 +33,16 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
         [ctx evaluateScript:wrappedBundle];
 
         ctx[@"transformCb"] = ^(JSValue* err, JSValue* data) {
-            callbackWasCalled = YES;
             cbData = [data toString];
-            dispatch_semaphore_signal(sema);
+			callbackWasCalled = YES;
         };
 
         [ctx evaluateScript:[NSString stringWithFormat:@"module.exports(%@, %@, transformCb)", JSONString(file), JSONString(source)]];
     });
 
-    /*
-     * Do run loop magic here
-     */
+	while (!callbackWasCalled) {
+		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+	}
 
     return cbData;
 }

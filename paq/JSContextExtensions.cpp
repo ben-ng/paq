@@ -14,7 +14,7 @@ JSContext* JSContextExtensions::create()
     JSContext* ctx = [[JSContext alloc] init];
 
     void (^setTimeout)(JSValue*, JSValue*) = ^(JSValue* function, JSValue* timeout) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([timeout toInt32] * NSEC_PER_MSEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([timeout toInt32] * NSEC_PER_MSEC)), dispatch_get_main_queue(), ^{
             [function callWithArguments:@[]];
         });
     };
