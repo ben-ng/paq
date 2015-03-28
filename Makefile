@@ -1,4 +1,4 @@
-d=$$(xcodebuild -showBuildSettings 2> /dev/null | grep CONFIGURATION_BUILD_DIR | cut -c31-)
+d=$$(xcodebuild -showBuildSettings 2> /dev/null | grep TARGET_BUILD_DIR | cut -c24-)
 
 all: js cli
 
@@ -34,6 +34,15 @@ run-test:
 	echo "Running tests from $$e" && \
 	cd $$e && \
 	./paq-tests
+
+show-build-dir:
+	@e=$d && \
+	b=$$(dirname "$$e") && \
+	b=$$(dirname "$$b") && \
+	echo "Build Dir: $$b" && \
+	cd $$b && \
+	tree | grep .gcno
+
 
 paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.js
 	@echo "Compiling builtins..."
