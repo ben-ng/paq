@@ -234,6 +234,10 @@ void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* 
             NSError *error;
             NSString *source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
             
+            if([file.pathExtension isEqualToString:@"json"]) {
+                source = [@"module.exports=" stringByAppendingString:source];
+            }
+            
             if(error) {
                 [NSException raise:@"Fatal Exception" format:@"Failed to read source code from %@: %@", file, error.localizedDescription];
             }

@@ -170,6 +170,17 @@ TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
     REQUIRE([resolved hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
 }
 
+TEST_CASE("Resolves relative dependency by traversing upwards multiple directories", "[resolve]")
+{
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/deep/deeper/deepest/bottom.js");
+    NSString* resolved = resolver->_resolveFilename(@"../../../json", parent);
+
+    REQUIRE(resolved != nil);
+    REQUIRE([resolved hasSuffix:@"/fixtures/basic/json.json"]);
+}
+
 TEST_CASE("Resolves global", "[resolve]")
 {
     Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
@@ -200,7 +211,7 @@ TEST_CASE("Creates a dependency map", "[deps]")
 
     dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
 
-    REQUIRE([dependencies count] == 4);
+    REQUIRE([dependencies count] == 6);
 
     [dependencies enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL* stop) {
         NSString *sourceFile = (NSString *) key;
@@ -211,7 +222,7 @@ TEST_CASE("Creates a dependency map", "[deps]")
         
         if([key hasSuffix:@"/basic/entry.js"]) {
             REQUIRE([sourceData[@"entry"] boolValue] == YES);
-            REQUIRE([requirePairs count] == 3);
+            REQUIRE([requirePairs count] == 4);
             
             [requirePairs enumerateKeysAndObjectsUsingBlock:^(NSString *requireExpr, NSString *resolution, BOOL *stop) {
                 if([requireExpr isEqualToString:@"./mylib"]) {
@@ -223,7 +234,15 @@ TEST_CASE("Creates a dependency map", "[deps]")
                 else if([requireExpr isEqualToString:@"flamingo"]) {
                     REQUIRE([resolution hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
                 }
+                else if([requireExpr isEqualToString:@"./deep/deeper/deepest/bottom"]) {
+                    REQUIRE([resolution hasSuffix:@"/fixtures/basic/deep/deeper/deepest/bottom.js"]);
+                }
             }];
+        }
+        else if([key hasSuffix:@"/basic/deep/deeper/deepest/bottom.js"]) {
+            REQUIRE([sourceData[@"entry"] boolValue] == NO);
+            REQUIRE([requirePairs count] == 1);
+            REQUIRE([requirePairs[@"../../../json"] hasSuffix:@"/fixtures/basic/json.json"]);
         }
         else {
             REQUIRE([sourceData[@"entry"] boolValue] == NO);
@@ -239,7 +258,7 @@ TEST_CASE("Creates a dependency map", "[deps]")
 TEST_CASE("Creates a basic bundle", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
-    REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo"]);
+    REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing"]);
 }
 
 TEST_CASE("Transforms browserify bundles", "[bundle]")

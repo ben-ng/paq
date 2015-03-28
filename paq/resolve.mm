@@ -161,7 +161,7 @@ NSArray* Resolve::_resolveLookupPaths(NSString* request, NSMutableDictionary* pa
 
 NSString* Resolve::_findPath(NSString* request, NSArray* paths)
 {
-    NSArray* exts = @[ @".js" ];
+    NSArray* exts = @[ @".js", @".json" ];
 
     if ([request characterAtIndex:0] == '/') {
         paths = @[ @"" ];
