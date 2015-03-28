@@ -12,4 +12,4 @@ script:
   - make test
 
 after_success:
-  -slather
+  - slather
