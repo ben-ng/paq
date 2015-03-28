@@ -69,6 +69,8 @@ int main(int argc, const char* argv[])
         }
 
         try {
+            requireTasks = std::stoi(options[REQUIRE_TASKS].arg);
+
             if (requireTasks < 1 || requireTasks > 49) {
                 NSLog(@"requireTasks must be an integer x where 0 < x < 50");
                 exit(EXIT_FAILURE);
