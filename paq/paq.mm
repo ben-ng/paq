@@ -11,6 +11,25 @@
 
 Paq::Paq(NSArray* entry, NSDictionary* options)
 {
+    _max_parser_contexts = 0;
+    _max_require_contexts = 0;
+    _unprocessed = 0;
+    _parser_contexts = nil;
+    _require_contexts = nil;
+    _parserCtxQ = nil;
+    _requireCtxQ = nil;
+    _resolveQ = nil;
+    _serialQ = nil;
+    _concurrentQ = nil;
+    _resolve = nil;
+    _module_map = nil;
+    _available_parser_contexts = nil;
+    _available_require_contexts = nil;
+    _entry = nil;
+    _options = nil;
+    _nativeModules = nil;
+    _deps_callback = nil;
+
     if (entry == nil) {
         [NSException raise:@"INVALID_ARGUMENT" format:@"Paq must be initialized with an NSArray of NSString entry file paths"];
     }
@@ -102,15 +121,7 @@ void Paq::deps(void (^callback)(NSDictionary* dependencies))
 
 void Paq::bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle))
 {
-    int timeout = 60;
     __block void (^cbref)(NSError*, NSString* bundle) = [callback copy];
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), _serialQ, ^{
-        if(_unprocessed != 0) {
-            NSLog(@"Bundling took longer than %d seconds with %lu to go, this is likely a bug in paq", timeout, _unprocessed);
-            exit(EXIT_FAILURE);
-        }
-    });
 
     // See header file for the structure of the deps callback argument
     deps(^void(NSDictionary* deps) {
@@ -395,5 +406,20 @@ NSString* Paq::evalToString()
 
 Paq::~Paq()
 {
+    _parser_contexts = nil;
+    _require_contexts = nil;
+    _parserCtxQ = nil;
+    _requireCtxQ = nil;
+    _resolveQ = nil;
+    _serialQ = nil;
+    _concurrentQ = nil;
+    _resolve = nil;
+    _module_map = nil;
+    _available_parser_contexts = nil;
+    _available_require_contexts = nil;
+    _entry = nil;
+    _options = nil;
+    _nativeModules = nil;
+    _deps_callback = nil;
     delete _resolve;
 }

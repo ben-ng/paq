@@ -146,6 +146,8 @@ TEST_CASE("Creates node_module paths", "[resolve]")
 
     REQUIRE([paths count] > 1);
     REQUIRE([paths[0] hasSuffix:@"node_modules"]);
+
+    delete resolver;
 }
 
 TEST_CASE("Resolves lookup paths", "[resolve]")
@@ -157,6 +159,8 @@ TEST_CASE("Resolves lookup paths", "[resolve]")
 
     REQUIRE([paths count] == 2);
     REQUIRE([paths[1] count] > 6); // This should be pretty long
+
+    delete resolver;
 }
 
 TEST_CASE("Resolves relative file", "[resolve]")
@@ -168,6 +172,8 @@ TEST_CASE("Resolves relative file", "[resolve]")
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
+
+    delete resolver;
 }
 
 TEST_CASE("Resolves relative directory", "[resolve]")
@@ -179,6 +185,8 @@ TEST_CASE("Resolves relative directory", "[resolve]")
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
+
+    delete resolver;
 }
 
 TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
@@ -190,6 +198,8 @@ TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/node_modules/waldo/waldo/index.js"]);
+
+    delete resolver;
 }
 
 TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
@@ -201,6 +211,8 @@ TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
+
+    delete resolver;
 }
 
 TEST_CASE("Resolves relative dependency by traversing upwards multiple directories", "[resolve]")
@@ -212,6 +224,8 @@ TEST_CASE("Resolves relative dependency by traversing upwards multiple directori
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/json.json"]);
+
+    delete resolver;
 }
 
 TEST_CASE("Resolves global", "[resolve]")
@@ -223,6 +237,8 @@ TEST_CASE("Resolves global", "[resolve]")
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved isEqualToString:@"http"]);
+
+    delete resolver;
 }
 
 /**
@@ -286,6 +302,8 @@ TEST_CASE("Creates a dependency map", "[deps]")
             REQUIRE([requirePairs count] == 0);
         }
     }];
+
+    delete paq;
 }
 
 /**
@@ -296,6 +314,8 @@ TEST_CASE("Creates a basic bundle", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
     REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
+
+    delete paq;
 }
 
 TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
@@ -303,6 +323,8 @@ TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], @{ @"parserTasks" : [NSNumber numberWithInt:1],
         @"requireTasks" : [NSNumber numberWithInt:1] });
     REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
+
+    delete paq;
 }
 
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
@@ -318,6 +340,8 @@ TEST_CASE("Converts the hbsfy transform", "[bundle]")
 
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"return \"My name is \""].location != NSNotFound);
+
+    delete paq;
 }
 
 TEST_CASE("Converts the babelify transform", "[bundle]")
@@ -333,18 +357,24 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
 
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"React.createElement("].location != NSNotFound);
+
+    delete paq;
 }
 
 TEST_CASE("Bundles node core modules", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
     REQUIRE([paq->evalToString() isEqualToString:@"a/b"]);
+
+    delete paq;
 }
 
 TEST_CASE("Inserts module globals", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
     REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
+
+    delete paq;
 }
 
 TEST_CASE("Ignores unevaluated expressions", "[bundle]")
@@ -355,6 +385,8 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     NSString* bundle = paq->bundleSync(nil, &err);
     REQUIRE(err == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
+
+    delete paq;
 }
 
 /*

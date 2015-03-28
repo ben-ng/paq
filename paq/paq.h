@@ -18,14 +18,7 @@ class Paq {
 private:
     unsigned int _max_parser_contexts;
     unsigned int _max_require_contexts;
-    NSMutableDictionary* _module_map;
     unsigned long _unprocessed;
-    NSMutableArray* _available_parser_contexts;
-    NSMutableArray* _available_require_contexts;
-    NSArray* _entry;
-    NSDictionary* _options;
-    Resolve* _resolve;
-    NSDictionary* _nativeModules;
     dispatch_semaphore_t _parser_contexts;
     dispatch_semaphore_t _require_contexts;
     dispatch_queue_t _parserCtxQ;
@@ -33,6 +26,13 @@ private:
     dispatch_queue_t _resolveQ;
     dispatch_queue_t _serialQ;
     dispatch_queue_t _concurrentQ;
+    Resolve* _resolve;
+    NSMutableDictionary* _module_map;
+    NSMutableArray* _available_parser_contexts;
+    NSMutableArray* _available_require_contexts;
+    NSArray* _entry;
+    NSDictionary* _options;
+    NSDictionary* _nativeModules;
 
     /*
      * This is a map like

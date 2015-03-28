@@ -10,6 +10,13 @@
 
 Resolve::Resolve(NSDictionary* options)
 {
+    _pathCache = nil;
+    _realPathCache = nil;
+    _packageMainCache = nil;
+    _nativeModules = nil;
+    _modulePaths = nil;
+    _cwd = nil;
+
     _pathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _realPathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _packageMainCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
@@ -389,4 +396,14 @@ NSString* Resolve::pathWithoutFileScheme(NSString* path)
     else {
         return substr;
     }
+}
+
+Resolve::~Resolve()
+{
+    _pathCache = nil;
+    _realPathCache = nil;
+    _packageMainCache = nil;
+    _nativeModules = nil;
+    _modulePaths = nil;
+    _cwd = nil;
 }

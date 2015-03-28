@@ -12,13 +12,13 @@
 
 class Resolve {
 private:
+    BOOL _nativeModuleExists(NSString* request);
     NSMutableDictionary* _pathCache;
     NSMutableDictionary* _realPathCache;
     NSMutableDictionary* _packageMainCache;
     NSDictionary* _nativeModules;
     NSArray* _modulePaths;
     NSURL* _cwd;
-    BOOL _nativeModuleExists(NSString* request);
     NSString* tryFile(NSString* requestPath);
     NSString* tryExtensions(NSString* p, NSArray* exts);
     NSString* tryPackage(NSString* requestPath, NSArray* exts);
@@ -27,6 +27,7 @@ private:
 
 public:
     Resolve(NSDictionary* options);
+    ~Resolve();
     NSString* _resolveFilename(NSString* request, NSMutableDictionary* parent);
     NSString* path_resolve(NSArray* args);
     NSMutableDictionary* makeModuleStub(NSString* filename);
