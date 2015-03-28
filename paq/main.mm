@@ -146,5 +146,7 @@ int main(int argc, const char* argv[])
 
     [bundle writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
 
+    delete paq;
+
     return 0;
 }

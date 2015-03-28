@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <mach-o/getsect.h>
 #import <mach-o/ldsyms.h>
+#import <iostream>
 
 class Resolve {
 private:

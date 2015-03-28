@@ -401,11 +401,14 @@ NSString* Paq::evalToString()
 
     JSValue* result = [ctx evaluateScript:bundle];
 
+    ctx.exceptionHandler = nil;
+
     return except ? except : [result toString];
 }
 
 Paq::~Paq()
 {
+    std::cout << "Destroying Paq" << std::endl;
     _parser_contexts = nil;
     _require_contexts = nil;
     _parserCtxQ = nil;
@@ -421,5 +424,7 @@ Paq::~Paq()
     _options = nil;
     _nativeModules = nil;
     _deps_callback = nil;
+    std::cout << "Paq destroying Resolve" << std::endl;
     delete _resolve;
+    std::cout << "Paq destroyed Resolve" << std::endl;
 }

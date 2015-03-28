@@ -33,5 +33,7 @@ JSContext* Script::loadEmbeddedBundle(std::string sectionName, NSString* afterLo
         }
     }
 
+    ctx.exceptionHandler = nil;
+
     return ctx;
 };

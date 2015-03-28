@@ -40,6 +40,8 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
                 
                 JSValue *compiledEspression = [ctx[@"generate"] callWithArguments:@[args[0]]];
                 
+                ctx.exceptionHandler = nil;
+                
                 if(!err) {
                     // TODO: Also handle process.env since people like to use that
                     NSString *wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
@@ -50,6 +52,8 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
                     };
                     
                     JSValue *evaluatedExpression = [ctx evaluateScript:wrappedExpr];
+                    
+                    ctx.exceptionHandler = nil;
                     
                     if(!err) {
                         if(![evaluatedExpression isString]) {
@@ -65,7 +69,7 @@ NSArray* Require::findRequires(JSContext* ctx, NSString* path, NSDictionary* ast
         }
         
         if(err) {
-            if(err.code == 9 && !options[@"ignoreUnresolvableExpressions"]) {
+            if(err.code == 9 && ![options[@"ignoreUnresolvableExpressions"] boolValue]) {
                 errored = YES;
             }
             

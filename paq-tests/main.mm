@@ -44,6 +44,8 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
     }
 
+    ctx.exceptionHandler = nil;
+
     return cbData;
 }
 
@@ -147,7 +149,9 @@ TEST_CASE("Creates node_module paths", "[resolve]")
     REQUIRE([paths count] > 1);
     REQUIRE([paths[0] hasSuffix:@"node_modules"]);
 
+    std::cout << "Test A destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test A destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves lookup paths", "[resolve]")
@@ -160,7 +164,9 @@ TEST_CASE("Resolves lookup paths", "[resolve]")
     REQUIRE([paths count] == 2);
     REQUIRE([paths[1] count] > 6); // This should be pretty long
 
+    std::cout << "Test B destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test B destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves relative file", "[resolve]")
@@ -173,7 +179,9 @@ TEST_CASE("Resolves relative file", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
 
+    std::cout << "Test C destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test C destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves relative directory", "[resolve]")
@@ -186,7 +194,9 @@ TEST_CASE("Resolves relative directory", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
 
+    std::cout << "Test D destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test D destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
@@ -199,7 +209,9 @@ TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/node_modules/waldo/waldo/index.js"]);
 
+    std::cout << "Test E destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test E destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
@@ -212,7 +224,9 @@ TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
 
+    std::cout << "Test F destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test F destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves relative dependency by traversing upwards multiple directories", "[resolve]")
@@ -225,7 +239,9 @@ TEST_CASE("Resolves relative dependency by traversing upwards multiple directori
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/json.json"]);
 
+    std::cout << "Test G destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test G destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves global", "[resolve]")
@@ -238,7 +254,9 @@ TEST_CASE("Resolves global", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved isEqualToString:@"http"]);
 
+    std::cout << "Test H destroying Resolve" << std::endl;
     delete resolver;
+    std::cout << "Test H destroyed Resolve" << std::endl;
 }
 
 /**
@@ -303,7 +321,13 @@ TEST_CASE("Creates a dependency map", "[deps]")
         }
     }];
 
+    std::cout << "Test I destroying Resolve" << std::endl;
+    delete resolver;
+    std::cout << "Test I destroyed Resolve" << std::endl;
+
+    std::cout << "Test I destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test I destroyed Paq" << std::endl;
 }
 
 /**
@@ -315,7 +339,9 @@ TEST_CASE("Creates a basic bundle", "[bundle]")
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
     REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
 
+    std::cout << "Test J destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test J destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
@@ -324,7 +350,9 @@ TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
         @"requireTasks" : [NSNumber numberWithInt:1] });
     REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
 
+    std::cout << "Test K destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test K destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
@@ -341,7 +369,9 @@ TEST_CASE("Converts the hbsfy transform", "[bundle]")
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"return \"My name is \""].location != NSNotFound);
 
+    std::cout << "Test L destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test L destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Converts the babelify transform", "[bundle]")
@@ -358,7 +388,9 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"React.createElement("].location != NSNotFound);
 
+    std::cout << "Test M destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test M destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Bundles node core modules", "[bundle]")
@@ -366,7 +398,9 @@ TEST_CASE("Bundles node core modules", "[bundle]")
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
     REQUIRE([paq->evalToString() isEqualToString:@"a/b"]);
 
+    std::cout << "Test N destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test N destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Inserts module globals", "[bundle]")
@@ -374,7 +408,9 @@ TEST_CASE("Inserts module globals", "[bundle]")
     Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
     REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
 
+    std::cout << "Test O destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test O destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Ignores unevaluated expressions", "[bundle]")
@@ -386,7 +422,9 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     REQUIRE(err == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
 
+    std::cout << "Test P destroying Paq" << std::endl;
     delete paq;
+    std::cout << "Test P destroyed Paq" << std::endl;
 }
 
 /*
@@ -402,4 +440,20 @@ TEST_CASE("Uses hbsfy transform", "[bundle]")
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
     REQUIRE([paq->evalToString() isEqualToString:@"Hello World!"]);
 }
- */
+*/
+
+/*
+TEST_CASE("Wait for instruments to detect leaks", "[instruments]")
+{
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    [NSThread sleepForTimeInterval:1.0f];
+    REQUIRE(1 == 1);
+}*/

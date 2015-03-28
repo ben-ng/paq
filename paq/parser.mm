@@ -27,6 +27,8 @@ NSDictionary* Parser::parse(JSContext* ctx, NSString* code, NSError** error)
         err = [NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : @"A context without a parse function was given to Parser::parse" }];
     }
 
+    ctx.exceptionHandler = nil;
+
     if (err) {
         if (error) {
             *error = err;
