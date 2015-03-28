@@ -3,10 +3,9 @@ language: objective-c
 
 before_install:
   - npm install
-  - sudo easy_install cpp-coveralls
+  - gem i cocoapods --no-ri --no-rdoc
+  - gem i slather --no-ri --no-rdoc
+  - brew uninstall xctool; brew install xctool --HEAD;
 
-script:
-  - make test
-
-after_success:
-  - ./scripts/coveralls.sh
+script: make test
+after_success: slather
