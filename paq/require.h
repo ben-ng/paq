@@ -16,15 +16,16 @@
 
 class Require {
 private:
+    BOOL _ignore_unresolvable;
     NSUInteger _max_tasks;
     NSUInteger _roundRobinCounter;
     NSString* _pathSrc;
     NSMutableArray* _virtualMachines;
     dispatch_queue_t _accessQueue;
-    static bool isRequire(NSDictionary* node);
+    static BOOL isRequire(NSDictionary* node);
 
 public:
     Require(NSDictionary* options);
-    Require();
+    ~Require();
     NSArray* findRequires(NSString* path, NSDictionary* ast, NSError** error);
 };

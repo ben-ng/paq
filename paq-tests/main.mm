@@ -329,15 +329,14 @@ TEST_CASE("Creates a dependency map", "[deps]")
 
 /**
  * paq: bundle
+ */
 
 TEST_CASE("Creates a basic bundle", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
     REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
 
-    std::cout << "Test J destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test J destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
@@ -346,9 +345,7 @@ TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
         @"requireTasks" : [NSNumber numberWithInt:1] });
     REQUIRE([paq->evalToString() isEqualToString:@"Custom Lib You found waldo! flamingo fishing flamingo.js"]);
 
-    std::cout << "Test K destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test K destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
@@ -365,9 +362,7 @@ TEST_CASE("Converts the hbsfy transform", "[bundle]")
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"return \"My name is \""].location != NSNotFound);
 
-    std::cout << "Test L destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test L destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Converts the babelify transform", "[bundle]")
@@ -384,9 +379,7 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"React.createElement("].location != NSNotFound);
 
-    std::cout << "Test M destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test M destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Bundles node core modules", "[bundle]")
@@ -394,9 +387,7 @@ TEST_CASE("Bundles node core modules", "[bundle]")
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
     REQUIRE([paq->evalToString() isEqualToString:@"a/b"]);
 
-    std::cout << "Test N destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test N destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Inserts module globals", "[bundle]")
@@ -404,9 +395,7 @@ TEST_CASE("Inserts module globals", "[bundle]")
     Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
     REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
 
-    std::cout << "Test O destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test O destroyed Paq" << std::endl;
 }
 
 TEST_CASE("Ignores unevaluated expressions", "[bundle]")
@@ -418,26 +407,24 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     REQUIRE(err == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
 
-    std::cout << "Test P destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test P destroyed Paq" << std::endl;
- }
- */
+}
 
 /*
 TEST_CASE("Uses hbsfy transform", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
+    // because that kind of require can't be evaluated statically
     Paq* paq = new Paq(@[ @"fixtures/hbs-app/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES],
         @"transforms" : @[ @"hbsfy" ] });
 
     NSError* err = nil;
-    NSString* bundle = paq->bundleSync(nil, &error);
-    REQUIRE(error == nil);
+    NSString* bundle = paq->bundleSync(nil, &err);
+    REQUIRE(err == nil);
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
     REQUIRE([paq->evalToString() isEqualToString:@"Hello World!"]);
 }
-*/
+ */
 
 /*
 TEST_CASE("Wait for instruments to detect leaks", "[instruments]")

@@ -28,7 +28,10 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     _parser = new Parser(@{ @"maxTasks" : options && options[@"parserTasks"] ? options[@"parserTasks"] : [NSNumber numberWithInt:0] });
-    _require = new Require(@{ @"maxTasks" : options && options[@"requireTasks"] ? options[@"requireTasks"] : [NSNumber numberWithInt:0] });
+    _require = new Require(@{
+        @"maxTasks" : options && options[@"requireTasks"] ? options[@"requireTasks"] : [NSNumber numberWithInt:0],
+        @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:options && options[@"ignoreUnresolvableExpressions"] && [options[@"ignoreUnresolvableExpressions"] boolValue]]
+    });
 
     // When this reaches zero, bundling is done
     _unprocessed = 0;
@@ -114,7 +117,7 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
         }
         
         ast = parseResult[0];
-        source = parseResult[0];
+        source = parseResult[1];
         
         // Here we are in the parser context queue
         // After this, findRequires enters the require ctx queue
@@ -321,22 +324,13 @@ NSString* Paq::evalToString()
 
 Paq::~Paq()
 {
-    std::cout << "Destroying Paq" << std::endl;
-    std::cout << "1" << std::endl;
     _serialQ = nil;
-    std::cout << "2" << std::endl;
     _resolve = nil;
-    std::cout << "3" << std::endl;
     _module_map = nil;
-    std::cout << "4" << std::endl;
     _entry = nil;
-    std::cout << "5" << std::endl;
     _options = nil;
-    std::cout << "6" << std::endl;
     _nativeModules = nil;
-    std::cout << "7" << std::endl;
     _deps_callback = nil;
-    std::cout << "Paq destroying Resolve" << std::endl;
     delete _resolve;
-    std::cout << "Paq destroyed Resolve" << std::endl;
+    delete _require;
 }

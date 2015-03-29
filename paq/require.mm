@@ -12,6 +12,7 @@ Require::Require(NSDictionary* options)
 {
     // Require contexts are JSContexts with acorn loaded up inside them
     _max_tasks = options != nil && options[@"maxTasks"] ? [options[@"maxTasks"] intValue] : 2;
+    _ignore_unresolvable = options != nil && options[@"ignoreUnresolvableExpressions"] && [options[@"ignoreUnresolvableExpressions"] boolValue];
 
     if (_max_tasks <= 0) {
         _max_tasks = 1;
@@ -98,8 +99,10 @@ NSArray* Require::findRequires(NSString* path, NSDictionary* ast, NSError** erro
             NSString* wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
 
             ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-                NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], compiledEspression, path];
-                err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
+                if(!_ignore_unresolvable) {
+                    NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], compiledEspression, path];
+                    err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
+                }
             };
 
             JSValue* evaluatedExpression = [ctx evaluateScript:wrappedExpr];
@@ -108,10 +111,11 @@ NSArray* Require::findRequires(NSString* path, NSDictionary* ast, NSError** erro
 
             if (!err) {
                 if (![evaluatedExpression isString]) {
-                    err = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
+                    if (!_ignore_unresolvable) {
+                        err = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
+                    }
                 }
-
-                if (!err && [compiledEspression isString]) {
+                else {
                     [modules addObject:[NSString stringWithString:[evaluatedExpression toString]]];
                 }
             }
@@ -151,7 +155,7 @@ NSArray* Require::findRequires(NSString* path, NSDictionary* ast, NSError** erro
     return modules;
 };
 
-bool Require::isRequire(NSDictionary* node)
+BOOL Require::isRequire(NSDictionary* node)
 {
     NSDictionary* c = node[@"callee"];
 
@@ -159,4 +163,13 @@ bool Require::isRequire(NSDictionary* node)
         [node[@"type"] isEqualToString:@"CallExpression"] &&
         [c[@"type"] isEqualToString:@"Identifier"] &&
         [c[@"name"] isEqualToString:@"require"];
+}
+
+Require::~Require()
+{
+    dispatch_queue_t _accessQueue;
+    [_virtualMachines removeAllObjects];
+    _virtualMachines = nil;
+    _accessQueue = nil;
+    _pathSrc = nil;
 }
