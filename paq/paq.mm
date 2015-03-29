@@ -321,24 +321,13 @@ NSString* Paq::evalToString()
 
 Paq::~Paq()
 {
-    std::cout << "Destroying Paq" << std::endl;
-    std::cout << "1" << std::endl;
     _serialQ = nil;
-    std::cout << "2" << std::endl;
     _resolve = nil;
-    std::cout << "3" << std::endl;
     _module_map = nil;
-    std::cout << "4" << std::endl;
     _entry = nil;
-    std::cout << "5" << std::endl;
     _options = nil;
-    std::cout << "6" << std::endl;
     _nativeModules = nil;
-    std::cout << "7" << std::endl;
     _deps_callback = nil;
-    std::cout << "Paq destroying Resolve" << std::endl;
     delete _resolve;
-    std::cout << "Paq destroying Require" << std::endl;
     delete _require;
-    std::cout << "Paq gone" << std::endl;
 }

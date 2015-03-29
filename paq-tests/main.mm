@@ -339,6 +339,7 @@ TEST_CASE("Creates a basic bundle", "[bundle]")
     delete paq;
 }
 
+/*
 TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], @{ @"parserTasks" : [NSNumber numberWithInt:1],
@@ -409,6 +410,7 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
 
     delete paq;
 }
+*/
 
 /*
 TEST_CASE("Uses hbsfy transform", "[bundle]")

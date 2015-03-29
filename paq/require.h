@@ -16,12 +16,12 @@
 
 class Require {
 private:
-    BOOL _ignore_unresolvable;
     NSUInteger _max_tasks;
     NSUInteger _roundRobinCounter;
     NSString* _pathSrc;
     NSMutableArray* _virtualMachines;
     dispatch_queue_t _accessQueue;
+    BOOL _ignore_unresolvable;
     static BOOL isRequire(NSDictionary* node);
 
 public:

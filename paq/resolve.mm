@@ -55,7 +55,7 @@ Resolve::Resolve(NSDictionary* options)
     }
 
     _modulePaths = paths;
-};
+}
 
 NSString* Resolve::_resolveFilename(NSString* request, NSMutableDictionary* parent)
 {
@@ -112,7 +112,7 @@ NSArray* Resolve::_nodeModulePaths(NSString* from)
     }
 
     return paths;
-};
+}
 
 NSArray* Resolve::_resolveLookupPaths(NSString* request, NSMutableDictionary* parent)
 {

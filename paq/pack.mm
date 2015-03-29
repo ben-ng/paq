@@ -27,8 +27,8 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
 
     [output appendString:@"({\n"];
 
-    __block unsigned long counter = 0;
-    long depscount = [deps count];
+    __block NSUInteger counter = 0;
+    NSUInteger depscount = [deps count];
 
     NSMutableArray* entryFiles =
         [[NSMutableArray alloc] initWithCapacity:[entry count]];
