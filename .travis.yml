@@ -9,5 +9,10 @@ before_install:
 script:
   - make test
 
+after_failure:
+  - echo "Sleeping for crash report..."
+  - sleep 5
+  - make show-crash
+
 after_success:
   - make slather
