@@ -7,7 +7,7 @@ before_install:
   - ulimit -c unlimited -S
 
 script:
-  - RESULT=1 ./paq-tests & pid=$! && fg;
+  - RESULT=1 make test & pid=$! && fg;
   - if [[ ${RESULT} != 0 ]]; then lldb --core /cores/core.$pid --batch --one-line "bt" ; fi;
   - if [[ ${RESULT} != 0 ]]; then exit $RESULT ; fi;
 
