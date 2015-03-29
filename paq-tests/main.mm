@@ -351,7 +351,6 @@ TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
     delete paq;
 }
 
-/*
 TEST_CASE("Bundles node core modules", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
@@ -360,6 +359,7 @@ TEST_CASE("Bundles node core modules", "[bundle]")
     delete paq;
 }
 
+/*
 TEST_CASE("Inserts module globals", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
