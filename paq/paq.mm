@@ -13,11 +13,9 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 {
     _unprocessed = 0;
     _serialQ = nil;
-    _concurrentQ = nil;
     _parser = nil;
     _resolve = nil;
     _module_map = nil;
-    _available_require_contexts = nil;
     _entry = nil;
     _options = nil;
     _nativeModules = nil;
@@ -69,7 +67,6 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 
     // Initialize multithreading stuff
     _serialQ = dispatch_queue_create("paq.serial", DISPATCH_QUEUE_SERIAL);
-    _concurrentQ = dispatch_queue_create("paq.concurrent", DISPATCH_QUEUE_CONCURRENT);
 };
 
 void Paq::deps(void (^callback)(NSDictionary* dependencies))

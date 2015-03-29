@@ -18,12 +18,10 @@ class Paq {
 private:
     unsigned long _unprocessed;
     dispatch_queue_t _serialQ;
-    dispatch_queue_t _concurrentQ;
     Parser* _parser;
     Require* _require;
     Resolve* _resolve;
     NSMutableDictionary* _module_map;
-    NSMutableArray* _available_require_contexts;
     NSArray* _entry;
     NSDictionary* _options;
     NSDictionary* _nativeModules;
