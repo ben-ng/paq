@@ -265,6 +265,7 @@ TEST_CASE("Resolves global", "[resolve]")
 
 /**
  * paq: deps
+ */
 
 TEST_CASE("Creates a dependency map", "[deps]")
 {
@@ -323,15 +324,8 @@ TEST_CASE("Creates a dependency map", "[deps]")
         }
     }];
 
-    std::cout << "Test I destroying Resolve" << std::endl;
-    delete resolver;
-    std::cout << "Test I destroyed Resolve" << std::endl;
-
-    std::cout << "Test I destroying Paq" << std::endl;
     delete paq;
-    std::cout << "Test I destroyed Paq" << std::endl;
- }
- */
+}
 
 /**
  * paq: bundle

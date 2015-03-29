@@ -27,8 +27,8 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
         [NSException raise:@"INVALID_ARGUMENT" format:@"Paq must be initialized with an NSArray of NSString entry file paths"];
     }
 
-    _parser = new Parser(@{ @"maxTasks" : options[@"parserTasks"] });
-    _require = new Require(@{ @"maxTasks" : options[@"requireTasks"] });
+    _parser = new Parser(@{ @"maxTasks" : options && options[@"parserTasks"] ? options[@"parserTasks"] : [NSNumber numberWithInt:0] });
+    _require = new Require(@{ @"maxTasks" : options && options[@"requireTasks"] ? options[@"requireTasks"] : [NSNumber numberWithInt:0] });
 
     // When this reaches zero, bundling is done
     _unprocessed = 0;
