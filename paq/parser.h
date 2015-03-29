@@ -21,7 +21,6 @@ private:
     NSUInteger _roundRobinCounter;
     NSMutableArray* _virtualMachines;
     dispatch_queue_t _accessQueue;
-    dispatch_queue_t _concurrentQueue;
 
 public:
     Parser(NSDictionary* options);
