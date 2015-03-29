@@ -67,7 +67,7 @@ run-test:
 	./paq-tests
 
 show-crash:
-	@cd $(diag_reports) && cat $$(ls | grep "paq-tests" -m 1)
+	@cd $(diag_reports) && ls | grep "paq-tests" | while read -r line ; do echo "------ Crash Report: $$line ------\n" && cat "$$line"; done
 
 show-build-dir:
 	@e=$d && \
