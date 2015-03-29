@@ -72,7 +72,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 void Paq::deps(void (^callback)(NSDictionary* dependencies))
 {
     // Called when dependencies are done processing
-    _deps_callback = [callback copy];
+    _deps_callback = callback;
 
     for (long i = 0, ii = [_entry count]; i < ii; ++i) {
         if (_module_map[_entry[i]] == nil) {

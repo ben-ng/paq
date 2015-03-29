@@ -38,7 +38,7 @@ private:
      *      }
      *  }
      */
-    __weak void (^_deps_callback)(NSDictionary* deps);
+    void (^_deps_callback)(NSDictionary* deps);
 
     void deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry);
     NSArray* _getAST(NSString* file, NSError** error);
