@@ -16,15 +16,11 @@
 
 class Paq {
 private:
-    unsigned int _max_parser_contexts;
-    unsigned int _max_require_contexts;
     unsigned long _unprocessed;
-    dispatch_semaphore_t _require_contexts;
-    dispatch_queue_t _requireCtxQ;
-    dispatch_queue_t _resolveQ;
     dispatch_queue_t _serialQ;
     dispatch_queue_t _concurrentQ;
     Parser* _parser;
+    Require* _require;
     Resolve* _resolve;
     NSMutableDictionary* _module_map;
     NSMutableArray* _available_require_contexts;
@@ -48,7 +44,6 @@ private:
 
     void deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry);
     NSArray* _getAST(NSString* file, NSError** error);
-    void _findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires));
     void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
     NSString* _insertGlobals(NSString* file, NSString* source);
 
@@ -64,5 +59,4 @@ public:
     NSString* bundleSync(NSDictionary* options, NSError** error);
     NSString* evalToString();
     void deps(void (^callback)(NSDictionary* dependencies));
-    static NSDictionary* getNativeBuiltins();
 };

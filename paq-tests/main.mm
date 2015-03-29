@@ -128,7 +128,8 @@ TEST_CASE("Extracts literal requires", "[require]")
 
     REQUIRE(err == nil);
 
-    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, nil, &err);
+    Require* require = new Require(nil);
+    NSArray* requires = require->findRequires(@"/fakedir/somefile.js", ast, &err);
 
     REQUIRE([err localizedDescription] == nil);
     REQUIRE([requires count] == 1);
@@ -145,7 +146,8 @@ TEST_CASE("Evaluates require expressions with the path module available", "[requ
 
     REQUIRE(err == nil);
 
-    NSArray* requires = Require::findRequires(Require::createContext(Paq::getNativeBuiltins()[@"path"]), @"/fakedir/somefile.js", ast, nil, &err);
+    Require* require = new Require(nil);
+    NSArray* requires = require->findRequires(@"/fakedir/somefile.js", ast, &err);
 
     REQUIRE([err localizedDescription] == nil);
     REQUIRE([requires count] == 1);
@@ -160,7 +162,7 @@ TEST_CASE("Evaluates require expressions with the path module available", "[requ
 
 TEST_CASE("Creates node_module paths", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSArray* paths = resolver->_nodeModulePaths(here);
 
@@ -172,7 +174,7 @@ TEST_CASE("Creates node_module paths", "[resolve]")
 
 TEST_CASE("Resolves lookup paths", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
     NSArray* paths = resolver->_resolveLookupPaths(@"lodash", parent);
@@ -185,7 +187,7 @@ TEST_CASE("Resolves lookup paths", "[resolve]")
 
 TEST_CASE("Resolves relative file", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
     NSString* resolved = resolver->_resolveFilename(@"./mylib/index.js", parent);
@@ -198,7 +200,7 @@ TEST_CASE("Resolves relative file", "[resolve]")
 
 TEST_CASE("Resolves relative directory", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
     NSString* resolved = resolver->_resolveFilename(@"./mylib", parent);
@@ -211,7 +213,7 @@ TEST_CASE("Resolves relative directory", "[resolve]")
 
 TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
     NSString* resolved = resolver->_resolveFilename(@"waldo", parent);
@@ -224,7 +226,7 @@ TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
 
 TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
     NSString* resolved = resolver->_resolveFilename(@"flamingo", parent);
@@ -237,7 +239,7 @@ TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
 
 TEST_CASE("Resolves relative dependency by traversing upwards multiple directories", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/deep/deeper/deepest/bottom.js");
     NSString* resolved = resolver->_resolveFilename(@"../../../json", parent);
@@ -250,7 +252,7 @@ TEST_CASE("Resolves relative dependency by traversing upwards multiple directori
 
 TEST_CASE("Resolves global", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
     NSString* resolved = resolver->_resolveFilename(@"http", parent);

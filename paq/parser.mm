@@ -44,6 +44,7 @@ NSDictionary* Parser::parse(NSString* code, NSError** error)
 
     if (size == 0) {
         NSLog(@"Acorn is missing from the __TEXT segment");
+        exit(EXIT_FAILURE);
     }
 
     NSString* src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];

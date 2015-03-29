@@ -11,12 +11,7 @@
 
 Paq::Paq(NSArray* entry, NSDictionary* options)
 {
-    _max_parser_contexts = 0;
-    _max_require_contexts = 0;
     _unprocessed = 0;
-    _require_contexts = nil;
-    _requireCtxQ = nil;
-    _resolveQ = nil;
     _serialQ = nil;
     _concurrentQ = nil;
     _parser = nil;
@@ -33,13 +28,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     _parser = new Parser(@{ @"maxTasks" : options[@"parserTasks"] });
-
-    // Require contexts are JSContexts with escodegen loaded up inside them
-    _max_require_contexts = options[@"requireTasks"] ? [options[@"requireTasks"] intValue] : 2;
-
-    if (_max_require_contexts <= 0) {
-        _max_require_contexts = 1;
-    }
+    _require = new Require(@{ @"maxTasks" : options[@"requireTasks"] });
 
     // When this reaches zero, bundling is done
     _unprocessed = 0;
@@ -51,17 +40,10 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     _module_map = [[NSMutableDictionary alloc] initWithCapacity:1000];
 
     // Load up the shims for node core modules
-    _nativeModules = getNativeBuiltins();
+    _nativeModules = Script::getNativeBuiltins();
 
     // The resolve instance has caches that make resolution faster
     _resolve = new Resolve(@{ @"nativeModules" : _nativeModules });
-
-    // Create JSContexts for parsing and require parsing
-    _available_require_contexts = [[NSMutableArray alloc] initWithCapacity:_max_require_contexts];
-
-    for (int i = 0; i < _max_require_contexts; i++) {
-        [_available_require_contexts addObject:Require::createContext(_nativeModules[@"path"])];
-    }
 
     // Resolve paths to entry files
     NSMutableArray* mutableEntries = [[NSMutableArray alloc] initWithCapacity:[entry count]];
@@ -83,11 +65,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     // Initialize multithreading stuff
-    _require_contexts = dispatch_semaphore_create(_max_require_contexts);
-
     _serialQ = dispatch_queue_create("paq.serial", DISPATCH_QUEUE_SERIAL);
-    _resolveQ = dispatch_queue_create("paq.resolve.serial", DISPATCH_QUEUE_SERIAL);
-    _requireCtxQ = dispatch_queue_create("paq.require-ctx.serial", DISPATCH_QUEUE_SERIAL);
     _concurrentQ = dispatch_queue_create("paq.concurrent", DISPATCH_QUEUE_CONCURRENT);
 };
 
@@ -140,49 +118,48 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
         
         // Here we are in the parser context queue
         // After this, findRequires enters the require ctx queue
-        _findRequires(file, ast, ^(NSError* error, NSArray *requires) {
-            // Probably some problem with evaluating a require expression or something
-            if(error) {
-                NSLog(@"%@", error.localizedDescription);
-                exit(EXIT_FAILURE);
-            }
-            
-            // Here we are in the require context queue
-            // This will go into the resolve queue
-            _resolveRequires(requires, parent, ^(NSArray *resolved) {
-                // Still in the resolve queue
-                // Move to the main serial queue
-                dispatch_async(_serialQ, ^{
-                    // Pull together the requires and resolved result for later
-                    NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
-                    for(long i=0, ii=[resolved count]; i<ii; ++i) {
-                        zip[requires[i]] = resolved[i];
-                        
-                        // Add native modules to the map as they are discovered
-                        if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
-                            _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
-                        }
-                    }
+        NSArray *requires = _require->findRequires(file, ast, &err);
+        
+        // Probably some problem with evaluating a require expression or something
+        if(requires == nil) {
+            NSLog(@"%@", err.localizedDescription);
+            exit(EXIT_FAILURE);
+        }
+        
+        // This will go into a concurrent queue
+        _resolveRequires(requires, parent, ^(NSArray *resolved) {
+            // Still in the resolve queue
+            // Move to the main serial queue
+            dispatch_async(_serialQ, ^{
+                // Pull together the requires and resolved result for later
+                NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
+                for(long i=0, ii=[resolved count]; i<ii; ++i) {
+                    zip[requires[i]] = resolved[i];
                     
-                    _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
-                    _unprocessed--;
-                    
-                    // Dispatch new tasks
-                    for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
-                        if(_module_map[resolved[i]] == nil) {
-                            NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
-                            _unprocessed++;
-                            _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
-                            deps(resolved[i], parent, NO);
-                        }
+                    // Add native modules to the map as they are discovered
+                    if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
+                        _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
                     }
-                    
-                    if(_unprocessed == 0) {
-                        // See header file for the structure of the deps callback argument
-                        _deps_callback(_module_map);
-                        _deps_callback = nil;
+                }
+                
+                _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
+                _unprocessed--;
+                
+                // Dispatch new tasks
+                for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
+                    if(_module_map[resolved[i]] == nil) {
+                        NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
+                        _unprocessed++;
+                        _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
+                        deps(resolved[i], parent, NO);
                     }
-                });
+                }
+                
+                if(_unprocessed == 0) {
+                    // See header file for the structure of the deps callback argument
+                    _deps_callback(_module_map);
+                    _deps_callback = nil;
+                }
             });
         });
     });
@@ -267,41 +244,9 @@ NSArray* Paq::_getAST(NSString* file, NSError** error)
     return @[ ast, source ];
 };
 
-void Paq::_findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires))
-{
-    dispatch_async(_requireCtxQ, ^{
-        dispatch_semaphore_wait(_require_contexts, 60 * NSEC_PER_SEC);
-        JSContext *requireCtx = (JSContext *) [_available_require_contexts lastObject];
-        [_available_require_contexts removeLastObject];
-        
-        // Replace broken contexts with new ones
-        // FIXME: Why the fuck does this even happen?? I think its when an exception happens. Everything just breaks inside the context.
-        if([requireCtx globalObject] == nil) {
-            requireCtx = Require::createContext(_nativeModules[@"path"]);
-        }
-        
-        dispatch_async(_concurrentQ, ^{
-            NSError *error;
-            NSArray *requires = Require::findRequires(requireCtx, file, ast, _options, &error);
-            
-            dispatch_async(_requireCtxQ, ^{
-                [_available_require_contexts addObject:requireCtx];
-                dispatch_semaphore_signal(_require_contexts);
-                
-                if(requires == nil) {
-                    callback(error, nil);
-                }
-                else {
-                    callback(nil, requires);
-                }
-            });
-        });
-    });
-}
-
 void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved))
 {
-    dispatch_async(_resolveQ, ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableArray *resolved = [[NSMutableArray alloc] initWithCapacity:[requires count]];
         
         for (long i = 0, ii = [requires count]; i<ii; ++i) {
@@ -316,25 +261,6 @@ void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void 
         
         callback(resolved);
     });
-}
-
-NSDictionary* Paq::getNativeBuiltins()
-{
-    unsigned long size;
-    void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__builtins_src", &size);
-
-    if (size == 0) {
-        [NSException raise:@"Fatal Exception" format:@"The __builtins_src section is missing"];
-    }
-
-    NSError* err = nil;
-    NSDictionary* out = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size freeWhenDone:NO] options:0 error:&err];
-
-    if (out == nil) {
-        [NSException raise:@"Fatal Exception" format:@"Could not parse the __builtins_src data as JSON"];
-    }
-
-    return out;
 }
 
 NSString* Paq::bundleSync(NSDictionary* options, NSError** error)
@@ -397,30 +323,18 @@ Paq::~Paq()
 {
     std::cout << "Destroying Paq" << std::endl;
     std::cout << "1" << std::endl;
-    [_available_require_contexts removeAllObjects];
-    std::cout << "2" << std::endl;
-    _available_require_contexts = nil;
-    std::cout << "4" << std::endl;
-    _require_contexts = nil;
-    std::cout << "6" << std::endl;
-    _requireCtxQ = nil;
-    std::cout << "7" << std::endl;
-    _resolveQ = nil;
-    std::cout << "8" << std::endl;
     _serialQ = nil;
-    std::cout << "9" << std::endl;
-    _concurrentQ = nil;
-    std::cout << "10" << std::endl;
+    std::cout << "2" << std::endl;
     _resolve = nil;
-    std::cout << "11" << std::endl;
+    std::cout << "3" << std::endl;
     _module_map = nil;
-    std::cout << "12" << std::endl;
+    std::cout << "4" << std::endl;
     _entry = nil;
-    std::cout << "13" << std::endl;
+    std::cout << "5" << std::endl;
     _options = nil;
-    std::cout << "14" << std::endl;
+    std::cout << "6" << std::endl;
     _nativeModules = nil;
-    std::cout << "15" << std::endl;
+    std::cout << "7" << std::endl;
     _deps_callback = nil;
     std::cout << "Paq destroying Resolve" << std::endl;
     delete _resolve;
