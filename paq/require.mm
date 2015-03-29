@@ -11,7 +11,7 @@
 Require::Require(NSDictionary* options)
 {
     // Require contexts are JSContexts with acorn loaded up inside them
-    _max_tasks = options != nil && options[@"maxTasks"] ? [options[@"maxTasks"] intValue] : 2;
+    _max_tasks = options != nil && options[@"maxTasks"] ? [options[@"maxTasks"] intValue] : 4;
     _ignore_unresolvable = options != nil && options[@"ignoreUnresolvableExpressions"] && [options[@"ignoreUnresolvableExpressions"] boolValue];
 
     if (_max_tasks <= 0) {
@@ -21,25 +21,144 @@ Require::Require(NSDictionary* options)
     _pathSrc = Script::getNativeBuiltins()[@"path"];
 
     _accessQueue = dispatch_queue_create("require.serial", DISPATCH_QUEUE_SERIAL);
-    _virtualMachines = [[NSMutableArray alloc] initWithCapacity:0];
+    _contextSema = dispatch_semaphore_create(_max_tasks);
+    _contexts = [[NSMutableArray alloc] initWithCapacity:_max_tasks];
 
     for (NSUInteger i = 0; i < _max_tasks; ++i) {
-        [_virtualMachines addObject:[[JSVirtualMachine alloc] init]];
+        [_contexts addObject:createContext()];
     }
 }
 
-NSArray* Require::findRequires(NSString* path, NSDictionary* ast, NSError** error)
+void Require::findRequires(NSString* path, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires))
 {
-    __block NSUInteger selectedVirtualMachine = 0;
 
-    dispatch_sync(_accessQueue, ^{
-        selectedVirtualMachine = _roundRobinCounter % _max_tasks;
-        _roundRobinCounter++;
+    dispatch_semaphore_wait(_contextSema, DISPATCH_TIME_FOREVER);
+
+    dispatch_async(_accessQueue, ^{
+        
+        JSContext* ctx = _contexts.lastObject;
+        [_contexts removeLastObject];
+        
+        // No idea how this happens, but it does. Possibly when an exception happens.
+        if([ctx globalObject] == nil) {
+            ctx = createContext();
+            [_contexts addObject:ctx];
+        }
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            // Context is set up, now to walk the AST and prepare work
+            __block NSMutableArray* modules = [[NSMutableArray alloc] initWithCapacity:10];
+            __block NSMutableArray* expressions = [[NSMutableArray alloc] initWithCapacity:10];
+            NSMutableArray* errors = [[NSMutableArray alloc] init];
+            
+            Traverse::walk(ast, ^(NSDictionary* node) {
+                if(!Require::isRequire(node))
+                    return;
+                
+                NSArray *args = (NSArray *) node[@"arguments"];
+                
+                if([args count]) {
+                    if([args[0][@"type"] isEqualToString:@"Literal"]) {
+                        [modules addObject:[NSString stringWithString:args[0][@"value"]]];
+                    }
+                    else {
+                        [expressions addObject:args[0]];
+                    }
+                }
+            });
+            
+            for (NSUInteger i = 0, ii = expressions.count; i < ii; ++i) {
+                __block NSError* err = nil;
+                
+                ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
+                    NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while compiling the expression: %@", [exception toString], path];
+                    err = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
+                };
+                
+                JSValue* compiledEspression = [ctx[@"generate"] callWithArguments:@[ expressions[i] ]];
+                
+                ctx.exceptionHandler = nil;
+                
+                if (!err) {
+                    // TODO: Also handle process.env since people like to use that
+                    NSString* wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
+                    
+                    ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
+                        if(!_ignore_unresolvable) {
+                            NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], compiledEspression, path];
+                            err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
+                        }
+                    };
+                    
+                    JSValue* evaluatedExpression = [ctx evaluateScript:wrappedExpr];
+                    
+                    ctx.exceptionHandler = nil;
+                    
+                    if (!err) {
+                        if (![evaluatedExpression isString]) {
+                            if (!_ignore_unresolvable) {
+                                err = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
+                            }
+                        }
+                        else {
+                            [modules addObject:[NSString stringWithString:[evaluatedExpression toString]]];
+                        }
+                    }
+                }
+                
+                if (err) {
+                    [errors addObject:err];
+                }
+            }
+            
+            dispatch_async(_accessQueue, ^{
+                [_contexts addObject:ctx];
+                
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                    if (errors.count > 0) {
+                        // Merge together all our errors
+                        NSMutableArray* errorDescs = [[NSMutableArray alloc] init];
+                        
+                        [errors enumerateObjectsUsingBlock:^(NSError* obj, NSUInteger idx, BOOL* stop) {
+                            if(obj.localizedRecoverySuggestion) {
+                                [errorDescs addObject:[NSString stringWithFormat:@"%@\n%@", obj.localizedDescription, obj.localizedRecoverySuggestion]];
+                            }
+                            else {
+                                [errorDescs addObject:obj.localizedDescription];
+                            }
+                        }];
+                        
+                        NSString* compoundErrorDesc = [[NSMutableString alloc] initWithFormat:@"Unhandled errors encountered parsing requires:\n%@\n", [errorDescs componentsJoinedByString:@"\n"]];
+                        NSError* compoundError = [NSError errorWithDomain:@"com.benng.paq" code:11 userInfo:@{ NSLocalizedDescriptionKey : compoundErrorDesc }];
+                        
+                        callback(compoundError, nil);
+                    }
+                    else {
+                        callback(nil, modules);
+                    }
+                    
+                    dispatch_semaphore_signal(_contextSema);
+                });
+            });
+        });
     });
+};
 
+BOOL Require::isRequire(NSDictionary* node)
+{
+    NSDictionary* c = node[@"callee"];
+
+    return c != nil &&
+        [node[@"type"] isEqualToString:@"CallExpression"] &&
+        [c[@"type"] isEqualToString:@"Identifier"] &&
+        [c[@"name"] isEqualToString:@"require"];
+}
+
+JSContext* Require::createContext()
+{
     JSContext* ctx;
 
-    ctx = [[JSContext alloc] initWithVirtualMachine:_virtualMachines[selectedVirtualMachine]];
+    ctx = [[JSContext alloc] init];
 
     unsigned long size;
     void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__escodegen_src", &size);
@@ -61,115 +180,14 @@ NSArray* Require::findRequires(NSString* path, NSDictionary* ast, NSError** erro
     // Move it to the path variable
     [ctx evaluateScript:@"_path = global.path; delete global.path; global = undefined;"];
 
-    // Context is set up, now to walk the AST and prepare work
-    __block NSMutableArray* modules = [[NSMutableArray alloc] initWithCapacity:10];
-    __block NSMutableArray* expressions = [[NSMutableArray alloc] initWithCapacity:10];
-    NSMutableArray* errors = [[NSMutableArray alloc] init];
-
-    Traverse::walk(ast, ^(NSDictionary* node) {
-        if(!Require::isRequire(node))
-            return;
-        
-        NSArray *args = (NSArray *) node[@"arguments"];
-        
-        if([args count]) {
-            if([args[0][@"type"] isEqualToString:@"Literal"]) {
-                [modules addObject:[NSString stringWithString:args[0][@"value"]]];
-            }
-            else {
-                [expressions addObject:args[0]];
-            }
-        }
-    });
-
-    for (NSUInteger i = 0, ii = expressions.count; i < ii; ++i) {
-        __block NSError* err = nil;
-
-        ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-            NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while compiling the expression: %@", [exception toString], path];
-            err = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
-        };
-
-        JSValue* compiledEspression = [ctx[@"generate"] callWithArguments:@[ expressions[i] ]];
-
-        ctx.exceptionHandler = nil;
-
-        if (!err) {
-            // TODO: Also handle process.env since people like to use that
-            NSString* wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
-
-            ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-                if(!_ignore_unresolvable) {
-                    NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], compiledEspression, path];
-                    err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
-                }
-            };
-
-            JSValue* evaluatedExpression = [ctx evaluateScript:wrappedExpr];
-
-            ctx.exceptionHandler = nil;
-
-            if (!err) {
-                if (![evaluatedExpression isString]) {
-                    if (!_ignore_unresolvable) {
-                        err = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
-                    }
-                }
-                else {
-                    [modules addObject:[NSString stringWithString:[evaluatedExpression toString]]];
-                }
-            }
-        }
-
-        if (err) {
-            [errors addObject:err];
-        }
-    }
-
-    if (errors.count > 0) {
-        // Merge together all our errors
-        NSMutableArray* errorDescs = [[NSMutableArray alloc] init];
-
-        [errors enumerateObjectsUsingBlock:^(NSError* obj, NSUInteger idx, BOOL* stop) {
-            if(obj.localizedRecoverySuggestion) {
-                [errorDescs addObject:[NSString stringWithFormat:@"%@\n%@", obj.localizedDescription, obj.localizedRecoverySuggestion]];
-            }
-            else {
-                [errorDescs addObject:obj.localizedDescription];
-            }
-        }];
-
-        NSString* compoundErrorDesc = [[NSMutableString alloc] initWithFormat:@"Unhandled errors encountered parsing requires:\n%@\n", [errorDescs componentsJoinedByString:@"\n"]];
-        NSError* compoundError = [NSError errorWithDomain:@"com.benng.paq" code:11 userInfo:@{ NSLocalizedDescriptionKey : compoundErrorDesc }];
-
-        if (error) {
-            *error = compoundError;
-        }
-        else {
-            NSLog(@"%@", compoundError);
-        }
-
-        return nil;
-    }
-
-    return modules;
-};
-
-BOOL Require::isRequire(NSDictionary* node)
-{
-    NSDictionary* c = node[@"callee"];
-
-    return c != nil &&
-        [node[@"type"] isEqualToString:@"CallExpression"] &&
-        [c[@"type"] isEqualToString:@"Identifier"] &&
-        [c[@"name"] isEqualToString:@"require"];
+    return ctx;
 }
 
 Require::~Require()
 {
-    dispatch_queue_t _accessQueue;
-    [_virtualMachines removeAllObjects];
-    _virtualMachines = nil;
+    [_contexts removeAllObjects];
+    _contexts = nil;
     _accessQueue = nil;
     _pathSrc = nil;
+    _contextSema = nil;
 }

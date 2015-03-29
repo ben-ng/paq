@@ -17,6 +17,52 @@
 #import "resolve.h"
 #import "paq.h"
 
+/**
+ * Executes the parser method synchronously and returns the array @[ error, ast, source ]
+ */
+NSArray* parseSync(NSString* input)
+{
+    Parser* parser = new Parser(nil);
+    __block NSArray* cbData = nil;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        parser->parse(input, ^(NSError *error, NSDictionary *ast, NSString *source) {
+            cbData = @[error != nil ? error : [NSNull null], ast != nil ? ast : [NSNull null], source != nil ? source : [NSNull null]];
+            
+            dispatch_semaphore_signal(sema);
+        });
+    });
+
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+    delete parser;
+
+    return cbData;
+}
+
+/**
+ * Executes the require method synchronously and returns the array @[ error, requires ]
+ */
+NSArray* requireSync(NSString* path, NSDictionary* ast)
+{
+    Require* require = new Require(nil);
+    __block NSArray* cbData = nil;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        require->findRequires(path, ast, ^(NSError *error, NSArray *requires) {
+            cbData = @[error != nil ? error : [NSNull null], requires != nil ? requires : [NSNull null]];
+            
+            dispatch_semaphore_signal(sema);
+        });
+    });
+
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+    delete require;
+
+    return cbData;
+}
+
 NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSString* source)
 {
     __block BOOL callbackWasCalled = NO;
@@ -61,45 +107,41 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
 
 TEST_CASE("Parser returns a valid AST for valid code", "[parser]")
 {
-    NSError* err = nil;
-    Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"require(path.join(__dirname, 'path'))", &err)[0];
+    NSArray* result = parseSync(@"require(path.join(__dirname, 'path'))");
+    NSError* err = result[0];
+    NSDictionary* ast = result[1];
 
-    REQUIRE(err == nil);
-    REQUIRE(ast[@"type"] != nil);
+    REQUIRE([err isKindOfClass:NSNull.class]);
+    REQUIRE(![ast[@"type"] isKindOfClass:NSNull.class]);
     REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
     REQUIRE([((NSArray*)ast[@"body"])count] == 1);
     REQUIRE([((NSString*)ast[@"body"][0][@"type"])isEqualToString:@"ExpressionStatement"]);
-
-    delete parser;
 }
 
 TEST_CASE("Parser returns an error for invalid code", "[parser]")
 {
-    NSError* err = nil;
-    Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"var unbalanced = {", &err)[0];
+    NSArray* result = parseSync(@"var unbalanced = {");
+    NSError* err = result[0];
+    NSDictionary* ast = result[1];
+    NSDictionary* source = result[2];
 
-    REQUIRE(err != nil);
+    REQUIRE(![err isKindOfClass:NSNull.class]);
     REQUIRE([err.localizedDescription isEqualToString:@"SyntaxError: Unexpected token (1:18)"]);
-    REQUIRE(ast == nil);
-
-    delete parser;
+    REQUIRE([ast isKindOfClass:NSNull.class]);
+    REQUIRE([source isKindOfClass:NSNull.class]);
 }
 
 TEST_CASE("Parser works on executable scripts", "[parser]")
 {
-    NSError* err = nil;
-    Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"#!/usr/local/bin/node\nrequire(__dirname + 'path')", &err)[0];
+    NSArray* result = parseSync(@"#!/usr/local/bin/node\nrequire(__dirname + 'path')");
+    NSError* err = result[0];
+    NSDictionary* ast = result[1];
 
-    REQUIRE(err == nil);
+    REQUIRE([err isKindOfClass:NSNull.class]);
     REQUIRE(ast[@"type"] != nil);
     REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
     REQUIRE([((NSArray*)ast[@"body"])count] == 1);
     REQUIRE([((NSString*)ast[@"body"][0][@"type"])isEqualToString:@"ExpressionStatement"]);
-
-    delete parser;
 }
 
 /**
@@ -108,9 +150,10 @@ TEST_CASE("Parser works on executable scripts", "[parser]")
 
 TEST_CASE("Traverses an AST", "[traverse]")
 {
-    NSError* err = nil;
-    Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"require(__dirname + 'path')", &err)[0];
+    NSArray* result = parseSync(@"require(__dirname + 'path')");
+    NSError* err = result[0];
+    NSDictionary* ast = result[1];
+
     __block unsigned int nodeCounter = 0;
 
     Traverse::walk(ast, ^(NSObject* node) {
@@ -118,8 +161,6 @@ TEST_CASE("Traverses an AST", "[traverse]")
     });
 
     REQUIRE(nodeCounter == 7);
-
-    delete parser;
 }
 
 /**
@@ -129,37 +170,43 @@ TEST_CASE("Traverses an AST", "[traverse]")
 TEST_CASE("Extracts literal requires", "[require]")
 {
     NSError* err = nil;
-    Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"if(1) { require('tofu'); }", &err)[0];
 
-    REQUIRE(err == nil);
+    NSArray* result = parseSync(@"require('tofu')");
 
-    Require* require = new Require(nil);
-    NSArray* requires = require->findRequires(@"/fakedir/somefile.js", ast, &err);
+    REQUIRE([result[0] isKindOfClass:NSNull.class]);
 
-    REQUIRE([err localizedDescription] == nil);
+    NSDictionary* ast = result[1];
+
+    err = nil;
+    NSArray* results = requireSync(@"/fakedir/somefile.js", ast);
+    err = results[0];
+    NSArray* requires = results[1];
+
+    REQUIRE([err isKindOfClass:NSNull.class]);
     REQUIRE([requires count] == 1);
     REQUIRE([requires[0] isEqualToString:@"tofu"]);
-
-    delete parser;
 }
 
 TEST_CASE("Evaluates require expressions with the path module available", "[require]")
 {
     NSError* err = nil;
-    Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"'use unstrict'; require(path.join(__dirname, 'compound'));", &err)[0];
 
-    REQUIRE(err == nil);
+    NSArray* result = parseSync(@"'use unstrict'; require(path.join(__dirname, 'compound'));");
+    err = result[0];
+    NSDictionary* ast = result[1];
+
+    REQUIRE([err isKindOfClass:NSNull.class]);
 
     Require* require = new Require(nil);
-    NSArray* requires = require->findRequires(@"/fakedir/somefile.js", ast, &err);
 
-    REQUIRE([err localizedDescription] == nil);
+    err = nil;
+    NSArray* results = requireSync(@"/fakedir/somefile.js", ast);
+    err = results[0];
+    NSArray* requires = results[1];
+
+    REQUIRE([err isKindOfClass:NSNull.class]);
     REQUIRE([requires count] == 1);
     REQUIRE([requires[0] isEqualToString:@"/fakedir/compound"]);
-
-    delete parser;
 }
 
 /**
@@ -401,6 +448,8 @@ TEST_CASE("Converts the hbsfy transform", "[bundle]")
 
 TEST_CASE("Converts the babelify transform", "[bundle]")
 {
+    NSLog(@"Babelify is running");
+
     Paq* paq = new Paq(@[ @"fixtures/node_modules/babelify/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
     NSError* err = nil;
     NSString* bundle = paq->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &err);

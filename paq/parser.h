@@ -18,12 +18,13 @@
 class Parser {
 private:
     NSUInteger _max_tasks;
-    NSUInteger _roundRobinCounter;
-    NSMutableArray* _virtualMachines;
+    NSMutableArray* _contexts;
     dispatch_queue_t _accessQueue;
+    dispatch_semaphore_t _contextSema;
+    JSContext* createContext();
 
 public:
     Parser(NSDictionary* options);
     ~Parser();
-    NSArray* parse(NSString* code, NSError** err);
+    void parse(NSString* code, void (^callback)(NSError* error, NSDictionary* ast, NSString* source));
 };

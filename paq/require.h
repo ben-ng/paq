@@ -17,15 +17,16 @@
 class Require {
 private:
     NSUInteger _max_tasks;
-    NSUInteger _roundRobinCounter;
     NSString* _pathSrc;
-    NSMutableArray* _virtualMachines;
+    NSMutableArray* _contexts;
     dispatch_queue_t _accessQueue;
+    dispatch_semaphore_t _contextSema;
     BOOL _ignore_unresolvable;
     static BOOL isRequire(NSDictionary* node);
+    JSContext* createContext();
 
 public:
     Require(NSDictionary* options);
     ~Require();
-    NSArray* findRequires(NSString* path, NSDictionary* ast, NSError** error);
+    void findRequires(NSString* path, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires));
 };

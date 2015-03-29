@@ -40,7 +40,7 @@ private:
      */
 
     void depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, void (^callback)(NSDictionary* deps));
-    NSArray* _getAST(NSString* file, NSError** error);
+    void _getAST(NSString* file, void (^callback)(NSError* err, NSDictionary* ast, NSString* source));
     void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
     NSString* _insertGlobals(NSString* file, NSString* source);
 
