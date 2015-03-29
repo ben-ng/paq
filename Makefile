@@ -64,7 +64,7 @@ run-test:
 	e="$${e/Release/GCov_Build}" && \
 	echo "Running tests from $$e" && \
 	cd $$e && \
-	./paq-tests && echo "passed" > ~/paq-passed.txt
+	./paq-tests && echo "passed" > ~/paq-passed.txt || true
 	@if test -f "~/paq-passed.txt"; then sleep 5 && cd $(diag_reports) && cat $$(ls | grep "paq-tests" -m 1) && cat "$(diag_reports)/$$f"; fi;
 	@unlink ~/paq-passed.txt
 
