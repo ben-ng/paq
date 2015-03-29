@@ -21,9 +21,10 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
 {
     __block BOOL callbackWasCalled = NO;
     __block NSString* cbData = nil;
-    JSContext* ctx = JSContextExtensions::create();
 
     NSString* wrappedBundle = [NSString stringWithFormat:@"var global = {}, exports = {}, module={exports:exports};%@;", transformString];
+
+    JSContext* ctx = JSContextExtensions::create();
 
     ctx.exceptionHandler = ^(JSContext* ctx, JSValue* e) {
         NSLog(@"JS Error: %@", [e toString]);
@@ -45,6 +46,8 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
     }
 
     ctx.exceptionHandler = nil;
+    ctx[@"transformCb"] = nil;
+    ctx = nil;
 
     return cbData;
 }
@@ -376,7 +379,6 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     delete paq;
 }
 
-/*
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
@@ -410,7 +412,6 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
 
     delete paq;
 }
-*/
 
 /*
 TEST_CASE("Uses hbsfy transform", "[bundle]")
