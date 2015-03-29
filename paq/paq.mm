@@ -128,6 +128,11 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
         
         // This will go into a concurrent queue
         _resolveRequires(requires, parent, ^(NSArray *resolved) {
+            // Do nothing if deallocated
+            if (this == nil) {
+                return;
+            }
+            
             // Still in the resolve queue
             // Move to the main serial queue
             dispatch_async(_serialQ, ^{
@@ -142,18 +147,22 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
                     }
                 }
                 
-                _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
-                _unprocessed--;
-                
-                // Dispatch new tasks
+                // Dispatch new tasks for each new module
                 for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
-                    if(_module_map[resolved[i]] == nil) {
+                    // If resolved[i] == file then it is the one we just resolved
+                    if(_module_map[resolved[i]] == nil && resolved[i] != file) {
                         NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
                         _unprocessed++;
                         _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
                         deps(resolved[i], parent, NO);
                     }
                 }
+                
+                // Must decrement after dispatching because on slow machines with few threads, those tasks ^
+                // may complete before we do. By decrementing last, we ensure that we keep _unprocessed above zero
+                // and that we are definitely the last task to complete
+                _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
+                _unprocessed--;
                 
                 // _deps_callback could be nil if the object gets deallocated before it is called
                 if(_unprocessed == 0 && _deps_callback != nil) {

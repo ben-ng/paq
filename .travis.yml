@@ -19,16 +19,6 @@ script:
   - make run-test
   - echo "Test run 5"
   - make run-test
-  - echo "Test run 6"
-  - make run-test
-  - echo "Test run 7"
-  - make run-test
-  - echo "Test run 8"
-  - make run-test
-  - echo "Test run 9"
-  - make run-test
-  - echo "Test run 10"
-  - make run-test
 
 after_failure:
   - echo "Waiting 5 seconds for crash reports..."
