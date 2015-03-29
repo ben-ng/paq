@@ -339,7 +339,6 @@ TEST_CASE("Creates a basic bundle", "[bundle]")
     delete paq;
 }
 
-/*
 TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], @{ @"parserTasks" : [NSNumber numberWithInt:1],
@@ -349,6 +348,35 @@ TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
     delete paq;
 }
 
+TEST_CASE("Bundles node core modules", "[bundle]")
+{
+    Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
+    REQUIRE([paq->evalToString() isEqualToString:@"a/b"]);
+
+    delete paq;
+}
+
+TEST_CASE("Inserts module globals", "[bundle]")
+{
+    Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
+    REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
+
+    delete paq;
+}
+
+TEST_CASE("Ignores unevaluated expressions", "[bundle]")
+{
+    // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
+    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
+    NSError* err = nil;
+    NSString* bundle = paq->bundleSync(nil, &err);
+    REQUIRE(err == nil);
+    REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
+
+    delete paq;
+}
+
+/*
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
@@ -379,34 +407,6 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
 
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"React.createElement("].location != NSNotFound);
-
-    delete paq;
-}
-
-TEST_CASE("Bundles node core modules", "[bundle]")
-{
-    Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
-    REQUIRE([paq->evalToString() isEqualToString:@"a/b"]);
-
-    delete paq;
-}
-
-TEST_CASE("Inserts module globals", "[bundle]")
-{
-    Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
-    REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
-
-    delete paq;
-}
-
-TEST_CASE("Ignores unevaluated expressions", "[bundle]")
-{
-    // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
-    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
-    NSError* err = nil;
-    NSString* bundle = paq->bundleSync(nil, &err);
-    REQUIRE(err == nil);
-    REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
 
     delete paq;
 }
