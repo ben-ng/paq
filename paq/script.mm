@@ -18,11 +18,11 @@ NSDictionary* Script::getNativeBuiltins()
     }
 
     NSError* err = nil;
-    NSDictionary* out = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size freeWhenDone:NO] options:0 error:&err];
+    NSDictionary* output = [NSJSONSerialization JSONObjectWithData:[NSData dataWithBytesNoCopy:JS_SOURCE length:size freeWhenDone:NO] options:0 error:&err];
 
-    if (out == nil) {
+    if (output == nil) {
         [NSException raise:@"Fatal Exception" format:@"Could not parse the __builtins_src data as JSON"];
     }
 
-    return out;
+    return output;
 }

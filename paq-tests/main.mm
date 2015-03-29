@@ -367,7 +367,6 @@ TEST_CASE("Inserts module globals", "[bundle]")
     delete paq;
 }
 
-/*
 TEST_CASE("Ignores unevaluated expressions", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
@@ -380,6 +379,7 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     delete paq;
 }
 
+/*
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
