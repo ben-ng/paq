@@ -359,7 +359,6 @@ TEST_CASE("Bundles node core modules", "[bundle]")
     delete paq;
 }
 
-/*
 TEST_CASE("Inserts module globals", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
@@ -368,6 +367,7 @@ TEST_CASE("Inserts module globals", "[bundle]")
     delete paq;
 }
 
+/*
 TEST_CASE("Ignores unevaluated expressions", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
