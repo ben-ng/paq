@@ -9,15 +9,9 @@ before_install:
 script:
   - echo "Compiling tests"
   - make compile-test
-  - echo "Test run 1"
   - make run-test
-  - echo "Test run 2"
   - make run-test
-  - echo "Test run 3"
   - make run-test
-  - echo "Test run 4"
-  - make run-test
-  - echo "Test run 5"
   - make run-test
 
 after_failure:
