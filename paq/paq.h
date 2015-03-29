@@ -19,16 +19,14 @@ private:
     unsigned int _max_parser_contexts;
     unsigned int _max_require_contexts;
     unsigned long _unprocessed;
-    dispatch_semaphore_t _parser_contexts;
     dispatch_semaphore_t _require_contexts;
-    dispatch_queue_t _parserCtxQ;
     dispatch_queue_t _requireCtxQ;
     dispatch_queue_t _resolveQ;
     dispatch_queue_t _serialQ;
     dispatch_queue_t _concurrentQ;
+    Parser* _parser;
     Resolve* _resolve;
     NSMutableDictionary* _module_map;
-    NSMutableArray* _available_parser_contexts;
     NSMutableArray* _available_require_contexts;
     NSArray* _entry;
     NSDictionary* _options;
@@ -49,7 +47,7 @@ private:
     void (^_deps_callback)(NSDictionary* deps);
 
     void deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry);
-    void _getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* source));
+    NSArray* _getAST(NSString* file, NSError** error);
     void _findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires));
     void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
     NSString* _insertGlobals(NSString* file, NSString* source);

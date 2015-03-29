@@ -56,35 +56,44 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
 TEST_CASE("Parser returns a valid AST for valid code", "[parser]")
 {
     NSError* err = nil;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"require(path.join(__dirname, 'path'))", &err);
+    Parser* parser = new Parser(nil);
+    NSDictionary* ast = parser->parse(@"require(path.join(__dirname, 'path'))", &err);
 
     REQUIRE(err == nil);
     REQUIRE(ast[@"type"] != nil);
     REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
     REQUIRE([((NSArray*)ast[@"body"])count] == 1);
     REQUIRE([((NSString*)ast[@"body"][0][@"type"])isEqualToString:@"ExpressionStatement"]);
+
+    delete parser;
 }
 
 TEST_CASE("Parser returns an error for invalid code", "[parser]")
 {
     NSError* err = nil;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"var unbalanced = {", &err);
+    Parser* parser = new Parser(nil);
+    NSDictionary* ast = parser->parse(@"var unbalanced = {", &err);
 
     REQUIRE(err != nil);
     REQUIRE([err.localizedDescription isEqualToString:@"SyntaxError: Unexpected token (1:18)"]);
     REQUIRE(ast == nil);
+
+    delete parser;
 }
 
 TEST_CASE("Parser works on executable scripts", "[parser]")
 {
     NSError* err = nil;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"#!/usr/local/bin/node\nrequire(__dirname + 'path')", &err);
+    Parser* parser = new Parser(nil);
+    NSDictionary* ast = parser->parse(@"#!/usr/local/bin/node\nrequire(__dirname + 'path')", &err);
 
     REQUIRE(err == nil);
     REQUIRE(ast[@"type"] != nil);
     REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
     REQUIRE([((NSArray*)ast[@"body"])count] == 1);
     REQUIRE([((NSString*)ast[@"body"][0][@"type"])isEqualToString:@"ExpressionStatement"]);
+
+    delete parser;
 }
 
 /**
@@ -94,7 +103,8 @@ TEST_CASE("Parser works on executable scripts", "[parser]")
 TEST_CASE("Traverses an AST", "[traverse]")
 {
     NSError* err = nil;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"require(__dirname + 'path')", &err);
+    Parser* parser = new Parser(nil);
+    NSDictionary* ast = parser->parse(@"require(__dirname + 'path')", &err);
     __block unsigned int nodeCounter = 0;
 
     Traverse::walk(ast, ^(NSObject* node) {
@@ -102,6 +112,8 @@ TEST_CASE("Traverses an AST", "[traverse]")
     });
 
     REQUIRE(nodeCounter == 7);
+
+    delete parser;
 }
 
 /**
@@ -111,7 +123,8 @@ TEST_CASE("Traverses an AST", "[traverse]")
 TEST_CASE("Extracts literal requires", "[require]")
 {
     NSError* err = nil;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"if(1) { require('tofu'); }", &err);
+    Parser* parser = new Parser(nil);
+    NSDictionary* ast = parser->parse(@"if(1) { require('tofu'); }", &err);
 
     REQUIRE(err == nil);
 
@@ -120,12 +133,15 @@ TEST_CASE("Extracts literal requires", "[require]")
     REQUIRE([err localizedDescription] == nil);
     REQUIRE([requires count] == 1);
     REQUIRE([requires[0] isEqualToString:@"tofu"]);
+
+    delete parser;
 }
 
 TEST_CASE("Evaluates require expressions with the path module available", "[require]")
 {
     NSError* err = nil;
-    NSDictionary* ast = Parser::parse(Parser::createContext(), @"'use unstrict'; require(path.join(__dirname, 'compound'));", &err);
+    Parser* parser = new Parser(nil);
+    NSDictionary* ast = parser->parse(@"'use unstrict'; require(path.join(__dirname, 'compound'));", &err);
 
     REQUIRE(err == nil);
 
@@ -134,11 +150,12 @@ TEST_CASE("Evaluates require expressions with the path module available", "[requ
     REQUIRE([err localizedDescription] == nil);
     REQUIRE([requires count] == 1);
     REQUIRE([requires[0] isEqualToString:@"/fakedir/compound"]);
+
+    delete parser;
 }
 
 /**
  * Resolve
- */
 
 TEST_CASE("Creates node_module paths", "[resolve]")
 {
@@ -257,11 +274,11 @@ TEST_CASE("Resolves global", "[resolve]")
     std::cout << "Test H destroying Resolve" << std::endl;
     delete resolver;
     std::cout << "Test H destroyed Resolve" << std::endl;
-}
+ }
+ */
 
 /**
  * paq: deps
- */
 
 TEST_CASE("Creates a dependency map", "[deps]")
 {
@@ -328,11 +345,11 @@ TEST_CASE("Creates a dependency map", "[deps]")
     std::cout << "Test I destroying Paq" << std::endl;
     delete paq;
     std::cout << "Test I destroyed Paq" << std::endl;
-}
+ }
+ */
 
 /**
  * paq: bundle
- */
 
 TEST_CASE("Creates a basic bundle", "[bundle]")
 {
@@ -425,7 +442,8 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     std::cout << "Test P destroying Paq" << std::endl;
     delete paq;
     std::cout << "Test P destroyed Paq" << std::endl;
-}
+ }
+ */
 
 /*
 TEST_CASE("Uses hbsfy transform", "[bundle]")

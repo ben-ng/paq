@@ -14,16 +14,14 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     _max_parser_contexts = 0;
     _max_require_contexts = 0;
     _unprocessed = 0;
-    _parser_contexts = nil;
     _require_contexts = nil;
-    _parserCtxQ = nil;
     _requireCtxQ = nil;
     _resolveQ = nil;
     _serialQ = nil;
     _concurrentQ = nil;
+    _parser = nil;
     _resolve = nil;
     _module_map = nil;
-    _available_parser_contexts = nil;
     _available_require_contexts = nil;
     _entry = nil;
     _options = nil;
@@ -34,15 +32,10 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
         [NSException raise:@"INVALID_ARGUMENT" format:@"Paq must be initialized with an NSArray of NSString entry file paths"];
     }
 
-    // Parser contexts are JSContexts with acorn loaded up inside them
-    _max_parser_contexts = options[@"parserTasks"] ? [options[@"parserTasks"] intValue] : 2;
+    _parser = new Parser(@{ @"maxTasks" : options[@"parserTasks"] });
 
     // Require contexts are JSContexts with escodegen loaded up inside them
     _max_require_contexts = options[@"requireTasks"] ? [options[@"requireTasks"] intValue] : 2;
-
-    if (_max_parser_contexts <= 0) {
-        _max_parser_contexts = 1;
-    }
 
     if (_max_require_contexts <= 0) {
         _max_require_contexts = 1;
@@ -64,12 +57,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     _resolve = new Resolve(@{ @"nativeModules" : _nativeModules });
 
     // Create JSContexts for parsing and require parsing
-    _available_parser_contexts = [[NSMutableArray alloc] initWithCapacity:_max_parser_contexts];
     _available_require_contexts = [[NSMutableArray alloc] initWithCapacity:_max_require_contexts];
-
-    for (int i = 0; i < _max_parser_contexts; i++) {
-        [_available_parser_contexts addObject:Parser::createContext()];
-    }
 
     for (int i = 0; i < _max_require_contexts; i++) {
         [_available_require_contexts addObject:Require::createContext(_nativeModules[@"path"])];
@@ -78,7 +66,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     // Resolve paths to entry files
     NSMutableArray* mutableEntries = [[NSMutableArray alloc] initWithCapacity:[entry count]];
 
-    for (NSUInteger i = 0, ii = [entry count]; i < ii; ++i) {
+    for (NSUInteger i = 0, ii = entry.count; i < ii; ++i) {
         [mutableEntries addObject:_resolve->path_resolve(@[ entry[i] ])];
     }
 
@@ -95,12 +83,10 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     }
 
     // Initialize multithreading stuff
-    _parser_contexts = dispatch_semaphore_create(_max_parser_contexts);
     _require_contexts = dispatch_semaphore_create(_max_require_contexts);
 
     _serialQ = dispatch_queue_create("paq.serial", DISPATCH_QUEUE_SERIAL);
     _resolveQ = dispatch_queue_create("paq.resolve.serial", DISPATCH_QUEUE_SERIAL);
-    _parserCtxQ = dispatch_queue_create("paq.parser-ctx.serial", DISPATCH_QUEUE_SERIAL);
     _requireCtxQ = dispatch_queue_create("paq.require-ctx.serial", DISPATCH_QUEUE_SERIAL);
     _concurrentQ = dispatch_queue_create("paq.concurrent", DISPATCH_QUEUE_CONCURRENT);
 };
@@ -137,52 +123,65 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
     }
 
     dispatch_async(_serialQ, ^{
-        _getAST(file, ^(NSDictionary *ast, NSString *source) {
-            // Here we are in the parser context queue
-            // After this, findRequires enters the require ctx queue
-            _findRequires(file, ast, ^(NSError* error, NSArray *requires) {
-                // Probably some problem with evaluating a require expression or something
-                if(error) {
-                    NSLog(@"%@", error.localizedDescription);
-                    exit(EXIT_FAILURE);
-                }
-                
-                // Here we are in the require context queue
-                // This will go into the resolve queue
-                _resolveRequires(requires, parent, ^(NSArray *resolved) {
-                    // Still in the resolve queue
-                    // Move to the main serial queue
-                    dispatch_async(_serialQ, ^{
-                        // Pull together the requires and resolved result for later
-                        NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
-                        for(long i=0, ii=[resolved count]; i<ii; ++i) {
-                            zip[requires[i]] = resolved[i];
-                            
-                            // Add native modules to the map as they are discovered
-                            if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
-                                _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
-                            }
-                        }
+        NSDictionary *ast = nil;
+        NSString *source = nil;
+        NSError *err = nil;
+        NSArray *parseResult = _getAST(file, &err);
+        
+        if(parseResult == nil) {
+            if(err != nil) {
+                NSLog(@"Failing because of error: %@", err.localizedDescription);
+            }
+            exit(EXIT_FAILURE);
+        }
+        
+        ast = parseResult[0];
+        source = parseResult[0];
+        
+        // Here we are in the parser context queue
+        // After this, findRequires enters the require ctx queue
+        _findRequires(file, ast, ^(NSError* error, NSArray *requires) {
+            // Probably some problem with evaluating a require expression or something
+            if(error) {
+                NSLog(@"%@", error.localizedDescription);
+                exit(EXIT_FAILURE);
+            }
+            
+            // Here we are in the require context queue
+            // This will go into the resolve queue
+            _resolveRequires(requires, parent, ^(NSArray *resolved) {
+                // Still in the resolve queue
+                // Move to the main serial queue
+                dispatch_async(_serialQ, ^{
+                    // Pull together the requires and resolved result for later
+                    NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
+                    for(long i=0, ii=[resolved count]; i<ii; ++i) {
+                        zip[requires[i]] = resolved[i];
                         
-                        _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
-                        _unprocessed--;
-                        
-                        // Dispatch new tasks
-                        for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
-                            if(_module_map[resolved[i]] == nil) {
-                                NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
-                                _unprocessed++;
-                                _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
-                                deps(resolved[i], parent, NO);
-                            }
+                        // Add native modules to the map as they are discovered
+                        if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
+                            _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
                         }
-                        
-                        if(_unprocessed == 0) {
-                            // See header file for the structure of the deps callback argument
-                            _deps_callback(_module_map);
-                            _deps_callback = nil;
+                    }
+                    
+                    _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
+                    _unprocessed--;
+                    
+                    // Dispatch new tasks
+                    for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
+                        if(_module_map[resolved[i]] == nil) {
+                            NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
+                            _unprocessed++;
+                            _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
+                            deps(resolved[i], parent, NO);
                         }
-                    });
+                    }
+                    
+                    if(_unprocessed == 0) {
+                        // See header file for the structure of the deps callback argument
+                        _deps_callback(_module_map);
+                        _deps_callback = nil;
+                    }
                 });
             });
         });
@@ -237,47 +236,35 @@ NSString* Paq::_insertGlobals(NSString* file, NSString* source)
     return source;
 }
 
-void Paq::_getAST(NSString* file, void (^callback)(NSDictionary* ast, NSString* source))
+NSArray* Paq::_getAST(NSString* file, NSError** error)
 {
-    dispatch_async(_parserCtxQ, ^{
-        dispatch_semaphore_wait(_parser_contexts, 60 * NSEC_PER_SEC);
-        JSContext *parserCtx = (JSContext *) [_available_parser_contexts lastObject];
-        [_available_parser_contexts removeLastObject];
-        
-        // Replace broken contexts with new ones
-        // FIXME: Why the fuck does this even happen?? I think its when an exception happens. Everything just breaks inside the context.
-        if([parserCtx globalObject] == nil) {
-            parserCtx = Parser::createContext();
+    NSError* err;
+    NSString* source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&err];
+
+    if (source == nil) {
+        if (error && err != nil) {
+            *error = err;
         }
-        
-        dispatch_async(_concurrentQ, ^{
-            NSError *error;
-            NSString *source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
-            
-            if(source == nil) {
-                [NSException raise:@"Fatal Exception" format:@"Failed to read source code from %@: %@", file, error.localizedDescription];
-            }
-            
-            if([file.pathExtension isEqualToString:@"json"]) {
-                source = [@"module.exports=" stringByAppendingString:source];
-            }
-            
-            // Insert globals now, because the replacements have require calls in them
-            source = _insertGlobals(file, source);
-            
-            NSDictionary *ast = Parser::parse(parserCtx, source, &error);
-            
-            if(ast == nil) {
-                [NSException raise:@"Fatal Exception" format:@"Failed to parse source code from %@: %@", file, error.localizedDescription];
-            }
-            
-            dispatch_async(_parserCtxQ, ^{
-                [_available_parser_contexts addObject:parserCtx];
-                dispatch_semaphore_signal(_parser_contexts);
-                callback(ast, source);
-            });
-        });
-    });
+        return nil;
+    }
+
+    if ([file.pathExtension isEqualToString:@"json"]) {
+        source = [@"module.exports=" stringByAppendingString:source];
+    }
+
+    // Insert globals now, because the replacements have require calls in them
+    source = _insertGlobals(file, source);
+
+    NSDictionary* ast = _parser->parse(source, &err);
+
+    if (ast == nil) {
+        if (error && err != nil) {
+            *error = err;
+        }
+        return nil;
+    }
+
+    return @[ ast, source ];
 };
 
 void Paq::_findRequires(NSString* file, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires))
@@ -410,17 +397,11 @@ Paq::~Paq()
 {
     std::cout << "Destroying Paq" << std::endl;
     std::cout << "1" << std::endl;
-    [_available_parser_contexts removeAllObjects];
     [_available_require_contexts removeAllObjects];
     std::cout << "2" << std::endl;
-    _available_parser_contexts = nil;
     _available_require_contexts = nil;
-    std::cout << "3" << std::endl;
-    _parser_contexts = nil;
     std::cout << "4" << std::endl;
     _require_contexts = nil;
-    std::cout << "5" << std::endl;
-    _parserCtxQ = nil;
     std::cout << "6" << std::endl;
     _requireCtxQ = nil;
     std::cout << "7" << std::endl;

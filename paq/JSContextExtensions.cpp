@@ -13,16 +13,20 @@ JSContext* JSContextExtensions::create()
 {
     JSContext* ctx = [[JSContext alloc] init];
 
-    void (^setTimeout)(JSValue*, JSValue*) = ^(JSValue* function, JSValue* timeout) {
+    NSArray* logFunctions = @[ @"log", @"info", @"warn", @"debug", @"error" ];
+
+    ctx[@"setTimeout"] = ^(JSValue* function, JSValue* timeout) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([timeout toInt32] * NSEC_PER_MSEC)), dispatch_get_main_queue(), ^{
             [function callWithArguments:@[]];
         });
     };
 
-    NSArray* logFunctions = @[ @"log", @"info", @"warn", @"debug", @"error" ];
+    ctx[@"setImmediate"] = ^(JSValue* function, JSValue* timeout) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([timeout toInt32] * NSEC_PER_MSEC)), dispatch_get_main_queue(), ^{
+            [function callWithArguments:@[]];
+        });
+    };
 
-    ctx[@"setTimeout"] = setTimeout;
-    ctx[@"setImmediate"] = setTimeout;
     [ctx evaluateScript:@"console = {}"];
 
     for (NSUInteger i = 0, ii = logFunctions.count; i < ii; ++i) {

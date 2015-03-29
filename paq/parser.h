@@ -16,7 +16,14 @@
  */
 
 class Parser {
+private:
+    NSUInteger _max_tasks;
+    NSUInteger _roundRobinCounter;
+    NSMutableArray* _virtualMachines;
+    dispatch_queue_t _accessQueue;
+
 public:
-    static NSDictionary* parse(JSContext* ctx, NSString* code, NSError** err);
-    static JSContext* createContext();
+    Parser(NSDictionary* options);
+    ~Parser();
+    NSDictionary* parse(NSString* code, NSError** err);
 };
