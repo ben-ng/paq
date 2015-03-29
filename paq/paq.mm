@@ -155,7 +155,8 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
                     }
                 }
                 
-                if(_unprocessed == 0) {
+                // _deps_callback could be nil if the object gets deallocated before it is called
+                if(_unprocessed == 0 && _deps_callback != nil) {
                     // See header file for the structure of the deps callback argument
                     _deps_callback(_module_map);
                     _deps_callback = nil;
