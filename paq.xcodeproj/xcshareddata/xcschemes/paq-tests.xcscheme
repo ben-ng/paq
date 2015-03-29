@@ -69,11 +69,6 @@
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>
-         <AdditionalOption
-            key = "MallocGuardEdges"
-            value = ""
-            isEnabled = "YES">
-         </AdditionalOption>
       </AdditionalOptions>
    </LaunchAction>
    <ProfileAction
