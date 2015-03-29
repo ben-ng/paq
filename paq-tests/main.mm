@@ -47,6 +47,9 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
 
     ctx.exceptionHandler = nil;
     ctx[@"transformCb"] = nil;
+
+    JSContextExtensions::destroy(ctx);
+
     ctx = nil;
 
     return cbData;
@@ -379,7 +382,6 @@ TEST_CASE("Ignores unevaluated expressions", "[bundle]")
     delete paq;
 }
 
-/*
 TEST_CASE("Converts the hbsfy transform", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
@@ -414,6 +416,7 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
     delete paq;
 }
 
+/*
 TEST_CASE("Uses hbsfy transform", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected

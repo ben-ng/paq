@@ -12,4 +12,5 @@
 class JSContextExtensions {
 public:
     static JSContext* create();
+    static void destroy(JSContext*);
 };

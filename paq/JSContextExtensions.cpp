@@ -35,3 +35,9 @@ JSContext* JSContextExtensions::create()
 
     return ctx;
 }
+
+void JSContextExtensions::destroy(JSContext* ctx)
+{
+    ctx[@"setTimeout"] = nil;
+    ctx[@"setImmediate"] = nil;
+}
