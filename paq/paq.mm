@@ -19,7 +19,6 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     _entry = nil;
     _options = nil;
     _nativeModules = nil;
-    _deps_callback = nil;
 
     if (entry == nil) {
         [NSException raise:@"INVALID_ARGUMENT" format:@"Paq must be initialized with an NSArray of NSString entry file paths"];
@@ -72,13 +71,13 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 void Paq::deps(void (^callback)(NSDictionary* dependencies))
 {
     // Called when dependencies are done processing
-    _deps_callback = [callback copy];
+    void (^callbackCopy)(NSDictionary*) = [callback copy];
 
     for (long i = 0, ii = [_entry count]; i < ii; ++i) {
         if (_module_map[_entry[i]] == nil) {
             _unprocessed++;
             _module_map[_entry[i]] = [NSNumber numberWithBool:NO];
-            deps(_entry[i], _resolve->makeModuleStub(_entry[i]), YES);
+            depsHelper(_entry[i], _resolve->makeModuleStub(_entry[i]), YES, callbackCopy);
         }
     }
 }
@@ -94,7 +93,7 @@ void Paq::bundle(NSDictionary* options, void (^callback)(NSError* error, NSStrin
     });
 };
 
-void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
+void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, void (^callback)(NSDictionary* deps))
 {
     if (!file.isAbsolutePath) {
         [NSException raise:@"Fatal Exception" format:@"Paq::deps must always be called with absolute paths to avoid infinite recursion. You called it with \"%@\"", file];
@@ -154,7 +153,7 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
                     NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
                     _unprocessed++;
                     _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
-                    deps(resolved[i], parent, NO);
+                    depsHelper(resolved[i], parent, NO, callback);
                 }
             }
             
@@ -164,11 +163,11 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
             _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
             _unprocessed--;
             
-            // _deps_callback could be nil if the object gets deallocated before it is called
-            if(_unprocessed == 0 && _deps_callback != nil) {
+            // callback could be nil if the object gets deallocated before it is called?
+            // TODO:: only a maybe. try removing this later.
+            if(_unprocessed == 0 && callback != nil) {
                 // See header file for the structure of the deps callback argument
-                _deps_callback(_module_map);
-                _deps_callback = nil;
+                callback(_module_map);
             }
         });
     });
@@ -336,7 +335,6 @@ Paq::~Paq()
     _entry = nil;
     _options = nil;
     _nativeModules = nil;
-    _deps_callback = nil;
     delete _resolve;
     delete _require;
 }
