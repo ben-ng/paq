@@ -7,7 +7,7 @@ before_install:
   - ulimit -c unlimited -S
 
 script:
-  - lldb make test
+  - make test
 
 after_success:
   - make slather
