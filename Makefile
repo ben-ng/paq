@@ -1,4 +1,5 @@
 d=$$(xcodebuild -showBuildSettings 2> /dev/null | grep TARGET_BUILD_DIR | cut -c24-)
+diag_reports=~/Library/Logs/DiagnosticReports
 
 all: js cli
 
@@ -63,7 +64,12 @@ run-test:
 	e="$${e/Release/GCov_Build}" && \
 	echo "Running tests from $$e" && \
 	cd $$e && \
-	./paq-tests
+	./paq-tests && echo "passed" > ~/paq-passed.txt
+	@if test -f "~/paq-passed.txt"; then cd $(diag_reports) && cat $$(ls | grep "paq-tests" -m 1) && cat "$(diag_reports)/$$f"; fi;
+	@unlink ~/paq-passed.txt
+
+show-crash:
+	@cd $(diag_reports) && cat $$(ls | grep "paq-tests" -m 1)
 
 show-build-dir:
 	@e=$d && \
