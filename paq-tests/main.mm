@@ -351,6 +351,7 @@ TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
     delete paq;
 }
 
+/*
 TEST_CASE("Bundles node core modules", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
@@ -413,7 +414,6 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
     delete paq;
 }
 
-/*
 TEST_CASE("Uses hbsfy transform", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
