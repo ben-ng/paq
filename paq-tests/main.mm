@@ -63,7 +63,7 @@ TEST_CASE("Parser returns a valid AST for valid code", "[parser]")
 {
     NSError* err = nil;
     Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"require(path.join(__dirname, 'path'))", &err);
+    NSDictionary* ast = parser->parse(@"require(path.join(__dirname, 'path'))", &err)[0];
 
     REQUIRE(err == nil);
     REQUIRE(ast[@"type"] != nil);
@@ -78,7 +78,7 @@ TEST_CASE("Parser returns an error for invalid code", "[parser]")
 {
     NSError* err = nil;
     Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"var unbalanced = {", &err);
+    NSDictionary* ast = parser->parse(@"var unbalanced = {", &err)[0];
 
     REQUIRE(err != nil);
     REQUIRE([err.localizedDescription isEqualToString:@"SyntaxError: Unexpected token (1:18)"]);
@@ -91,7 +91,7 @@ TEST_CASE("Parser works on executable scripts", "[parser]")
 {
     NSError* err = nil;
     Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"#!/usr/local/bin/node\nrequire(__dirname + 'path')", &err);
+    NSDictionary* ast = parser->parse(@"#!/usr/local/bin/node\nrequire(__dirname + 'path')", &err)[0];
 
     REQUIRE(err == nil);
     REQUIRE(ast[@"type"] != nil);
@@ -110,7 +110,7 @@ TEST_CASE("Traverses an AST", "[traverse]")
 {
     NSError* err = nil;
     Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"require(__dirname + 'path')", &err);
+    NSDictionary* ast = parser->parse(@"require(__dirname + 'path')", &err)[0];
     __block unsigned int nodeCounter = 0;
 
     Traverse::walk(ast, ^(NSObject* node) {
@@ -130,7 +130,7 @@ TEST_CASE("Extracts literal requires", "[require]")
 {
     NSError* err = nil;
     Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"if(1) { require('tofu'); }", &err);
+    NSDictionary* ast = parser->parse(@"if(1) { require('tofu'); }", &err)[0];
 
     REQUIRE(err == nil);
 
@@ -148,7 +148,7 @@ TEST_CASE("Evaluates require expressions with the path module available", "[requ
 {
     NSError* err = nil;
     Parser* parser = new Parser(nil);
-    NSDictionary* ast = parser->parse(@"'use unstrict'; require(path.join(__dirname, 'compound'));", &err);
+    NSDictionary* ast = parser->parse(@"'use unstrict'; require(path.join(__dirname, 'compound'));", &err)[0];
 
     REQUIRE(err == nil);
 

@@ -49,7 +49,7 @@ NSArray* Require::findRequires(NSString* path, NSDictionary* ast, NSError** erro
         exit(EXIT_FAILURE);
     }
 
-    NSString* src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
+    NSString* src = [[NSString alloc] initWithBytes:JS_SOURCE length:size encoding:NSUTF8StringEncoding];
 
     [ctx evaluateScript:src];
 

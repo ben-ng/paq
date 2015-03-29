@@ -72,7 +72,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 void Paq::deps(void (^callback)(NSDictionary* dependencies))
 {
     // Called when dependencies are done processing
-    _deps_callback = [callback copy]g;
+    _deps_callback = [callback copy];
 
     for (long i = 0, ii = [_entry count]; i < ii; ++i) {
         if (_module_map[_entry[i]] == nil) {
@@ -100,77 +100,76 @@ void Paq::deps(NSString* file, NSMutableDictionary* parent, BOOL isEntry)
         [NSException raise:@"Fatal Exception" format:@"Paq::deps must always be called with absolute paths to avoid infinite recursion. You called it with \"%@\"", file];
     }
 
-    dispatch_async(_serialQ, ^{
-        NSDictionary *ast = nil;
-        NSString *source = nil;
-        NSError *err = nil;
-        NSArray *parseResult = _getAST(file, &err);
-        
-        if(parseResult == nil) {
-            if(err != nil) {
-                NSLog(@"Failing because of error: %@", err.localizedDescription);
-            }
-            exit(EXIT_FAILURE);
+    // This stuff can be done concurrently
+    NSDictionary* ast = nil;
+    NSString* source = nil;
+    NSError* err = nil;
+    NSArray* parseResult = _getAST(file, &err);
+
+    if (parseResult == nil) {
+        if (err != nil) {
+            NSLog(@"Failing because of error: %@", err.localizedDescription);
+        }
+        exit(EXIT_FAILURE);
+    }
+
+    ast = parseResult[0];
+    source = parseResult[1];
+
+    // Here we are in the parser context queue
+    // After this, findRequires enters the require ctx queue
+    NSArray* requires = _require->findRequires(file, ast, &err);
+
+    // Probably some problem with evaluating a require expression or something
+    if (requires == nil) {
+        NSLog(@"%@", err.localizedDescription);
+        exit(EXIT_FAILURE);
+    }
+
+    // This will go into a concurrent queue
+    _resolveRequires(requires, parent, ^(NSArray* resolved) {
+        // Do nothing if deallocated
+        if (this == nil) {
+            return;
         }
         
-        ast = parseResult[0];
-        source = parseResult[1];
-        
-        // Here we are in the parser context queue
-        // After this, findRequires enters the require ctx queue
-        NSArray *requires = _require->findRequires(file, ast, &err);
-        
-        // Probably some problem with evaluating a require expression or something
-        if(requires == nil) {
-            NSLog(@"%@", err.localizedDescription);
-            exit(EXIT_FAILURE);
-        }
-        
-        // This will go into a concurrent queue
-        _resolveRequires(requires, parent, ^(NSArray *resolved) {
-            // Do nothing if deallocated
-            if (this == nil) {
-                return;
+        // Still in the resolve queue
+        // Move to the main serial queue
+        dispatch_async(_serialQ, ^{
+            // Pull together the requires and resolved result for later
+            NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
+            for(long i=0, ii=[resolved count]; i<ii; ++i) {
+                zip[requires[i]] = resolved[i];
+                
+                // Add native modules to the map as they are discovered
+                if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
+                    _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
+                }
             }
             
-            // Still in the resolve queue
-            // Move to the main serial queue
-            dispatch_async(_serialQ, ^{
-                // Pull together the requires and resolved result for later
-                NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
-                for(long i=0, ii=[resolved count]; i<ii; ++i) {
-                    zip[requires[i]] = resolved[i];
-                    
-                    // Add native modules to the map as they are discovered
-                    if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
-                        _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
-                    }
+            // Dispatch new tasks for each new module
+            for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
+                // If resolved[i] == file then it is the one we just resolved
+                if(_module_map[resolved[i]] == nil && resolved[i] != file) {
+                    NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
+                    _unprocessed++;
+                    _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
+                    deps(resolved[i], parent, NO);
                 }
-                
-                // Dispatch new tasks for each new module
-                for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
-                    // If resolved[i] == file then it is the one we just resolved
-                    if(_module_map[resolved[i]] == nil && resolved[i] != file) {
-                        NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
-                        _unprocessed++;
-                        _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
-                        deps(resolved[i], parent, NO);
-                    }
-                }
-                
-                // Must decrement after dispatching because on slow machines with few threads, those tasks ^
-                // may complete before we do. By decrementing last, we ensure that we keep _unprocessed above zero
-                // and that we are definitely the last task to complete
-                _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
-                _unprocessed--;
-                
-                // _deps_callback could be nil if the object gets deallocated before it is called
-                if(_unprocessed == 0 && _deps_callback != nil) {
-                    // See header file for the structure of the deps callback argument
-                    _deps_callback(_module_map);
-                    _deps_callback = nil;
-                }
-            });
+            }
+            
+            // Must decrement after dispatching because on slow machines with few threads, those tasks ^
+            // may complete before we do. By decrementing last, we ensure that we keep _unprocessed above zero
+            // and that we are definitely the last task to complete
+            _module_map[file] = @{@"source": source, @"deps": zip, @"entry": [NSNumber numberWithBool:isEntry]};
+            _unprocessed--;
+            
+            // _deps_callback could be nil if the object gets deallocated before it is called
+            if(_unprocessed == 0 && _deps_callback != nil) {
+                // See header file for the structure of the deps callback argument
+                _deps_callback(_module_map);
+                _deps_callback = nil;
+            }
         });
     });
 }
@@ -242,16 +241,16 @@ NSArray* Paq::_getAST(NSString* file, NSError** error)
     // Insert globals now, because the replacements have require calls in them
     source = _insertGlobals(file, source);
 
-    NSDictionary* ast = _parser->parse(source, &err);
+    NSArray* ret = _parser->parse(source, &err);
 
-    if (ast == nil) {
+    if (ret[0] == nil) {
         if (error && err != nil) {
             *error = err;
         }
         return nil;
     }
 
-    return @[ ast, source ];
+    return ret;
 };
 
 void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved))
