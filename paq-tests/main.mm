@@ -156,6 +156,7 @@ TEST_CASE("Evaluates require expressions with the path module available", "[requ
 
 /**
  * Resolve
+ */
 
 TEST_CASE("Creates node_module paths", "[resolve]")
 {
@@ -166,9 +167,7 @@ TEST_CASE("Creates node_module paths", "[resolve]")
     REQUIRE([paths count] > 1);
     REQUIRE([paths[0] hasSuffix:@"node_modules"]);
 
-    std::cout << "Test A destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test A destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves lookup paths", "[resolve]")
@@ -181,9 +180,7 @@ TEST_CASE("Resolves lookup paths", "[resolve]")
     REQUIRE([paths count] == 2);
     REQUIRE([paths[1] count] > 6); // This should be pretty long
 
-    std::cout << "Test B destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test B destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves relative file", "[resolve]")
@@ -196,9 +193,7 @@ TEST_CASE("Resolves relative file", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
 
-    std::cout << "Test C destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test C destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves relative directory", "[resolve]")
@@ -211,9 +206,7 @@ TEST_CASE("Resolves relative directory", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
 
-    std::cout << "Test D destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test D destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
@@ -226,9 +219,7 @@ TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/node_modules/waldo/waldo/index.js"]);
 
-    std::cout << "Test E destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test E destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
@@ -241,9 +232,7 @@ TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
 
-    std::cout << "Test F destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test F destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves relative dependency by traversing upwards multiple directories", "[resolve]")
@@ -256,9 +245,7 @@ TEST_CASE("Resolves relative dependency by traversing upwards multiple directori
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/json.json"]);
 
-    std::cout << "Test G destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test G destroyed Resolve" << std::endl;
 }
 
 TEST_CASE("Resolves global", "[resolve]")
@@ -271,18 +258,14 @@ TEST_CASE("Resolves global", "[resolve]")
     REQUIRE(resolved != nil);
     REQUIRE([resolved isEqualToString:@"http"]);
 
-    std::cout << "Test H destroying Resolve" << std::endl;
     delete resolver;
-    std::cout << "Test H destroyed Resolve" << std::endl;
- }
- */
+}
 
 /**
  * paq: deps
 
 TEST_CASE("Creates a dependency map", "[deps]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Paq::getNativeBuiltins()) });
     Paq* paq = new Paq(@[ @"fixtures/basic/entry.js" ], nil);
     __block NSDictionary* dependencies;
 

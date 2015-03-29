@@ -400,7 +400,6 @@ NSString* Resolve::pathWithoutFileScheme(NSString* path)
 
 Resolve::~Resolve()
 {
-    std::cout << "Destroying Resolve" << std::endl;
     _pathCache = nil;
     _realPathCache = nil;
     _packageMainCache = nil;
