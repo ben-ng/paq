@@ -13,6 +13,11 @@ script:
   - make run-test
   - make run-test
   - make run-test
+  - make run-test
+  - make run-test
+  - make run-test
+  - make run-test
+  - make run-test
 
 after_failure:
   - echo "Waiting 5 seconds for crash reports..."
