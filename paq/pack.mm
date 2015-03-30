@@ -23,7 +23,7 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
         return callback([NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : @"Prelude is missing from __TEXT segment" }], nil);
     }
 
-    NSMutableString* output = [[NSMutableString alloc] initWithBytes:JS_SOURCE length:size encoding:NSUTF8StringEncoding];
+    NSMutableString* output = [[NSMutableString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
 
     [output appendString:@"({\n"];
 

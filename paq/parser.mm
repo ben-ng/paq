@@ -102,7 +102,7 @@ JSContext* Parser::createContext()
         exit(EXIT_FAILURE);
     }
 
-    NSString* src = [[NSString alloc] initWithBytes:JS_SOURCE length:size encoding:NSUTF8StringEncoding];
+    NSString* src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
 
     [ctx evaluateScript:src];
     [ctx evaluateScript:@"\
