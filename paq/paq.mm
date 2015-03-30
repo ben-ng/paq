@@ -215,16 +215,36 @@ NSString* Paq::_insertGlobals(NSString* file, NSString* source)
 
 void Paq::_getAST(NSString* file, void (^callback)(NSError* err, NSDictionary* ast, NSString* source))
 {
-    NSError* err;
-    NSString* source = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&err];
+    dispatch_fd_t fd = open([file cStringUsingEncoding:NSUTF8StringEncoding], O_RDONLY);
+    __block NSString* source = nil;
 
-    if (source == nil) {
-        return callback(err, nil, nil);
+    if (fd == -1) {
+        return callback([NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d opening file", errno] }], nil, nil);
     }
 
-    if ([file.pathExtension isEqualToString:@"json"]) {
-        source = [@"module.exports=" stringByAppendingString:source];
-    }
+    dispatch_semaphore_t readsema = dispatch_semaphore_create(0);
+
+    dispatch_read(fd, SIZE_T_MAX, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(dispatch_data_t data, int error) {
+        int res = close(fd);
+        
+        if(res != 0) {
+            return callback([NSError errorWithDomain:@"com.benng.paq" code:18 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d closing file", errno] }], nil, nil);
+        }
+        
+        if(error != 0) {
+            return callback([NSError errorWithDomain:@"com.benng.paq" code:16 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Error %d in dispatch_read", error]}], nil, nil);
+        }
+        
+        source = [[NSString alloc] initWithData:(NSData *) data encoding:NSUTF8StringEncoding];
+        
+        if ([file.pathExtension isEqualToString:@"json"]) {
+            source = [@"module.exports=" stringByAppendingString:source];
+        }
+        
+        dispatch_semaphore_signal(readsema);
+    });
+
+    dispatch_semaphore_wait(readsema, DISPATCH_TIME_FOREVER);
 
     // Insert globals now, because the replacements have require calls in them
     source = _insertGlobals(file, source);
