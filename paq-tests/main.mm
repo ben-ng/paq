@@ -448,8 +448,6 @@ TEST_CASE("Converts the hbsfy transform", "[bundle]")
 
 TEST_CASE("Converts the babelify transform", "[bundle]")
 {
-    NSLog(@"Babelify is running");
-
     Paq* paq = new Paq(@[ @"fixtures/node_modules/babelify/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES] });
     NSError* err = nil;
     NSString* bundle = paq->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &err);

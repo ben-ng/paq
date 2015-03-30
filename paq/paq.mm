@@ -107,7 +107,7 @@ void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, 
     _getAST(file, ^(NSError* err, NSDictionary* ast, NSString* source) {
         if(ast == nil || source == nil) {
             // TODO: Fail more gracefully here
-            [NSException raise:@"Fatal Exception" format:@"Dependency resolution failed: %@", err.localizedDescription];
+            [NSException raise:@"Fatal Exception" format:@"Dependency resolution failed: %@", err];
         }
         
         // Here we are in some concurrent queue
@@ -295,7 +295,7 @@ NSString* Paq::bundleSync(NSDictionary* options, NSError** error)
             *error = err;
         }
         else {
-            NSLog(@"Error bundling: %@", err.localizedDescription);
+            NSLog(@"Error bundling: %@", err);
         }
         return nil;
     }
