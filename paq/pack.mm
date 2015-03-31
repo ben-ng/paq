@@ -19,10 +19,6 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
     unsigned long size;
     void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__prelude_src", &size);
 
-    if (size == 0) {
-        return callback([NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : @"Prelude is missing from __TEXT segment" }], nil);
-    }
-
     NSMutableString* output = [[NSMutableString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
 
     [output appendString:@"({\n"];
@@ -41,14 +37,9 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
         [output appendString:obj[@"source"]];
         [output appendString:@"\n}, "];
 
-        NSError *error;
         NSData *serialized = [NSJSONSerialization dataWithJSONObject:obj[@"deps"]
                                                              options:0
-                                                               error:&error];
-
-        if (error) {
-            return callback([NSError errorWithDomain:@"com.benng.paq" code:6 userInfo:@{NSLocalizedDescriptionKey: @"The dependency object could not be serialized"}], nil);
-        }
+                                                               error:nil];
 
         [output appendString:[[NSString alloc] initWithData:serialized
                                                    encoding:NSUTF8StringEncoding]];
@@ -65,14 +56,9 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
 
     [output appendString:@"},{},"];
 
-    NSError* error;
     NSData* serialized = [NSJSONSerialization dataWithJSONObject:entryFiles
                                                          options:0
-                                                           error:&error];
-
-    if (error) {
-        return callback([NSError errorWithDomain:@"com.benng.paq" code:6 userInfo:@{ NSLocalizedDescriptionKey : @"The entry array could not be serialized" }], nil);
-    }
+                                                           error:nil];
 
     [output appendString:[[NSString alloc] initWithData:serialized
                                                encoding:NSUTF8StringEncoding]];
@@ -122,16 +108,6 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
 
         unsigned long size;
         void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__concats_src", &size);
-
-        if (size == 0) {
-            return callback([NSError errorWithDomain:@"com.benng.paq"
-                                                code:15
-                                            userInfo:@{
-                                                NSLocalizedDescriptionKey :
-                                                    @"The concat-stream source is missing"
-                                            }],
-                nil);
-        }
 
         NSString* concat_src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
 

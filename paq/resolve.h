@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <mach-o/getsect.h>
 #import <mach-o/ldsyms.h>
-#import <iostream>
+#import "script.h"
 
 class Resolve {
 private:
@@ -30,10 +30,9 @@ private:
 public:
     Resolve(NSDictionary* options);
     ~Resolve();
-    NSString* _resolveFilename(NSString* request, NSMutableDictionary* parent);
+    NSString* _resolveFilename(NSString* request, NSMutableDictionary* parent, NSError** error);
     NSString* path_resolve(NSArray* args);
     NSMutableDictionary* makeModuleStub(NSString* filename);
-    NSArray* normalizeArray(NSArray* parts, BOOL allowAboveRoot);
     NSArray* _nodeModulePaths(NSString* from);
     NSArray* _resolveLookupPaths(NSString* request, NSMutableDictionary* parent);
     NSString* _findPath(NSString* request, NSArray* paths);

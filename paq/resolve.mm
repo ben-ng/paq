@@ -21,12 +21,7 @@ Resolve::Resolve(NSDictionary* options)
     _realPathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _packageMainCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _packageBrowserCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
-
-    if (![options[@"nativeModules"] isKindOfClass:NSDictionary.class]) {
-        [NSException raise:@"Fatal Exception" format:@"The nativeModules argument is required and must be an NSDictionary"];
-    }
-
-    _nativeModules = options[@"nativeModules"];
+    _nativeModules = Script::getNativeBuiltins();
 
     if (options != nil && options[@"cwd"]) {
         _cwd = options[@"cwd"];
@@ -58,7 +53,7 @@ Resolve::Resolve(NSDictionary* options)
     _modulePaths = paths;
 }
 
-NSString* Resolve::_resolveFilename(NSString* request, NSMutableDictionary* parent)
+NSString* Resolve::_resolveFilename(NSString* request, NSMutableDictionary* parent, NSError** error)
 {
     if (_nativeModuleExists(request)) {
         return request;
@@ -71,15 +66,21 @@ NSString* Resolve::_resolveFilename(NSString* request, NSMutableDictionary* pare
     NSString* filename = _findPath(request, paths);
 
     if (!filename) {
-        NSLog(@"Cannot resolve module \"%@\"", request);
-        NSLog(@"from: %@", fileId);
+        NSMutableString* errString = [[NSMutableString alloc] init];
+
+        [errString appendFormat:@"Cannot resolve module \"%@\"\n", request];
+        [errString appendFormat:@"from: %@\n", fileId];
 
         if (parent && parent[@"filename"]) {
-            NSLog(@"required from: \"%@\"", parent[@"filename"]);
+            [errString appendFormat:@"required from: \"%@\"\n", parent[@"filename"]];
         }
 
         for (NSUInteger i = 0, ii = [paths count]; i < ii; ++i) {
-            NSLog(@"tried: %@", paths[i]);
+            [errString appendFormat:@"tried: %@\n", paths[i]];
+        }
+
+        if (error != nil) {
+            *error = [NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : errString }];
         }
 
         return nil;
@@ -94,10 +95,12 @@ NSArray* Resolve::_nodeModulePaths(NSString* from)
     NSMutableArray* paths = [[NSMutableArray alloc] initWithCapacity:20];
 
     // guarantee that 'from' is absolute
+    /* This is in the node.js source. In paq, everything is absolute, so no worries here.
     if (![from isAbsolutePath]) {
         NSString* absstr = [[NSURL URLWithString:from relativeToURL:_cwd] absoluteString];
         from = pathWithoutFileScheme(absstr);
     }
+    */
 
     // Posix only. I doubt this project will ever run on windows anyway.
     NSArray* parts = [from componentsSeparatedByString:sep];
@@ -264,33 +267,6 @@ NSMutableDictionary* Resolve::makeModuleStub(NSString* filename)
         @"filename" : filename,
         @"paths" : _nodeModulePaths([filename stringByDeletingLastPathComponent])
     }];
-}
-
-NSArray* Resolve::normalizeArray(NSArray* parts, BOOL allowAboveRoot)
-{
-    NSMutableArray* res = [[NSMutableArray alloc] init];
-
-    for (long i = 0, ii = [parts count]; i < ii; i++) {
-        NSString* p = parts[i];
-
-        if (!p || [p isEqualToString:@"."]) {
-            continue;
-        }
-
-        if ([p isEqualToString:@".."]) {
-            if ([res count] && [res[[res count] - 1] isNotEqualTo:@".."]) {
-                [res removeLastObject];
-            }
-            else if (allowAboveRoot) {
-                [res addObject:@".."];
-            }
-        }
-        else {
-            [res addObject:p];
-        }
-    }
-
-    return res;
 }
 
 NSString* Resolve::tryFile(NSString* requestPath)

@@ -21,7 +21,6 @@ private:
     dispatch_queue_t _accessQueue;
     dispatch_semaphore_t _contextSema;
     BOOL _ignore_unresolvable;
-    static BOOL isRequire(NSDictionary* node);
     JSContext* createContext();
 
 public:

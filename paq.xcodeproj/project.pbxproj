@@ -23,8 +23,8 @@
 		B51283A51AC5F5BF008C2E0A /* transform.mm in Sources */ = {isa = PBXBuildFile; fileRef = B51283A21AC5F5BF008C2E0A /* transform.mm */; };
 		B5479C751ACA076C0011FFE7 /* require.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5479C741ACA076C0011FFE7 /* require.mm */; };
 		B5479C761ACA076C0011FFE7 /* require.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5479C741ACA076C0011FFE7 /* require.mm */; };
-		B573FFE01AC7175C0046282D /* JSContextExtensions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */; };
-		B573FFE11AC7175C0046282D /* JSContextExtensions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */; };
+		B573FFE01AC7175C0046282D /* JSContextExtensions.mm in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.mm */; };
+		B573FFE11AC7175C0046282D /* JSContextExtensions.mm in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.mm */; };
 		B59884B51AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
 		B59884B61AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
 		B59884B81AC2641A005929C3 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B59884B71AC2641A005929C3 /* JavaScriptCore.framework */; };
@@ -64,7 +64,7 @@
 		B51283A31AC5F5BF008C2E0A /* transform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = transform.h; sourceTree = "<group>"; };
 		B5479C731ACA076C0011FFE7 /* require.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = require.h; sourceTree = "<group>"; };
 		B5479C741ACA076C0011FFE7 /* require.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = require.mm; sourceTree = "<group>"; };
-		B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSContextExtensions.cpp; sourceTree = "<group>"; };
+		B573FFDE1AC7175C0046282D /* JSContextExtensions.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = JSContextExtensions.mm; sourceTree = "<group>"; };
 		B573FFDF1AC7175C0046282D /* JSContextExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSContextExtensions.h; sourceTree = "<group>"; };
 		B59884B31AC263B7005929C3 /* parser.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = parser.mm; sourceTree = "<group>"; };
 		B59884B41AC263B7005929C3 /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
@@ -131,7 +131,7 @@
 				B512839F1AC5C248008C2E0A /* optionparser.hpp */,
 				B51283A21AC5F5BF008C2E0A /* transform.mm */,
 				B51283A31AC5F5BF008C2E0A /* transform.h */,
-				B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */,
+				B573FFDE1AC7175C0046282D /* JSContextExtensions.mm */,
 				B573FFDF1AC7175C0046282D /* JSContextExtensions.h */,
 			);
 			path = paq;
@@ -324,7 +324,7 @@
 				B505A1661AC2A26D00986D7B /* script.mm in Sources */,
 				B59884B51AC263B7005929C3 /* parser.mm in Sources */,
 				B5081D771AC114F700D675E9 /* main.mm in Sources */,
-				B573FFE01AC7175C0046282D /* JSContextExtensions.cpp in Sources */,
+				B573FFE01AC7175C0046282D /* JSContextExtensions.mm in Sources */,
 				B5479C751ACA076C0011FFE7 /* require.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -341,7 +341,7 @@
 				B505A17B1AC2E59B00986D7B /* resolve.mm in Sources */,
 				B505A1671AC2A26D00986D7B /* script.mm in Sources */,
 				B59884B61AC263B7005929C3 /* parser.mm in Sources */,
-				B573FFE11AC7175C0046282D /* JSContextExtensions.cpp in Sources */,
+				B573FFE11AC7175C0046282D /* JSContextExtensions.mm in Sources */,
 				B5479C761ACA076C0011FFE7 /* require.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

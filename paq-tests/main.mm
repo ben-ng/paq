@@ -14,6 +14,7 @@
 #import "parser.h"
 #import "require.h"
 #import "resolve.h"
+#import "pack.h"
 #import "paq.h"
 
 /**
@@ -149,30 +150,7 @@ TEST_CASE("Parser works on executable scripts", "[parser]")
     REQUIRE(source.length > 0);
 }
 
-/**
- * Traverse
-
-TEST_CASE("Traverses an AST", "[traverse]")
-{
-    NSArray* result = parseSync(@"require(__dirname + 'path')");
-    NSError* err = result[0];
-    NSDictionary* ast = result[1];
-
-    __block unsigned int nodeCounter = 0;
-
-    Traverse::walk(ast, ^(NSObject* node) {
-        nodeCounter++;
-    });
-
-    REQUIRE(nodeCounter == 7);
- }
- */
-
-/**
- * Require
- */
-
-TEST_CASE("Extracts literal requires", "[require]")
+TEST_CASE("Extracts literal requires", "[parse]")
 {
     NSError* err = nil;
 
@@ -189,7 +167,11 @@ TEST_CASE("Extracts literal requires", "[require]")
     REQUIRE([literals[0] isEqualToString:@"tofu"]);
 }
 
-TEST_CASE("Evaluates require expressions with the path module available", "[require]")
+/**
+ * Require
+ */
+
+TEST_CASE("Evaluates require expressions with the path module available", "[parse]")
 {
     NSError* err = nil;
 
@@ -211,13 +193,38 @@ TEST_CASE("Evaluates require expressions with the path module available", "[requ
     REQUIRE([requires[0] isEqualToString:@"/fakedir/compound"]);
 }
 
+TEST_CASE("Fails to resolve expressions with arbitrary variables", "[require]")
+{
+    NSError* err = nil;
+
+    NSArray* result = parseSync(@"require(opts.puppy)");
+    err = result[0];
+    NSArray* expressions = result[2];
+
+    REQUIRE([err isKindOfClass:NSNull.class]);
+
+    Require* require = new Require(nil);
+
+    err = nil;
+    NSArray* results = requireSync(@"/fakedir/somefile.js", expressions);
+    err = results[0];
+    NSArray* requires = results[1];
+
+    REQUIRE(![err isKindOfClass:NSNull.class]);
+    REQUIRE(err.code == 11);
+    // Should say what the problem is
+    REQUIRE([err.localizedDescription rangeOfString:@"Can't find variable: opts"].location != NSNotFound);
+    // Should give a recovery option
+    REQUIRE([err.localizedDescription rangeOfString:@"Rerun with --ignoreUnresolvableExpressions to continue"].location != NSNotFound);
+}
+
 /**
  * Resolve
  */
 
 TEST_CASE("Creates node_module paths", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSArray* paths = resolver->_nodeModulePaths(here);
 
@@ -229,7 +236,7 @@ TEST_CASE("Creates node_module paths", "[resolve]")
 
 TEST_CASE("Resolves lookup paths", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
     NSArray* paths = resolver->_resolveLookupPaths(@"lodash", parent);
@@ -242,10 +249,10 @@ TEST_CASE("Resolves lookup paths", "[resolve]")
 
 TEST_CASE("Resolves relative file", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
-    NSString* resolved = resolver->_resolveFilename(@"./mylib/index.js", parent);
+    NSString* resolved = resolver->_resolveFilename(@"./mylib/index.js", parent, nil);
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
@@ -255,10 +262,10 @@ TEST_CASE("Resolves relative file", "[resolve]")
 
 TEST_CASE("Resolves relative directory", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
-    NSString* resolved = resolver->_resolveFilename(@"./mylib", parent);
+    NSString* resolved = resolver->_resolveFilename(@"./mylib", parent, nil);
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/mylib/index.js"]);
@@ -268,10 +275,10 @@ TEST_CASE("Resolves relative directory", "[resolve]")
 
 TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
-    NSString* resolved = resolver->_resolveFilename(@"waldo", parent);
+    NSString* resolved = resolver->_resolveFilename(@"waldo", parent, nil);
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/node_modules/waldo/waldo/index.js"]);
@@ -281,10 +288,10 @@ TEST_CASE("Resolves dependency with user defined main script", "[resolve]")
 
 TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
-    NSString* resolved = resolver->_resolveFilename(@"flamingo", parent);
+    NSString* resolved = resolver->_resolveFilename(@"flamingo", parent, nil);
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/node_modules/flamingo/flamingo.js"]);
@@ -294,10 +301,10 @@ TEST_CASE("Resolves dependency by traversing upwards", "[resolve]")
 
 TEST_CASE("Resolves relative dependency by traversing upwards multiple directories", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/deep/deeper/deepest/bottom.js");
-    NSString* resolved = resolver->_resolveFilename(@"../../../json", parent);
+    NSString* resolved = resolver->_resolveFilename(@"../../../json", parent, nil);
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved hasSuffix:@"/fixtures/basic/json.json"]);
@@ -307,13 +314,28 @@ TEST_CASE("Resolves relative dependency by traversing upwards multiple directori
 
 TEST_CASE("Resolves global", "[resolve]")
 {
-    Resolve* resolver = new Resolve(@{ @"nativeModules" : (Script::getNativeBuiltins()) });
+    Resolve* resolver = new Resolve(nil);
     NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
     NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
-    NSString* resolved = resolver->_resolveFilename(@"http", parent);
+    NSString* resolved = resolver->_resolveFilename(@"http", parent, nil);
 
     REQUIRE(resolved != nil);
     REQUIRE([resolved isEqualToString:@"http"]);
+
+    delete resolver;
+}
+
+TEST_CASE("Should error on missing module", "[resolve]")
+{
+    Resolve* resolver = new Resolve(nil);
+    NSString* here = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSMutableDictionary* parent = resolver->makeModuleStub(@"fixtures/basic/entry.js");
+    NSError* error = nil;
+    NSString* resolved = resolver->_resolveFilename(@"i-dont-exist!", parent, &error);
+
+    REQUIRE(resolved == nil);
+    REQUIRE(error != nil);
+    REQUIRE([error.localizedDescription rangeOfString:@"tried:"].location != NSNotFound);
 
     delete resolver;
 }
@@ -380,6 +402,34 @@ TEST_CASE("Creates a dependency map", "[deps]")
     }];
 
     delete paq;
+}
+
+/**
+ * paq: pack errors
+ */
+
+TEST_CASE("Eval cannot be used with more than one entry script")
+{
+    Pack::pack(@[ @"a", @"b" ], nil, @{ @"eval" : [NSNumber numberWithBool:YES] },
+        ^(NSError* error, NSString* bundle) {
+        REQUIRE(error != nil);
+        });
+}
+
+TEST_CASE("Standalone cannot be used with more than one entry script")
+{
+    Pack::pack(@[ @"a", @"b" ], nil, @{ @"standalone" : [NSNumber numberWithBool:YES] },
+        ^(NSError* error, NSString* bundle) {
+                   REQUIRE(error != nil);
+        });
+}
+
+TEST_CASE("ConvertBrowserifyTransform cannot be used with more than one entry script")
+{
+    Pack::pack(@[ @"a", @"b" ], nil, @{ @"standalone" : [NSNumber numberWithBool:YES] },
+        ^(NSError* error, NSString* bundle) {
+                   REQUIRE(error != nil);
+        });
 }
 
 /**

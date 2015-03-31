@@ -56,6 +56,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     _options = options;
 
     // Are there any transforms we need to set up?
+    /* NOT YET DONE, COMING SOON
     if (options && options[@"transforms"]) {
         if (![options[@"transforms"] isKindOfClass:NSArray.class]) {
             [NSException raise:@"Fatal Exception" format:@"The transforms option must be an NSArray"];
@@ -63,6 +64,7 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
 
         // paq each transform
     }
+    */
 
     // Initialize multithreading stuff
     _serialQ = dispatch_queue_create("paq.serial", DISPATCH_QUEUE_SERIAL);
@@ -264,10 +266,11 @@ void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void 
         NSMutableArray *resolved = [[NSMutableArray alloc] initWithCapacity:[requires count]];
         
         for (long i = 0, ii = [requires count]; i<ii; ++i) {
-            NSString *result = _resolve->_resolveFilename(requires[i], parent);
+            NSError* error = nil;
+            NSString *result = _resolve->_resolveFilename(requires[i], parent, &error);
             
             if(!result) {
-                [NSException raise:@"Fatal Exception" format:@"Module not found"];
+                [NSException raise:@"Fatal Exception" format:@"%@", error];
             }
             
             [resolved addObject:result];

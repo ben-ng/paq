@@ -36,12 +36,6 @@ void Parser::parse(NSString* code, void (^callback)(NSError* error, NSArray* lit
         JSContext* ctx = _contexts.lastObject;
         [_contexts removeLastObject];
         
-        // No idea how this happens, but it does. Possibly when an exception happens.
-        if([ctx globalObject] == nil) {
-            ctx = createContext();
-            [_contexts addObject:ctx];
-        }
-
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             __block NSError *err = nil;
             
@@ -50,10 +44,6 @@ void Parser::parse(NSString* code, void (^callback)(NSError* error, NSArray* lit
             NSString* newCode = [regex stringByReplacingMatchesInString:code options:0 range:NSMakeRange(0, [code length]) withTemplate:@""];
             
             JSValue* parseFunc = ctx[@"detective"];
-            
-            if (parseFunc == nil) {
-                err = [NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : @"A context without a parse function was given to Parser::parse" }];
-            }
             
             ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
                 err = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
@@ -98,11 +88,6 @@ JSContext* Parser::createContext()
 
     unsigned long size;
     void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__detective_src", &size);
-
-    if (size == 0) {
-        NSLog(@"Detective is missing from the __TEXT segment");
-        exit(EXIT_FAILURE);
-    }
 
     NSString* src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
 

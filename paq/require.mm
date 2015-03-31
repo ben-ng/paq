@@ -43,12 +43,6 @@ void Require::evaluateRequireExpressions(NSString* path, NSArray* expressions, v
         JSContext* ctx = _contexts.lastObject;
         [_contexts removeLastObject];
         
-        // No idea how this happens, but it does. Possibly when an exception happens.
-        if([ctx globalObject] == nil) {
-            ctx = createContext();
-            [_contexts addObject:ctx];
-        }
-        
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             NSMutableArray *errors = [[NSMutableArray alloc] init];
             NSMutableArray *evaluated = [[NSMutableArray alloc] initWithCapacity:expressions.count];
@@ -120,16 +114,6 @@ void Require::evaluateRequireExpressions(NSString* path, NSArray* expressions, v
         });
     });
 };
-
-BOOL Require::isRequire(NSDictionary* node)
-{
-    NSDictionary* c = node[@"callee"];
-
-    return c != nil &&
-        [node[@"type"] isEqualToString:@"CallExpression"] &&
-        [c[@"type"] isEqualToString:@"Identifier"] &&
-        [c[@"name"] isEqualToString:@"require"];
-}
 
 JSContext* Require::createContext()
 {
