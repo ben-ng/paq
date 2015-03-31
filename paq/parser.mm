@@ -27,7 +27,7 @@ Parser::Parser(NSDictionary* options)
     }
 }
 
-void Parser::parse(NSString* code, void (^callback)(NSError* error, NSDictionary* ast, NSString* source))
+void Parser::parse(NSString* code, void (^callback)(NSError* error, NSArray* literals, NSArray* expressions, NSString* source))
 {
     dispatch_semaphore_wait(_contextSema, DISPATCH_TIME_FOREVER);
 
@@ -45,20 +45,21 @@ void Parser::parse(NSString* code, void (^callback)(NSError* error, NSDictionary
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             __block NSError *err = nil;
             
-            ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-                err = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
-            };
-            
             // Remove hashbangs
             NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:@"^#![^\n]*\n" options:0 error:nil];
             NSString* newCode = [regex stringByReplacingMatchesInString:code options:0 range:NSMakeRange(0, [code length]) withTemplate:@""];
             
-            JSValue* parseFunc = ctx[@"parse"];
-            JSValue* evalResult = [parseFunc callWithArguments:@[ newCode ]];
+            JSValue* parseFunc = ctx[@"detective"];
             
             if (parseFunc == nil) {
                 err = [NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : @"A context without a parse function was given to Parser::parse" }];
             }
+            
+            ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
+                err = [NSError errorWithDomain:@"com.benng.paq" code:2 userInfo:@{NSLocalizedDescriptionKey: [exception toString]}];
+            };
+            
+            JSValue* evalResult = [parseFunc callWithArguments:@[ newCode ]];
             
             ctx.exceptionHandler = nil;
             
@@ -69,17 +70,18 @@ void Parser::parse(NSString* code, void (^callback)(NSError* error, NSDictionary
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
                     
                     if (err != nil) {
-                        callback(err, nil, nil);
+                        callback(err, nil, nil, nil);
                     }
                     else {
                         if ([evalResult isObject]) {
-                            callback(nil, [evalResult toDictionary], newCode);
+                            NSDictionary *result = [evalResult toDictionary];
+                            callback(nil, (NSArray *)result[@"strings"], (NSArray *)result[@"expressions"], newCode);
                         }
                         else if ([evalResult isString]) {
-                            callback([NSError errorWithDomain:@"com.benng.paq" code:3 userInfo:@{ NSLocalizedDescriptionKey : [evalResult toString] }], nil, nil);
+                            callback([NSError errorWithDomain:@"com.benng.paq" code:3 userInfo:@{ NSLocalizedDescriptionKey : [evalResult toString] }], nil, nil, nil);
                         }
                         else {
-                            callback([NSError errorWithDomain:@"com.benng.paq" code:4 userInfo:@{ NSLocalizedDescriptionKey : @"An unknown error occurred, there was no exception and an invalid return value from Acorn" }], nil, nil);
+                            callback([NSError errorWithDomain:@"com.benng.paq" code:4 userInfo:@{ NSLocalizedDescriptionKey : @"An unknown error occurred, there was no exception and an invalid return value from Acorn" }], nil, nil, nil);
                         }
                     }
                     
@@ -95,35 +97,18 @@ JSContext* Parser::createContext()
     JSContext* ctx = [[JSContext alloc] init];
 
     unsigned long size;
-    void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__acorn_src", &size);
+    void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__detective_src", &size);
 
     if (size == 0) {
-        NSLog(@"Acorn is missing from the __TEXT segment");
+        NSLog(@"Detective is missing from the __TEXT segment");
         exit(EXIT_FAILURE);
     }
 
     NSString* src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
 
+    [ctx evaluateScript:@"var exports = {}, module = {exports: exports};"];
     [ctx evaluateScript:src];
-    [ctx evaluateScript:@"\
-     function defined () {\
-     for (var i = 0; i < arguments.length; i++) {\
-     if (arguments[i] !== undefined) return arguments[i];\
-     }}\
-     function parse (src, opts) {\
-     if (!opts) opts = {};\
-     return acorn.parse(src, {\
-     ecmaVersion: defined(opts.ecmaVersion, 6),\
-     ranges: defined(opts.ranges, opts.range),\
-     locations: defined(opts.locations, opts.loc),\
-     allowReturnOutsideFunction: defined(\
-     opts.allowReturnOutsideFunction, true\
-     ),\
-     strictSemicolons: defined(opts.strictSemicolons, false),\
-     allowTrailingCommas: defined(opts.allowTrailingCommas, true),\
-     forbidReserved: defined(opts.forbidReserved, false)\
-     });\
-     }"];
+    [ctx evaluateScript:@"detective = module.exports.find "];
 
     return ctx;
 }

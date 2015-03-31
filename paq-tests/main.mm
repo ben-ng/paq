@@ -12,7 +12,6 @@
 #import "JSContextExtensions.h"
 #import "catch.hpp"
 #import "parser.h"
-#import "traverse.h"
 #import "require.h"
 #import "resolve.h"
 #import "paq.h"
@@ -27,8 +26,8 @@ NSArray* parseSync(NSString* input)
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        parser->parse(input, ^(NSError *error, NSDictionary *ast, NSString *source) {
-            cbData = @[error != nil ? error : [NSNull null], ast != nil ? ast : [NSNull null], source != nil ? source : [NSNull null]];
+        parser->parse(input, ^(NSError *error, NSArray *literals, NSArray *expressions, NSString *source) {
+            cbData = @[error != nil ? error : [NSNull null], literals != nil ? literals : [NSNull null], expressions != nil ? expressions : [NSNull null], source != nil ? source : [NSNull null]];
             
             dispatch_semaphore_signal(sema);
         });
@@ -43,14 +42,14 @@ NSArray* parseSync(NSString* input)
 /**
  * Executes the require method synchronously and returns the array @[ error, requires ]
  */
-NSArray* requireSync(NSString* path, NSDictionary* ast)
+NSArray* requireSync(NSString* path, NSArray* expressions)
 {
     Require* require = new Require(nil);
     __block NSArray* cbData = nil;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        require->findRequires(path, ast, ^(NSError *error, NSArray *requires) {
+        require->evaluateRequireExpressions(path, expressions, ^(NSError *error, NSArray *requires) {
             cbData = @[error != nil ? error : [NSNull null], requires != nil ? requires : [NSNull null]];
             
             dispatch_semaphore_signal(sema);
@@ -105,29 +104,33 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
  * Parser
  */
 
-TEST_CASE("Parser returns a valid AST for valid code", "[parser]")
+TEST_CASE("Parser returns require statements for valid code", "[parser]")
 {
-    NSArray* result = parseSync(@"require(path.join(__dirname, 'path'))");
+    NSArray* result = parseSync(@"require('taco') && require(path.join(__dirname, 'path'))");
     NSError* err = result[0];
-    NSDictionary* ast = result[1];
+    NSArray* literals = result[1];
+    NSArray* expressions = result[2];
 
     REQUIRE([err isKindOfClass:NSNull.class]);
-    REQUIRE(![ast[@"type"] isKindOfClass:NSNull.class]);
-    REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
-    REQUIRE([((NSArray*)ast[@"body"])count] == 1);
-    REQUIRE([((NSString*)ast[@"body"][0][@"type"])isEqualToString:@"ExpressionStatement"]);
+    REQUIRE(literals.count == 1);
+    REQUIRE([literals[0] isEqualToString:@"taco"]);
+    REQUIRE(expressions.count == 1);
+    REQUIRE([expressions[0] isEqualToString:@"path.join(__dirname, 'path')"]);
 }
 
 TEST_CASE("Parser returns an error for invalid code", "[parser]")
 {
-    NSArray* result = parseSync(@"var unbalanced = {");
+    // MUST have "require" somewhere in the string because node-detective cheats!
+    NSArray* result = parseSync(@"var unbalanced = {this [][] is not !! valid @#@#$ code require");
     NSError* err = result[0];
-    NSDictionary* ast = result[1];
-    NSDictionary* source = result[2];
+    NSArray* literals = result[1];
+    NSArray* expressions = result[2];
+    NSString* source = result[3];
 
     REQUIRE(![err isKindOfClass:NSNull.class]);
-    REQUIRE([err.localizedDescription isEqualToString:@"SyntaxError: Unexpected token (1:18)"]);
-    REQUIRE([ast isKindOfClass:NSNull.class]);
+    REQUIRE([err.localizedDescription isEqualToString:@"SyntaxError: Unexpected token (1:23)"]);
+    REQUIRE([literals isKindOfClass:NSNull.class]);
+    REQUIRE([expressions isKindOfClass:NSNull.class]);
     REQUIRE([source isKindOfClass:NSNull.class]);
 }
 
@@ -135,18 +138,19 @@ TEST_CASE("Parser works on executable scripts", "[parser]")
 {
     NSArray* result = parseSync(@"#!/usr/local/bin/node\nrequire(__dirname + 'path')");
     NSError* err = result[0];
-    NSDictionary* ast = result[1];
+    NSArray* literals = result[1];
+    NSArray* expressions = result[2];
+    NSString* source = result[3];
 
     REQUIRE([err isKindOfClass:NSNull.class]);
-    REQUIRE(ast[@"type"] != nil);
-    REQUIRE([ast[@"type"] isEqualToString:@"Program"]);
-    REQUIRE([((NSArray*)ast[@"body"])count] == 1);
-    REQUIRE([((NSString*)ast[@"body"][0][@"type"])isEqualToString:@"ExpressionStatement"]);
+    REQUIRE(literals.count == 0);
+    REQUIRE(expressions.count == 1);
+    REQUIRE([expressions[0] isEqualToString:@"__dirname + 'path'"]);
+    REQUIRE(source.length > 0);
 }
 
 /**
  * Traverse
- */
 
 TEST_CASE("Traverses an AST", "[traverse]")
 {
@@ -161,7 +165,8 @@ TEST_CASE("Traverses an AST", "[traverse]")
     });
 
     REQUIRE(nodeCounter == 7);
-}
+ }
+ */
 
 /**
  * Require
@@ -175,16 +180,13 @@ TEST_CASE("Extracts literal requires", "[require]")
 
     REQUIRE([result[0] isKindOfClass:NSNull.class]);
 
-    NSDictionary* ast = result[1];
+    NSArray* literals = result[1];
 
-    err = nil;
-    NSArray* results = requireSync(@"/fakedir/somefile.js", ast);
-    err = results[0];
-    NSArray* requires = results[1];
+    err = result[0];
 
     REQUIRE([err isKindOfClass:NSNull.class]);
-    REQUIRE([requires count] == 1);
-    REQUIRE([requires[0] isEqualToString:@"tofu"]);
+    REQUIRE([literals count] == 1);
+    REQUIRE([literals[0] isEqualToString:@"tofu"]);
 }
 
 TEST_CASE("Evaluates require expressions with the path module available", "[require]")
@@ -193,14 +195,14 @@ TEST_CASE("Evaluates require expressions with the path module available", "[requ
 
     NSArray* result = parseSync(@"'use unstrict'; require(path.join(__dirname, 'compound'));");
     err = result[0];
-    NSDictionary* ast = result[1];
+    NSArray* expressions = result[2];
 
     REQUIRE([err isKindOfClass:NSNull.class]);
 
     Require* require = new Require(nil);
 
     err = nil;
-    NSArray* results = requireSync(@"/fakedir/somefile.js", ast);
+    NSArray* results = requireSync(@"/fakedir/somefile.js", expressions);
     err = results[0];
     NSArray* requires = results[1];
 

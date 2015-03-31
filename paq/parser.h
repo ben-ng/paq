@@ -26,5 +26,5 @@ private:
 public:
     Parser(NSDictionary* options);
     ~Parser();
-    void parse(NSString* code, void (^callback)(NSError* error, NSDictionary* ast, NSString* source));
+    void parse(NSString* code, void (^callback)(NSError* error, NSArray* literals, NSArray* expressions, NSString* source));
 };

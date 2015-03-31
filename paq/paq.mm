@@ -104,31 +104,34 @@ void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, 
     }
 
     // This stuff can be done concurrently
-    _getAST(file, ^(NSError* err, NSDictionary* ast, NSString* source) {
-        if(ast == nil || source == nil) {
+    _getAST(file, ^(NSError* err, NSArray* literals, NSArray* expressions, NSString* source) {
+        if(literals == nil || expressions == nil || source == nil) {
             // TODO: Fail more gracefully here
             [NSException raise:@"Fatal Exception" format:@"Dependency resolution failed: %@", err];
         }
         
         // Here we are in some concurrent queue
-        _require->findRequires(file, ast, ^(NSError *error, NSArray *requires) {
+        _require->evaluateRequireExpressions(file, expressions, ^(NSError *error, NSArray *evaluatedExpressions) {
             // Still in some concurrent queue here
             
             // Probably some problem with evaluating a require expression or something
-            if (requires == nil) {
+            if (evaluatedExpressions == nil) {
                 NSLog(@"Failed to resolve requires: %@", error.localizedDescription);
                 exit(EXIT_FAILURE);
             }
             
+            NSArray *evaluatedRequires = [literals arrayByAddingObjectsFromArray:evaluatedExpressions];
+            
             // Still in a concurrent queue
-            _resolveRequires(requires, parent, ^(NSArray* resolved) {
+            _resolveRequires(evaluatedRequires, parent, ^(NSArray* resolved) {
                 // Still in the resolve queue
                 // Move to the main serial queue
                 dispatch_async(_serialQ, ^{
+                    
                     // Pull together the requires and resolved result for later
                     NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
                     for(long i=0, ii=[resolved count]; i<ii; ++i) {
-                        zip[requires[i]] = resolved[i];
+                        zip[evaluatedRequires[i]] = resolved[i];
                         
                         // Add native modules to the map as they are discovered
                         if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
@@ -213,13 +216,13 @@ NSString* Paq::_insertGlobals(NSString* file, NSString* source)
     return source;
 }
 
-void Paq::_getAST(NSString* file, void (^callback)(NSError* err, NSDictionary* ast, NSString* source))
+void Paq::_getAST(NSString* file, void (^callback)(NSError* err, NSArray* literals, NSArray* expressions, NSString* source))
 {
     dispatch_fd_t fd = open([file cStringUsingEncoding:NSUTF8StringEncoding], O_RDONLY);
     __block NSString* source = nil;
 
     if (fd == -1) {
-        return callback([NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d opening file", errno] }], nil, nil);
+        return callback([NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d opening file", errno] }], nil, nil, nil);
     }
 
     dispatch_semaphore_t readsema = dispatch_semaphore_create(0);
@@ -228,11 +231,11 @@ void Paq::_getAST(NSString* file, void (^callback)(NSError* err, NSDictionary* a
         int res = close(fd);
         
         if(res != 0) {
-            return callback([NSError errorWithDomain:@"com.benng.paq" code:18 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d closing file", errno] }], nil, nil);
+            return callback([NSError errorWithDomain:@"com.benng.paq" code:18 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d closing file", errno] }], nil, nil, nil);
         }
         
         if(error != 0) {
-            return callback([NSError errorWithDomain:@"com.benng.paq" code:16 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Error %d in dispatch_read", error]}], nil, nil);
+            return callback([NSError errorWithDomain:@"com.benng.paq" code:16 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Error %d in dispatch_read", error]}], nil, nil, nil);
         }
         
         source = [[NSString alloc] initWithData:(NSData *) data encoding:NSUTF8StringEncoding];

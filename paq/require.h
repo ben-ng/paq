@@ -11,7 +11,6 @@
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "script.h"
-#import "traverse.h"
 #import "json.h"
 
 class Require {
@@ -28,5 +27,5 @@ private:
 public:
     Require(NSDictionary* options);
     ~Require();
-    void findRequires(NSString* path, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires));
+    void evaluateRequireExpressions(NSString* path, NSArray* expressions, void (^callback)(NSError* error, NSArray* requires));
 };

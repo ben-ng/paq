@@ -29,9 +29,8 @@ Require::Require(NSDictionary* options)
     }
 }
 
-void Require::findRequires(NSString* path, NSDictionary* ast, void (^callback)(NSError* error, NSArray* requires))
+void Require::evaluateRequireExpressions(NSString* path, NSArray* expressions, void (^callback)(NSError* error, NSArray* requires))
 {
-
     dispatch_semaphore_wait(_contextSema, DISPATCH_TIME_FOREVER);
 
     dispatch_async(_accessQueue, ^{
@@ -46,63 +45,36 @@ void Require::findRequires(NSString* path, NSDictionary* ast, void (^callback)(N
         }
         
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-            // Context is set up, now to walk the AST and prepare work
-            __block NSMutableArray* modules = [[NSMutableArray alloc] initWithCapacity:10];
-            __block NSMutableArray* expressions = [[NSMutableArray alloc] initWithCapacity:10];
-            NSMutableArray* errors = [[NSMutableArray alloc] init];
-            
-            Traverse::walk(ast, ^(NSDictionary* node) {
-                if(!Require::isRequire(node))
-                    return;
-                
-                NSArray *args = (NSArray *) node[@"arguments"];
-                
-                if([args count]) {
-                    if([args[0][@"type"] isEqualToString:@"Literal"]) {
-                        [modules addObject:[NSString stringWithString:args[0][@"value"]]];
-                    }
-                    else {
-                        [expressions addObject:args[0]];
-                    }
-                }
-            });
+            NSMutableArray *errors = [[NSMutableArray alloc] init];
+            NSMutableArray *evaluated = [[NSMutableArray alloc] initWithCapacity:expressions.count];
             
             for (NSUInteger i = 0, ii = expressions.count; i < ii; ++i) {
                 __block NSError* err = nil;
                 
+                NSString *expr = expressions[i];
+                
+                // TODO: Also handle process.env since people like to use that
+                NSString* wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", expr, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
+                
                 ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-                    NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while compiling the expression: %@", [exception toString], path];
-                    err = [NSError errorWithDomain:@"com.benng.paq" code:5 userInfo:@{NSLocalizedDescriptionKey: errStr}];
+                    if(!_ignore_unresolvable) {
+                        NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], expr, path];
+                        err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
+                    }
                 };
                 
-                JSValue* compiledEspression = [ctx[@"generate"] callWithArguments:@[ expressions[i] ]];
+                JSValue* evaluatedExpression = [ctx evaluateScript:wrappedExpr];
                 
                 ctx.exceptionHandler = nil;
                 
                 if (!err) {
-                    // TODO: Also handle process.env since people like to use that
-                    NSString* wrappedExpr = [NSString stringWithFormat:@"(function (path, __dirname, __filename) {return (%@)}(_path, %@, %@))", compiledEspression, JSONString([path stringByDeletingLastPathComponent]), JSONString(path)];
-                    
-                    ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
-                        if(!_ignore_unresolvable) {
-                            NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], compiledEspression, path];
-                            err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
+                    if (![evaluatedExpression isString]) {
+                        if (!_ignore_unresolvable) {
+                            err = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
                         }
-                    };
-                    
-                    JSValue* evaluatedExpression = [ctx evaluateScript:wrappedExpr];
-                    
-                    ctx.exceptionHandler = nil;
-                    
-                    if (!err) {
-                        if (![evaluatedExpression isString]) {
-                            if (!_ignore_unresolvable) {
-                                err = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
-                            }
-                        }
-                        else {
-                            [modules addObject:[NSString stringWithString:[evaluatedExpression toString]]];
-                        }
+                    }
+                    else {
+                        [evaluated addObject:[NSString stringWithString:[evaluatedExpression toString]]];
                     }
                 }
                 
@@ -134,7 +106,7 @@ void Require::findRequires(NSString* path, NSDictionary* ast, void (^callback)(N
                         callback(compoundError, nil);
                     }
                     else {
-                        callback(nil, modules);
+                        callback(nil, evaluated);
                     }
                     
                     dispatch_semaphore_signal(_contextSema);
@@ -160,21 +132,8 @@ JSContext* Require::createContext()
 
     ctx = [[JSContext alloc] init];
 
-    unsigned long size;
-    void* JS_SOURCE = getsectiondata(&_mh_execute_header, "__TEXT", "__escodegen_src", &size);
-
-    if (size == 0) {
-        NSLog(@"Escodegen is missing from the __TEXT segment");
-        exit(EXIT_FAILURE);
-    }
-
-    NSString* src = [[NSString alloc] initWithBytesNoCopy:JS_SOURCE length:size encoding:NSUTF8StringEncoding freeWhenDone:NO];
-
-    [ctx evaluateScript:src];
-
-    [ctx evaluateScript:@"generate = escodegen.generate; global = {};"];
-
     // This is a standalone browserify module, so it will appear at global.path
+    [ctx evaluateScript:@"global = {}"];
     [ctx evaluateScript:_pathSrc];
 
     // Move it to the path variable

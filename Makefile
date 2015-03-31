@@ -3,7 +3,7 @@ diag_reports=~/Library/Logs/DiagnosticReports
 
 all: js cli
 
-js: paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json paq/concat-stream.bundle.js
+js: paq/detective.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json paq/concat-stream.bundle.js
 
 cli: bin/paq
 
@@ -87,9 +87,9 @@ paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.
 	@echo "Compiling builtins..."
 	@node scripts/builtins.js > paq/builtins.bundle.json
 
-paq/acorn.bundle.js: node_modules/acorn/package.json
-	@echo "Compiling acorn..."
-	@node node_modules/browserify/bin/cmd.js -s acorn node_modules/acorn | node node_modules/uglifyjs/bin/uglifyjs > paq/acorn.bundle.js
+paq/detective.bundle.js: node_modules/detective/package.json
+	@echo "Compiling detective..."
+	@node node_modules/browserify/bin/cmd.js --noParse "$$(pwd)/node_modules/detective/node_modules/acorn/dist/acorn.js" -s detective "$$(pwd)/node_modules/detective/index.js" | node node_modules/uglifyjs/bin/uglifyjs > paq/detective.bundle.js
 
 paq/concat-stream.bundle.js: node_modules/concat-stream/package.json
 	@echo "Compiling concat-stream..."
@@ -108,4 +108,4 @@ bin/paq:
 	mv $$c bin
 
 clean:
-	rm -rf paq/acorn.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json bin/paq $(d)/fixtures
+	rm -rf paq/*.bundle.js paq/builtins.bundle.json bin/paq $(d)/fixtures

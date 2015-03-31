@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		B505A1661AC2A26D00986D7B /* script.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1641AC2A26D00986D7B /* script.mm */; };
 		B505A1671AC2A26D00986D7B /* script.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1641AC2A26D00986D7B /* script.mm */; };
-		B505A16E1AC2A82700986D7B /* traverse.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.mm */; };
-		B505A16F1AC2A82700986D7B /* traverse.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A16C1AC2A82700986D7B /* traverse.mm */; };
 		B505A1761AC2DEC300986D7B /* paq.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1741AC2DEC300986D7B /* paq.mm */; };
 		B505A1771AC2DEC300986D7B /* paq.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1741AC2DEC300986D7B /* paq.mm */; };
 		B505A17A1AC2E59B00986D7B /* resolve.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505A1781AC2E59B00986D7B /* resolve.mm */; };
@@ -23,13 +21,13 @@
 		B51283A11AC5F403008C2E0A /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5081D861AC118B500D675E9 /* main.mm */; };
 		B51283A41AC5F5BF008C2E0A /* transform.mm in Sources */ = {isa = PBXBuildFile; fileRef = B51283A21AC5F5BF008C2E0A /* transform.mm */; };
 		B51283A51AC5F5BF008C2E0A /* transform.mm in Sources */ = {isa = PBXBuildFile; fileRef = B51283A21AC5F5BF008C2E0A /* transform.mm */; };
+		B5479C751ACA076C0011FFE7 /* require.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5479C741ACA076C0011FFE7 /* require.mm */; };
+		B5479C761ACA076C0011FFE7 /* require.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5479C741ACA076C0011FFE7 /* require.mm */; };
 		B573FFE01AC7175C0046282D /* JSContextExtensions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */; };
 		B573FFE11AC7175C0046282D /* JSContextExtensions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */; };
 		B59884B51AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
 		B59884B61AC263B7005929C3 /* parser.mm in Sources */ = {isa = PBXBuildFile; fileRef = B59884B31AC263B7005929C3 /* parser.mm */; };
 		B59884B81AC2641A005929C3 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B59884B71AC2641A005929C3 /* JavaScriptCore.framework */; };
-		B5B592341AC29EF500160D50 /* require.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5B592321AC29EF500160D50 /* require.mm */; };
-		B5B592351AC29EF600160D50 /* require.mm in Sources */ = {isa = PBXBuildFile; fileRef = B5B592321AC29EF500160D50 /* require.mm */; };
 		B5BA5B631AC282CB00FCE5EE /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B59884B71AC2641A005929C3 /* JavaScriptCore.framework */; };
 /* End PBXBuildFile section */
 
@@ -48,8 +46,6 @@
 /* Begin PBXFileReference section */
 		B505A1641AC2A26D00986D7B /* script.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = script.mm; sourceTree = "<group>"; };
 		B505A1651AC2A26D00986D7B /* script.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = script.h; sourceTree = "<group>"; };
-		B505A16C1AC2A82700986D7B /* traverse.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = traverse.mm; sourceTree = "<group>"; };
-		B505A16D1AC2A82700986D7B /* traverse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = traverse.h; sourceTree = "<group>"; };
 		B505A1741AC2DEC300986D7B /* paq.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = paq.mm; sourceTree = "<group>"; };
 		B505A1751AC2DEC300986D7B /* paq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = paq.h; sourceTree = "<group>"; };
 		B505A1781AC2E59B00986D7B /* resolve.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = resolve.mm; sourceTree = "<group>"; };
@@ -66,13 +62,13 @@
 		B512839F1AC5C248008C2E0A /* optionparser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = optionparser.hpp; sourceTree = "<group>"; };
 		B51283A21AC5F5BF008C2E0A /* transform.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = transform.mm; sourceTree = "<group>"; };
 		B51283A31AC5F5BF008C2E0A /* transform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = transform.h; sourceTree = "<group>"; };
+		B5479C731ACA076C0011FFE7 /* require.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = require.h; sourceTree = "<group>"; };
+		B5479C741ACA076C0011FFE7 /* require.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = require.mm; sourceTree = "<group>"; };
 		B573FFDE1AC7175C0046282D /* JSContextExtensions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSContextExtensions.cpp; sourceTree = "<group>"; };
 		B573FFDF1AC7175C0046282D /* JSContextExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSContextExtensions.h; sourceTree = "<group>"; };
 		B59884B31AC263B7005929C3 /* parser.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = parser.mm; sourceTree = "<group>"; };
 		B59884B41AC263B7005929C3 /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
 		B59884B71AC2641A005929C3 /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		B5B592321AC29EF500160D50 /* require.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = require.mm; sourceTree = "<group>"; };
-		B5B592331AC29EF500160D50 /* require.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = require.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,14 +114,12 @@
 			isa = PBXGroup;
 			children = (
 				B5081D761AC114F700D675E9 /* main.mm */,
-				B59884B31AC263B7005929C3 /* parser.mm */,
 				B59884B41AC263B7005929C3 /* parser.h */,
-				B5B592321AC29EF500160D50 /* require.mm */,
-				B5B592331AC29EF500160D50 /* require.h */,
+				B59884B31AC263B7005929C3 /* parser.mm */,
+				B5479C731ACA076C0011FFE7 /* require.h */,
+				B5479C741ACA076C0011FFE7 /* require.mm */,
 				B505A1641AC2A26D00986D7B /* script.mm */,
 				B505A1651AC2A26D00986D7B /* script.h */,
-				B505A16C1AC2A82700986D7B /* traverse.mm */,
-				B505A16D1AC2A82700986D7B /* traverse.h */,
 				B505A1741AC2DEC300986D7B /* paq.mm */,
 				B505A1751AC2DEC300986D7B /* paq.h */,
 				B505A1781AC2E59B00986D7B /* resolve.mm */,
@@ -327,12 +321,11 @@
 				B51283A41AC5F5BF008C2E0A /* transform.mm in Sources */,
 				B512839C1AC5078B008C2E0A /* json.mm in Sources */,
 				B505A17A1AC2E59B00986D7B /* resolve.mm in Sources */,
-				B505A16E1AC2A82700986D7B /* traverse.mm in Sources */,
 				B505A1661AC2A26D00986D7B /* script.mm in Sources */,
-				B5B592341AC29EF500160D50 /* require.mm in Sources */,
 				B59884B51AC263B7005929C3 /* parser.mm in Sources */,
 				B5081D771AC114F700D675E9 /* main.mm in Sources */,
 				B573FFE01AC7175C0046282D /* JSContextExtensions.cpp in Sources */,
+				B5479C751ACA076C0011FFE7 /* require.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,11 +339,10 @@
 				B505A1771AC2DEC300986D7B /* paq.mm in Sources */,
 				B512839D1AC5078B008C2E0A /* json.mm in Sources */,
 				B505A17B1AC2E59B00986D7B /* resolve.mm in Sources */,
-				B505A16F1AC2A82700986D7B /* traverse.mm in Sources */,
 				B505A1671AC2A26D00986D7B /* script.mm in Sources */,
-				B5B592351AC29EF600160D50 /* require.mm in Sources */,
 				B59884B61AC263B7005929C3 /* parser.mm in Sources */,
 				B573FFE11AC7175C0046282D /* JSContextExtensions.cpp in Sources */,
+				B5479C761ACA076C0011FFE7 /* require.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -445,7 +437,7 @@
 				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
-					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
@@ -465,7 +457,7 @@
 				GCC_OPTIMIZATION_LEVEL = 3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
-					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
@@ -487,8 +479,7 @@
 				);
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
-					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
-					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
@@ -508,8 +499,7 @@
 				GCC_OPTIMIZATION_LEVEL = s;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
-					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
-					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
@@ -570,7 +560,7 @@
 				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
-					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
@@ -594,8 +584,7 @@
 				);
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
-					"-Wl,-sectcreate,__TEXT,__acorn_src,$(PROJECT_DIR)/paq/acorn.bundle.js",
-					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
+					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
