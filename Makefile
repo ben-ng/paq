@@ -3,7 +3,7 @@ diag_reports=~/Library/Logs/DiagnosticReports
 
 all: js cli
 
-js: paq/detective.bundle.js paq/escodegen.bundle.js paq/builtins.bundle.json paq/concat-stream.bundle.js
+js: paq/detective.bundle.js paq/builtins.bundle.json paq/concat-stream.bundle.js
 
 cli: bin/paq
 
@@ -18,7 +18,13 @@ compile-test:
 	GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES \
 	GCC_GENERATE_TEST_COVERAGE_FILES=YES
 
-copy-fixtures: copy-gcov-fixtures copy-debug-fixtures copy-release-fixtures
+copy-fixtures: copy-browserify copy-gcov-fixtures copy-debug-fixtures copy-release-fixtures
+
+copy-browserify:
+	@e=$d && \
+	rm -rf $$e/../node_modules || true && \
+	mkdir -p "$$e/../node_modules" && \
+	cp -rf node_modules/browserify "$$e/../node_modules"
 
 copy-release-fixtures:
 	@e=$d && \
@@ -94,10 +100,6 @@ paq/detective.bundle.js: node_modules/detective/package.json
 paq/concat-stream.bundle.js: node_modules/concat-stream/package.json
 	@echo "Compiling concat-stream..."
 	@node node_modules/browserify/bin/cmd.js -s concat node_modules/concat-stream | node node_modules/uglifyjs/bin/uglifyjs > paq/concat-stream.bundle.js
-
-paq/escodegen.bundle.js: node_modules/escodegen/package.json
-	@echo "Compiling escodegen..."
-	@node node_modules/browserify/bin/cmd.js -s escodegen node_modules/escodegen | node node_modules/uglifyjs/bin/uglifyjs > paq/escodegen.bundle.js
 
 bin/paq:
 	@echo "Compiling paq..."

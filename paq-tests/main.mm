@@ -406,7 +406,8 @@ TEST_CASE("Creates a basic bundle without concurrency", "[bundle]")
 TEST_CASE("Bundles node core modules", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/node-core/index.js" ], nil);
-    REQUIRE([paq->evalToString() isEqualToString:@"a/b"]);
+    NSString* evaled = paq->evalToString();
+    REQUIRE([evaled isEqualToString:@"a/b"]);
 
     delete paq;
 }
@@ -414,7 +415,8 @@ TEST_CASE("Bundles node core modules", "[bundle]")
 TEST_CASE("Inserts module globals", "[bundle]")
 {
     Paq* paq = new Paq(@[ @"fixtures/insert-globals/index.js" ], nil);
-    REQUIRE([paq->evalToString() hasSuffix:@"insert-globals"]);
+    NSString* evaled = paq->evalToString();
+    REQUIRE([evaled hasSuffix:@"insert-globals/browser"]);
 
     delete paq;
 }

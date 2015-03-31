@@ -131,22 +131,25 @@ void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, 
                     // Pull together the requires and resolved result for later
                     NSMutableDictionary *zip = [[NSMutableDictionary alloc] initWithCapacity:[resolved count]];
                     for(long i=0, ii=[resolved count]; i<ii; ++i) {
-                        zip[evaluatedRequires[i]] = resolved[i];
+                        NSString* possibleNativeModule = _nativeModules[resolved[i]];
                         
-                        // Add native modules to the map as they are discovered
-                        if(_nativeModules[resolved[i]] != nil && _module_map[resolved[i]] == nil) {
-                            _module_map[resolved[i]] = @{@"source": _nativeModules[resolved[i]], @"deps": @{}, @"entry": [NSNumber numberWithBool:NO]};
+                        if(possibleNativeModule != nil) {
+                            zip[evaluatedRequires[i]] = possibleNativeModule;
+                        }
+                        else {
+                            zip[evaluatedRequires[i]] = resolved[i];
                         }
                     }
                     
                     // Dispatch new tasks for each new module
                     for(NSUInteger i = 0, ii = [resolved count]; i<ii; ++i) {
                         // If resolved[i] == file then it is the one we just resolved
-                        if(_module_map[resolved[i]] == nil && resolved[i] != file) {
-                            NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
+                        NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
+                        NSString *path = parent[@"filename"];
+                        if(_module_map[path] == nil && resolved[i] != file) {
                             _unprocessed++;
-                            _module_map[resolved[i]] = [NSNumber numberWithBool:NO];
-                            depsHelper(resolved[i], parent, NO, callback);
+                            _module_map[path] = [NSNumber numberWithBool:NO]; // This ensures that nobody else tries to resolve this
+                            depsHelper(path, parent, NO, callback);
                         }
                     }
                     

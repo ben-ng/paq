@@ -17,6 +17,7 @@ private:
     NSMutableDictionary* _pathCache;
     NSMutableDictionary* _realPathCache;
     NSMutableDictionary* _packageMainCache;
+    NSMutableDictionary* _packageBrowserCache;
     NSDictionary* _nativeModules;
     NSArray* _modulePaths;
     NSURL* _cwd;

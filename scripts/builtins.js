@@ -5,33 +5,22 @@
 * bundled with the final result
 */
 var builtins = require('browserify/lib/builtins')
-  , browserify = require('browserify')
   , async = require('async')
+  , path = require('path')
+  , moduleRoot = path.dirname(__dirname)
+  , keys = Object.keys(builtins)
+  , out = {}
 
-async.map(Object.keys(builtins)
-, function (key, next) {
-
-  var b = new browserify(builtins[key], {standalone: key})
+for (var i=0, ii=keys.length; i<ii; ++i) {
+  var key = keys[i]
     , mutatedKey = key
 
   if(key.charAt(0) == '_') {
     mutatedKey = key.substring(1).split('_').join('/')
   }
 
-  b.bundle(function (err, buff) {
-    next(err, err ? null : [mutatedKey, buff.toString()])
-  })
+  // Store the relative paths from the root of the module, to the builtin
+  out[mutatedKey] = path.relative(moduleRoot, builtins[key])
+}
 
-}, function (err, bundles) {
-  if(err) {
-    throw err
-  }
-
-  var dict = {}
-
-  for (var i=0, ii=bundles.length; i<ii; ++i) {
-    dict[bundles[i][0]] = bundles[i][1]
-  }
-
-  process.stdout.write(JSON.stringify(dict))
-})
+process.stdout.write(JSON.stringify(out))

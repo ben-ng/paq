@@ -18,7 +18,12 @@ Require::Require(NSDictionary* options)
         _max_tasks = 1;
     }
 
-    _pathSrc = Script::getNativeBuiltins()[@"path"];
+    NSError* err = nil;
+    _pathSrc = [NSString stringWithContentsOfFile:Script::getNativeBuiltins()[@"path"] encoding:NSUTF8StringEncoding error:&err];
+
+    if (!_pathSrc) {
+        [NSException raise:@"Fatal Exception" format:@"The path module could not be found"];
+    }
 
     _accessQueue = dispatch_queue_create("require.serial", DISPATCH_QUEUE_SERIAL);
     _contextSema = dispatch_semaphore_create(_max_tasks);
@@ -128,16 +133,14 @@ BOOL Require::isRequire(NSDictionary* node)
 
 JSContext* Require::createContext()
 {
-    JSContext* ctx;
+    JSContext* ctx = nil;
 
     ctx = [[JSContext alloc] init];
 
-    // This is a standalone browserify module, so it will appear at global.path
-    [ctx evaluateScript:@"global = {}"];
-    [ctx evaluateScript:_pathSrc];
-
-    // Move it to the path variable
-    [ctx evaluateScript:@"_path = global.path; delete global.path; global = undefined;"];
+    // This is a browserify builtin module that expects to be run in a CJS environment
+    [ctx evaluateScript:@"var _exports = {}, _module = {exports: exports};"];
+    [ctx evaluateScript:[NSString stringWithFormat:@"(function (exports){%@}(_exports))", _pathSrc]];
+    [ctx evaluateScript:@"_path = _exports; _exports = undefined; _module = undefined"];
 
     return ctx;
 }

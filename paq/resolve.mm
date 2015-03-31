@@ -20,6 +20,7 @@ Resolve::Resolve(NSDictionary* options)
     _pathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _realPathCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
     _packageMainCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
+    _packageBrowserCache = [[NSMutableDictionary alloc] initWithCapacity:1000];
 
     if (![options[@"nativeModules"] isKindOfClass:NSDictionary.class]) {
         [NSException raise:@"Fatal Exception" format:@"The nativeModules argument is required and must be an NSDictionary"];
@@ -251,7 +252,13 @@ NSString* Resolve::path_resolve(NSArray* args)
 
 NSMutableDictionary* Resolve::makeModuleStub(NSString* filename)
 {
-    filename = path_resolve(@[ filename ]);
+    if (_nativeModuleExists(filename)) {
+        filename = _nativeModules[filename];
+    }
+    else {
+        filename = path_resolve(@[ filename ]);
+    }
+
     return [[NSMutableDictionary alloc] initWithDictionary:@{
         @"id" : filename,
         @"filename" : filename,
@@ -288,6 +295,16 @@ NSArray* Resolve::normalizeArray(NSArray* parts, BOOL allowAboveRoot)
 
 NSString* Resolve::tryFile(NSString* requestPath)
 {
+    // Preload the browser field replacement dictionary, if there is one
+    readPackage(requestPath);
+
+    requestPath = [requestPath stringByStandardizingPath];
+
+    // Replace with browser version if there is one
+    if (_packageBrowserCache[requestPath] != nil) {
+        requestPath = _packageBrowserCache[requestPath];
+    }
+
     BOOL isDirectory;
     BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:requestPath isDirectory:&isDirectory];
 
@@ -375,9 +392,49 @@ NSString* Resolve::readPackage(NSString* requestPath)
     }
 
     if ([object isKindOfClass:[NSDictionary class]]) {
+        NSObject* browserFile = ((NSDictionary*)object)[@"browser"];
         NSString* mainFile = ((NSDictionary*)object)[@"main"];
-        _packageMainCache[requestPath] = mainFile ? mainFile : @"";
-        return mainFile;
+        NSDictionary* browserDict = nil;
+
+        if (browserFile != nil) {
+            // If dictionary, write the aliases now
+            if ([browserFile isKindOfClass:NSDictionary.class]) {
+                browserDict = (NSDictionary*)browserFile;
+
+                [browserDict enumerateKeysAndObjectsUsingBlock:^(NSString* needle, NSString* replacement, BOOL* stop) {
+                    // Absolute paths are way easier to work with!
+                    NSString* absNeedPath = [[requestPath stringByAppendingPathComponent:needle] stringByStandardizingPath];
+                    NSString* absReplPath = [[requestPath stringByAppendingPathComponent:replacement] stringByStandardizingPath];
+                    
+                    // Make sure that modules can't overwite other modules by traversing upwards
+                    if (![absNeedPath hasPrefix:requestPath] || ![absReplPath hasPrefix:requestPath]) {
+                        [NSException raise:@"Malicious package.json" format:@"%@ is trying to alter settings beyond its allowed scope", requestPath];
+                    }
+                    
+                    _packageBrowserCache[absNeedPath] = absReplPath;
+                }];
+            }
+            else {
+                _packageMainCache[requestPath] = (NSString*)browserFile;
+            }
+        }
+
+        // Second condition is because a string browser field overrides the main field
+        if (mainFile != nil && !_packageMainCache[requestPath]) {
+            // Use the browser alias if provided
+            if (browserDict && browserDict[mainFile] != nil) {
+                _packageMainCache[requestPath] = browserDict[mainFile];
+            }
+            else {
+                _packageMainCache[requestPath] = mainFile;
+            }
+        }
+
+        if (_packageMainCache[requestPath] == nil) {
+            _packageMainCache[requestPath] = @"";
+        }
+
+        return _packageMainCache[requestPath];
     }
     else {
         NSLog(@"Parsed %@ but did not get a dictionary: %@", jsonPath, [error localizedDescription]);
@@ -403,6 +460,7 @@ Resolve::~Resolve()
     _pathCache = nil;
     _realPathCache = nil;
     _packageMainCache = nil;
+    _packageBrowserCache = nil;
     _nativeModules = nil;
     _modulePaths = nil;
     _cwd = nil;

@@ -114,10 +114,10 @@
 			isa = PBXGroup;
 			children = (
 				B5081D761AC114F700D675E9 /* main.mm */,
-				B59884B41AC263B7005929C3 /* parser.h */,
 				B59884B31AC263B7005929C3 /* parser.mm */,
-				B5479C731ACA076C0011FFE7 /* require.h */,
+				B59884B41AC263B7005929C3 /* parser.h */,
 				B5479C741ACA076C0011FFE7 /* require.mm */,
+				B5479C731ACA076C0011FFE7 /* require.h */,
 				B505A1641AC2A26D00986D7B /* script.mm */,
 				B505A1651AC2A26D00986D7B /* script.h */,
 				B505A1741AC2DEC300986D7B /* paq.mm */,
@@ -438,7 +438,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
 					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
-					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
@@ -454,11 +453,10 @@
 				CLANG_ENABLE_MODULES = YES;
 				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
 				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
-				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_OPTIMIZATION_LEVEL = s;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
 					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
-					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
@@ -561,7 +559,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				OTHER_LDFLAGS = (
 					"-Wl,-sectcreate,__TEXT,__detective_src,$(PROJECT_DIR)/paq/detective.bundle.js",
-					"-Wl,-sectcreate,__TEXT,__escodegen_src,$(PROJECT_DIR)/paq/escodegen.bundle.js",
 					"-Wl,-sectcreate,__TEXT,__builtins_src,$(PROJECT_DIR)/paq/builtins.bundle.json",
 					"-Wl,-sectcreate,__TEXT,__prelude_src,$(PROJECT_DIR)/node_modules/browser-pack/_prelude.js",
 					"-Wl,-sectcreate,__TEXT,__concats_src,$(PROJECT_DIR)/paq/concat-stream.bundle.js",
