@@ -1,6 +1,6 @@
 {
   "name": "paq",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Multithreaded tool for running node.js style code in the browser inspired by substack's Browserify.",
   "main": "index.js",
   "bin": {
