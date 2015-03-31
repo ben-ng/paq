@@ -5,7 +5,6 @@
 * bundled with the final result
 */
 var builtins = require('browserify/lib/builtins')
-  , async = require('async')
   , path = require('path')
   , moduleRoot = path.dirname(__dirname)
   , keys = Object.keys(builtins)
