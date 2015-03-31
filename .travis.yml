@@ -3,8 +3,7 @@ language: objective-c
 
 before_install:
   - npm install
-  - gem i slather --no-ri --no-rdoc
-  - ulimit -c unlimited -S
+  - bundle
 
 script:
   - echo "Compiling tests"
