@@ -83,12 +83,6 @@ show-build-dir:
 	cd $$b && \
 	tree | grep .gcno
 
-slather:
-	@e=$d && \
-	b=$$(dirname "$$e") && \
-	b=$$(dirname "$$b") && \
-	slather coverage -b $$b
-
 paq/builtins.bundle.json: node_modules/browserify/package.json scripts/builtins.js
 	@echo "Compiling builtins..."
 	@node scripts/builtins.js > paq/builtins.bundle.json

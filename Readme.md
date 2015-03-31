@@ -1,6 +1,6 @@
 # paq
 
-[![Build Status](https://travis-ci.org/ben-ng/paq.svg?branch=master)](https://travis-ci.org/ben-ng/paq)
+[![Build Status](https://travis-ci.org/ben-ng/paq.svg?branch=master)](https://travis-ci.org/ben-ng/paq) [![Coverage Status](https://coveralls.io/repos/ben-ng/paq/badge.svg)](https://coveralls.io/r/ben-ng/paq)
 
 paq implements a subset of [Browserify](http://browserify.org)'s features with full multithreading support. For impatient people who have to deal with large codebases.
 

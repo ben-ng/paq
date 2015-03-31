@@ -3,7 +3,8 @@ language: objective-c
 
 before_install:
   - npm install
-  - bundle
+  - gem install specific_install
+  - gem specific_install -l https://github.com/ben-ng/slather.git
 
 script:
   - echo "Compiling tests"
@@ -25,4 +26,4 @@ after_failure:
   - make show-crash
 
 after_success:
-  - make slather
+  - slather
