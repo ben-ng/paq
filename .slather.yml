@@ -1,4 +1,5 @@
 coverage_service: coveralls
 xcodeproj: paq.xcodeproj
 ignore:
+  - main.mm
   - catch.hpp
