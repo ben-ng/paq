@@ -39,8 +39,8 @@ private:
      *  }
      */
 
-    void depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, void (^callback)(NSDictionary* deps));
-    void _getAST(NSString* file, void (^callback)(NSError* err, NSArray* literals, NSArray* expressions, NSString* source));
+    void depsHelper(NSString* file, NSMutableDictionary* parent, NSString* source, BOOL isEntry, void (^callback)(NSDictionary* deps));
+    void _getAST(NSString* file, NSString* source, void (^callback)(NSError* err, NSArray* literals, NSArray* expressions, NSString* source));
     void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
     NSString* _insertGlobals(NSString* file, NSString* source);
 
@@ -55,5 +55,5 @@ public:
     void bundle(NSDictionary* options, void (^callback)(NSError* error, NSString* bundle));
     NSString* bundleSync(NSDictionary* options, NSError** error);
     NSString* evalToString();
-    void deps(void (^callback)(NSDictionary* dependencies));
+    void deps(NSDictionary* options, void (^callback)(NSDictionary* dependencies));
 };

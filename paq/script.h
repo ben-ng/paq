@@ -16,4 +16,5 @@
 class Script {
 public:
     static NSDictionary* getNativeBuiltins();
+    static NSString* getModuleRoot();
 };

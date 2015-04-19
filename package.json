@@ -21,14 +21,14 @@
   },
   "homepage": "https://github.com/ben-ng/paq",
   "dependencies": {
-    "browserify": "^9.0.3"
+    "browserify": "^9.0.3",
+    "concat-stream": "^1.4.7"
   },
   "devDependencies": {
     "babel-runtime": "^5.0.0-beta1",
     "babelify": "^5.0.4",
     "brfs": "^1.4.0",
     "browser-pack": "^4.0.1",
-    "concat-stream": "^1.4.7",
     "detective": "https://github.com/ben-ng/node-detective/archive/master.tar.gz",
     "escodegen": "^1.6.1",
     "handlebars": "^3.0.1",

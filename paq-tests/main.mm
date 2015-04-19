@@ -349,7 +349,7 @@ TEST_CASE("Creates a dependency map", "[deps]")
 
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
-    paq->deps(^(NSDictionary* deps) {
+    paq->deps(@{}, ^(NSDictionary* deps) {
         dependencies = deps;
         dispatch_semaphore_signal(sema);
     });
@@ -515,13 +515,41 @@ TEST_CASE("Converts the babelify transform", "[bundle]")
     delete paq;
 }
 
+TEST_CASE("Creates a transform chain", "[transform]")
+{
+    Paq* paq = new Paq(@[ @"fixtures/node_modules/hbsfy/index.js", @"fixtures/node_modules/babelify/index.js" ], @{
+        @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES]
+    });
+    NSError* err = nil;
+    NSString* bundle = paq->bundleSync(@{ @"chainTransforms" : [NSNumber numberWithBool:YES] }, &err);
+
+    // Should have references to JSX stuff somewhere in it
+    REQUIRE([bundle rangeOfString:@"JSXElement"].location != NSNotFound);
+
+    // Should have the hbsfy runtime somewhere in it
+    REQUIRE([bundle rangeOfString:@"require('hbsfy/runtime')"].location != NSNotFound);
+
+    // The same bundle should be able to handle both jsx and hbs
+    NSString* evaluated = evaluateTransformSync(bundle, @"hello.jsx", @"<div>Hello {this.props.name}</div>;");
+
+    REQUIRE(evaluated != nil);
+    REQUIRE([evaluated rangeOfString:@"React.createElement("].location != NSNotFound);
+
+    evaluated = evaluateTransformSync(bundle, @"hbs", @"My name is {{name}}");
+
+    REQUIRE(evaluated != nil);
+    REQUIRE([evaluated rangeOfString:@"return \"My name is \""].location != NSNotFound);
+
+    delete paq;
+}
+
 /*
 TEST_CASE("Uses hbsfy transform", "[bundle]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
     // because that kind of require can't be evaluated statically
     Paq* paq = new Paq(@[ @"fixtures/hbs-app/index.js" ], @{ @"ignoreUnresolvableExpressions" : [NSNumber numberWithBool:YES],
-        @"transforms" : @[ @"hbsfy" ] });
+        @"transforms" : @[ @"fixtures/node_modules/hbsfy/index.js" ] });
 
     NSError* err = nil;
     NSString* bundle = paq->bundleSync(nil, &err);
@@ -529,9 +557,7 @@ TEST_CASE("Uses hbsfy transform", "[bundle]")
     REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
     REQUIRE([paq->evalToString() isEqualToString:@"Hello World!"]);
 }
- */
 
-/*
 TEST_CASE("Wait for instruments to detect leaks", "[instruments]")
 {
     [NSThread sleepForTimeInterval:1.0f];

@@ -278,7 +278,13 @@ NSString* Resolve::tryFile(NSString* requestPath)
 
     // Replace with browser version if there is one
     if (_packageBrowserCache[requestPath] != nil) {
-        requestPath = _packageBrowserCache[requestPath];
+        // This package wants us to ignore bundling this file
+        if ([_packageBrowserCache[requestPath] isKindOfClass:NSNumber.class] && [_packageBrowserCache[requestPath] boolValue] == NO) {
+            return @"\0";
+        }
+        else {
+            requestPath = _packageBrowserCache[requestPath];
+        }
     }
 
     BOOL isDirectory;
@@ -377,17 +383,23 @@ NSString* Resolve::readPackage(NSString* requestPath)
             if ([browserFile isKindOfClass:NSDictionary.class]) {
                 browserDict = (NSDictionary*)browserFile;
 
-                [browserDict enumerateKeysAndObjectsUsingBlock:^(NSString* needle, NSString* replacement, BOOL* stop) {
+                [browserDict enumerateKeysAndObjectsUsingBlock:^(NSString* needle, NSObject* replacement, BOOL* stop) {
                     // Absolute paths are way easier to work with!
                     NSString* absNeedPath = [[requestPath stringByAppendingPathComponent:needle] stringByStandardizingPath];
-                    NSString* absReplPath = [[requestPath stringByAppendingPathComponent:replacement] stringByStandardizingPath];
                     
-                    // Make sure that modules can't overwite other modules by traversing upwards
-                    if (![absNeedPath hasPrefix:requestPath] || ![absReplPath hasPrefix:requestPath]) {
-                        [NSException raise:@"Malicious package.json" format:@"%@ is trying to alter settings beyond its allowed scope", requestPath];
+                    if ([replacement isKindOfClass:NSString.class]) {
+                        NSString* absReplPath = [[requestPath stringByAppendingPathComponent:(NSString *) replacement] stringByStandardizingPath];
+                        
+                        // Make sure that modules can't overwite other modules by traversing upwards
+                        if (![absNeedPath hasPrefix:requestPath] || ![absReplPath hasPrefix:requestPath]) {
+                            [NSException raise:@"Malicious package.json" format:@"%@ is trying to alter settings beyond its allowed scope", requestPath];
+                        }
+                        
+                        _packageBrowserCache[absNeedPath] = absReplPath;
                     }
-                    
-                    _packageBrowserCache[absNeedPath] = absReplPath;
+                    else {
+                        _packageBrowserCache[absNeedPath] = [NSNumber numberWithBool:NO];
+                    }
                 }];
             }
             else {

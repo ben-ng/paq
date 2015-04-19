@@ -9,6 +9,8 @@
 
 #import "paq.h"
 
+NSString* TRANSFORM_ROOT_FILE = @"transform-root.js";
+
 Paq::Paq(NSArray* entry, NSDictionary* options)
 {
     _unprocessed = 0;
@@ -56,34 +58,116 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     _options = options;
 
     // Are there any transforms we need to set up?
-    /* NOT YET DONE, COMING SOON
     if (options && options[@"transforms"]) {
         if (![options[@"transforms"] isKindOfClass:NSArray.class]) {
             [NSException raise:@"Fatal Exception" format:@"The transforms option must be an NSArray"];
         }
 
         // paq each transform
+        NSArray* transforms = options[@"transforms"];
+        NSMutableDictionary* optionsSansTransforms = [options mutableCopy];
+        [optionsSansTransforms removeObjectForKey:@"transforms"];
+
+        for (NSUInteger i = 0, ii = transforms.count; i < ii; ++i) {
+            NSError* err = nil;
+            Paq* transformBundle = new Paq(@[ _resolve->path_resolve(@[ transforms[i] ]) ], optionsSansTransforms);
+            NSString* transformString = transformBundle->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &err);
+
+            if (transformString == nil) {
+                [NSException raise:@"Fatal Exception" format:@"Failed to paq the %@ transform", transforms[i]];
+            }
+        }
     }
-    */
 
     // Initialize multithreading stuff
     _serialQ = dispatch_queue_create("paq.serial", DISPATCH_QUEUE_SERIAL);
 };
 
-void Paq::deps(void (^callback)(NSDictionary* dependencies))
+void Paq::deps(NSDictionary* options, void (^callback)(NSDictionary* dependencies))
 {
     // Called when dependencies are done processing
     void (^callbackCopy)(NSDictionary*) = [callback copy];
+    NSMutableString* generatedRootFile;
 
-    _unprocessed = _entry.count;
+    if (options[@"chainTransforms"] != nil && [options[@"chainTransforms"] boolValue]) {
+        NSMutableArray* transformFilePaths = [[NSMutableArray alloc] initWithCapacity:_entry.count];
+        generatedRootFile = [[NSMutableString alloc] init];
 
-    for (long i = 0, ii = _entry.count; i < ii; ++i) {
-        if (_module_map[_entry[i]] == nil) {
-            _module_map[_entry[i]] = [NSNumber numberWithBool:NO];
+        for (NSUInteger i = 0, ii = _entry.count; i < ii; ++i) {
+            NSString* escapedEntry = JSONString(_entry[i]);
+            transformFilePaths[i] = [NSString stringWithFormat:@"[%@, require(%@)]", escapedEntry, escapedEntry];
+        }
 
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-                depsHelper(_entry[i], _resolve->makeModuleStub(_entry[i]), YES, callbackCopy);
-            });
+        // First require all the transforms we need
+        [generatedRootFile appendFormat:@"var transforms = [\n%@\n]\n", [transformFilePaths componentsJoinedByString:@",\n"]];
+
+        // TODO: Refactor to be more maintainable
+        [generatedRootFile appendFormat:@""
+                           @"module.exports = function chainedTransform (file, src, finish) {\n"
+                           @"  var currentTransformIndex = 0\n"
+                           @"    , iterate\n"
+                           @"  iterate = function () {\n"
+                           @"    var transformFunc\n"
+                           @"    if (currentTransformIndex >= transforms.length) {\n"
+                           @"      finish(null, src)\n"
+                           @"      return\n"
+                           @"    }\n"
+                           @"    transformFunc = transforms[currentTransformIndex][1]\n"
+                           @"    // Handle paq-style transforms\n"
+                           @"    if (transformFunc.length === 3) {\n"
+                           @"      transformFunc(file, src, function (err, transformedSrc) {\n"
+                           @"        if (err) {\n"
+                           @"          finish(err, null)\n"
+                           @"          return\n"
+                           @"        }\n"
+                           @"        src = transformedSrc\n"
+                           @"        currentTransformIndex += 1\n"
+                           @"        iterate()\n"
+                           @"      })\n"
+                           @"    }\n"
+                           @"    // Handle browserify-style transforms\n"
+                           @"    else {\n"
+                           @"      var transformStream = transformFunc(file)\n"
+                           @"        , concat = require('concat-stream')\n"
+                           @"      transformStream.pipe(concat(function (data){\n"
+                           @"        src = data.toString()\n"
+                           @"        currentTransformIndex += 1\n"
+                           @"        iterate()\n"
+                           @"      }))\n"
+                           @"      transformStream.on('error', function (err){\n"
+                           @"        finish(err, null)\n"
+                           @"      })\n"
+                           @"      transformStream.end(src)\n"
+                           @"    }\n"
+                           @"  }\n"
+                           @"  iterate()\n"
+                           @"}\n"];
+
+        // There isn't actually a file there, but we pretend like there is one
+        // the resolve will give us an absolute path to this fake file
+        // wherever the current working directory (cwd) is, so that the require
+        // calls in the file contents resolve relative to the cwd
+        NSString* rootFile = _resolve->path_resolve(@[ TRANSFORM_ROOT_FILE ]);
+
+        _unprocessed = 1;
+
+        _module_map[rootFile] = [NSNumber numberWithBool:NO];
+
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            depsHelper(rootFile, _resolve->makeModuleStub(rootFile), generatedRootFile, YES, callbackCopy);
+        });
+    }
+    else {
+        _unprocessed = _entry.count;
+
+        for (long i = 0, ii = _entry.count; i < ii; ++i) {
+            if (_module_map[_entry[i]] == nil) {
+                _module_map[_entry[i]] = [NSNumber numberWithBool:NO];
+
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                    depsHelper(_entry[i], _resolve->makeModuleStub(_entry[i]), nil, YES, callbackCopy);
+                });
+            }
         }
     }
 }
@@ -93,20 +177,29 @@ void Paq::bundle(NSDictionary* options, void (^callback)(NSError* error, NSStrin
     __block void (^cbref)(NSError*, NSString* bundle) = [callback copy];
 
     // See header file for the structure of the deps callback argument
-    deps(^void(NSDictionary* deps) {
-        Pack::pack(_entry, deps, options, cbref);
+    deps(options, ^void(NSDictionary* deps) {
+        if (options[@"chainTransforms"] != nil && [options[@"chainTransforms"] boolValue]) {
+            // Transform bundles are actually standalone modules
+            NSMutableDictionary *optionsCopy = [options mutableCopy];
+            optionsCopy[@"standalone"] = [NSNumber numberWithBool:YES];
+            
+            Pack::pack(@[_resolve->path_resolve(@[TRANSFORM_ROOT_FILE])], deps, optionsCopy, cbref);
+        }
+        else {
+            Pack::pack(_entry, deps, options, cbref);
+        }
         cbref = nil;
     });
 };
 
-void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, void (^callback)(NSDictionary* deps))
+void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, NSString* source, BOOL isEntry, void (^callback)(NSDictionary* deps))
 {
     if (!file.isAbsolutePath) {
         [NSException raise:@"Fatal Exception" format:@"Paq::deps must always be called with absolute paths to avoid infinite recursion. You called it with \"%@\"", file];
     }
 
     // This stuff can be done concurrently
-    _getAST(file, ^(NSError* err, NSArray* literals, NSArray* expressions, NSString* source) {
+    _getAST(file, source, ^(NSError* err, NSArray* literals, NSArray* expressions, NSString* source) {
         if(literals == nil || expressions == nil || source == nil) {
             // TODO: Fail more gracefully here
             [NSException raise:@"Fatal Exception" format:@"Dependency resolution failed: %@", err];
@@ -148,10 +241,12 @@ void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, BOOL isEntry, 
                         // If resolved[i] == file then it is the one we just resolved
                         NSMutableDictionary *parent = _resolve->makeModuleStub(resolved[i]);
                         NSString *path = parent[@"filename"];
-                        if(_module_map[path] == nil && resolved[i] != file) {
+                        if(![resolved[i] isEqualToString: @"\0"] && // These are modules ignored using `false` in the package.json browser field
+                           _module_map[path] == nil &&
+                           resolved[i] != file) {
                             _unprocessed++;
                             _module_map[path] = [NSNumber numberWithBool:NO]; // This ensures that nobody else tries to resolve this
-                            depsHelper(path, parent, NO, callback);
+                            depsHelper(path, parent, nil, NO, callback);
                         }
                     }
                     
@@ -221,43 +316,49 @@ NSString* Paq::_insertGlobals(NSString* file, NSString* source)
     return source;
 }
 
-void Paq::_getAST(NSString* file, void (^callback)(NSError* err, NSArray* literals, NSArray* expressions, NSString* source))
+void Paq::_getAST(NSString* file, NSString* source, void (^callback)(NSError* err, NSArray* literals, NSArray* expressions, NSString* source))
 {
-    dispatch_fd_t fd = open([file cStringUsingEncoding:NSUTF8StringEncoding], O_RDONLY);
-    __block NSString* source = nil;
+    __block NSString* srcCode = nil;
 
-    if (fd == -1) {
-        return callback([NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d opening file", errno] }], nil, nil, nil);
+    if (source == nil) {
+        dispatch_fd_t fd = open([file cStringUsingEncoding:NSUTF8StringEncoding], O_RDONLY);
+
+        if (fd == -1) {
+            return callback([NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d opening %@", errno, file] }], nil, nil, nil);
+        }
+
+        dispatch_semaphore_t readsema = dispatch_semaphore_create(0);
+
+        dispatch_read(fd, SIZE_T_MAX, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(dispatch_data_t data, int error) {
+            int res = close(fd);
+            
+            if(res != 0) {
+                return callback([NSError errorWithDomain:@"com.benng.paq" code:18 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d closing file", errno] }], nil, nil, nil);
+            }
+            
+            if(error != 0) {
+                return callback([NSError errorWithDomain:@"com.benng.paq" code:16 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Error %d in dispatch_read of %@", error, file]}], nil, nil, nil);
+            }
+            
+            srcCode = [[NSString alloc] initWithData:(NSData *) data encoding:NSUTF8StringEncoding];
+            
+            if ([file.pathExtension isEqualToString:@"json"]) {
+                srcCode = [@"module.exports=" stringByAppendingString:srcCode];
+            }
+            
+            dispatch_semaphore_signal(readsema);
+        });
+
+        dispatch_semaphore_wait(readsema, DISPATCH_TIME_FOREVER);
+    }
+    else {
+        srcCode = source;
     }
 
-    dispatch_semaphore_t readsema = dispatch_semaphore_create(0);
-
-    dispatch_read(fd, SIZE_T_MAX, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(dispatch_data_t data, int error) {
-        int res = close(fd);
-        
-        if(res != 0) {
-            return callback([NSError errorWithDomain:@"com.benng.paq" code:18 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d closing file", errno] }], nil, nil, nil);
-        }
-        
-        if(error != 0) {
-            return callback([NSError errorWithDomain:@"com.benng.paq" code:16 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Error %d in dispatch_read", error]}], nil, nil, nil);
-        }
-        
-        source = [[NSString alloc] initWithData:(NSData *) data encoding:NSUTF8StringEncoding];
-        
-        if ([file.pathExtension isEqualToString:@"json"]) {
-            source = [@"module.exports=" stringByAppendingString:source];
-        }
-        
-        dispatch_semaphore_signal(readsema);
-    });
-
-    dispatch_semaphore_wait(readsema, DISPATCH_TIME_FOREVER);
-
     // Insert globals now, because the replacements have require calls in them
-    source = _insertGlobals(file, source);
+    srcCode = _insertGlobals(file, srcCode);
 
-    _parser->parse(source, callback);
+    _parser->parse(srcCode, callback);
 };
 
 void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved))

@@ -18,13 +18,14 @@ compile-test:
 	GCC_INSTRUMENT_PROGRAM_FLOW_ARCS=YES \
 	GCC_GENERATE_TEST_COVERAGE_FILES=YES
 
-copy-fixtures: copy-browserify copy-gcov-fixtures copy-debug-fixtures copy-release-fixtures
+copy-fixtures: copy-deps copy-gcov-fixtures copy-debug-fixtures copy-release-fixtures
 
-copy-browserify:
+copy-deps:
 	@e=$d && \
 	rm -rf $$e/../node_modules || true && \
 	mkdir -p "$$e/../node_modules" && \
-	cp -rf node_modules/browserify "$$e/../node_modules"
+	cp -rf node_modules/browserify "$$e/../node_modules" && \
+	cp -rf node_modules/concat-stream "$$e/../node_modules"
 
 copy-release-fixtures:
 	@e=$d && \
