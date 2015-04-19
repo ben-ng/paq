@@ -323,7 +323,7 @@ NSString* Paq::evalToString()
         return err.localizedDescription;
     }
 
-    JSContext* ctx = JSContextExtensions::create();
+    JSContext* ctx = [[PseudoBrowserJSContext alloc] init];
 
     ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
         except = [exception toString];

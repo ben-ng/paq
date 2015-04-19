@@ -8,8 +8,8 @@
 
 #define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #import <Foundation/Foundation.h>
+#import "PseudoBrowserJSContext.h"
 #import "json.h"
-#import "JSContextExtensions.h"
 #import "catch.hpp"
 #import "parser.h"
 #import "require.h"
@@ -70,7 +70,7 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
 
     NSString* wrappedBundle = [NSString stringWithFormat:@"var global = {}, exports = {}, module={exports:exports};%@;", transformString];
 
-    JSContext* ctx = JSContextExtensions::create();
+    JSContext* ctx = [[PseudoBrowserJSContext alloc] init];
 
     ctx.exceptionHandler = ^(JSContext* ctx, JSValue* e) {
         NSLog(@"JS Error: %@", [e toString]);
@@ -93,8 +93,6 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
 
     ctx.exceptionHandler = nil;
     ctx[@"transformCb"] = nil;
-
-    JSContextExtensions::destroy(ctx);
 
     ctx = nil;
 
