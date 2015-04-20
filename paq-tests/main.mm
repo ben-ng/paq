@@ -65,7 +65,7 @@ NSArray* requireSync(NSString* path, NSArray* expressions)
 
 NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSString* source)
 {
-    __block BOOL callbackWasCalled = NO;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     __block NSString* cbData = nil;
 
     NSString* wrappedBundle = [NSString stringWithFormat:@"var global = {}, exports = {}, module={exports:exports};%@;", transformString];
@@ -73,23 +73,21 @@ NSString* evaluateTransformSync(NSString* transformString, NSString* file, NSStr
     JSContext* ctx = [[PseudoBrowserJSContext alloc] init];
 
     ctx.exceptionHandler = ^(JSContext* ctx, JSValue* e) {
-        NSLog(@"JS Error: %@", [e toString]);
+        NSLog(@"Test Transform JS Error: %@", [e toString]);
     };
 
     [ctx evaluateScript:wrappedBundle];
 
     ctx[@"transformCb"] = ^(JSValue* err, JSValue* data) {
         cbData = [data toString];
-        callbackWasCalled = YES;
+        dispatch_semaphore_signal(sema);
     };
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [ctx evaluateScript:[NSString stringWithFormat:@"module.exports(%@, %@, transformCb)", JSONString(file), JSONString(source)]];
+        [ctx evaluateScript:[NSString stringWithFormat:@"module.exports(%@, %@, transformCb); __PBSJC_drain()", JSONString(file), JSONString(source)]];
     });
 
-    while (!callbackWasCalled) {
-        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
-    }
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
 
     ctx.exceptionHandler = nil;
     ctx[@"transformCb"] = nil;
@@ -209,7 +207,7 @@ TEST_CASE("Fails to resolve expressions with arbitrary variables", "[require]")
     NSArray* requires = results[1];
 
     REQUIRE(![err isKindOfClass:NSNull.class]);
-    REQUIRE(err.code == 11);
+    REQUIRE(err.code == 8);
     // Should say what the problem is
     REQUIRE([err.localizedDescription rangeOfString:@"Can't find variable: opts"].location != NSNotFound);
     // Should give a recovery option
@@ -540,11 +538,21 @@ TEST_CASE("Creates a transform chain", "[transform]")
     REQUIRE(evaluated != nil);
     REQUIRE([evaluated rangeOfString:@"return \"My name is \""].location != NSNotFound);
 
+    // And it just shouldn't do anything sometimes
+    evaluated = evaluateTransformSync(bundle, @"some-really/long-file/path/index.js",
+        @"var template = require('./template.hbs')\n"
+        @"\n"
+        @"// Should export \"Hello World!\"\n"
+        @"module.exports = template({input: 'World'})\n"
+        @"");
+
+    REQUIRE(evaluated != nil);
+    REQUIRE([evaluated rangeOfString:@"require('./template.hbs')"].location != NSNotFound);
+
     delete paq;
 }
 
-/*
-TEST_CASE("Uses hbsfy transform", "[bundle]")
+TEST_CASE("Uses hbsfy transform", "[bundle, transform]")
 {
     // There is something like a require(opts.p || opts.default) in hbsfy. If this test passes, then the option was respected
     // because that kind of require can't be evaluated statically
@@ -552,12 +560,15 @@ TEST_CASE("Uses hbsfy transform", "[bundle]")
         @"transforms" : @[ @"fixtures/node_modules/hbsfy/index.js" ] });
 
     NSError* err = nil;
-    NSString* bundle = paq->bundleSync(nil, &err);
+    NSString* bundle = paq->evalToString();
     REQUIRE(err == nil);
-    REQUIRE([bundle lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 0);
-    REQUIRE([paq->evalToString() isEqualToString:@"Hello World!"]);
+    REQUIRE([bundle isEqualToString:@"Hello World!"]);
+
+    delete paq;
 }
 
+/*
+ 
 TEST_CASE("Wait for instruments to detect leaks", "[instruments]")
 {
     [NSThread sleepForTimeInterval:1.0f];

@@ -21,6 +21,8 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
     _entry = nil;
     _options = nil;
     _nativeModules = nil;
+    _transform = nil;
+    _transformBundle = nil;
 
     if (entry == nil) {
         [NSException raise:@"INVALID_ARGUMENT" format:@"Paq must be initialized with an NSArray of NSString entry file paths"];
@@ -63,20 +65,11 @@ Paq::Paq(NSArray* entry, NSDictionary* options)
             [NSException raise:@"Fatal Exception" format:@"The transforms option must be an NSArray"];
         }
 
-        // paq each transform
+        // Create a transform chain
         NSArray* transforms = options[@"transforms"];
         NSMutableDictionary* optionsSansTransforms = [options mutableCopy];
         [optionsSansTransforms removeObjectForKey:@"transforms"];
-
-        for (NSUInteger i = 0, ii = transforms.count; i < ii; ++i) {
-            NSError* err = nil;
-            Paq* transformBundle = new Paq(@[ _resolve->path_resolve(@[ transforms[i] ]) ], optionsSansTransforms);
-            NSString* transformString = transformBundle->bundleSync(@{ @"convertBrowserifyTransform" : [NSNumber numberWithBool:YES] }, &err);
-
-            if (transformString == nil) {
-                [NSException raise:@"Fatal Exception" format:@"Failed to paq the %@ transform", transforms[i]];
-            }
-        }
+        _transformBundle = new Paq(transforms, optionsSansTransforms);
     }
 
     // Initialize multithreading stuff
@@ -124,6 +117,8 @@ void Paq::deps(NSDictionary* options, void (^callback)(NSDictionary* dependencie
                            @"        currentTransformIndex += 1\n"
                            @"        iterate()\n"
                            @"      })\n"
+                           @"      // Tells our setTimeout shim to run until streams are done\n"
+                           @"      __PBSJC_drain()\n"
                            @"    }\n"
                            @"    // Handle browserify-style transforms\n"
                            @"    else {\n"
@@ -138,6 +133,8 @@ void Paq::deps(NSDictionary* options, void (^callback)(NSDictionary* dependencie
                            @"        finish(err, null)\n"
                            @"      })\n"
                            @"      transformStream.end(src)\n"
+                           @"      // Tells our setTimeout shim to run until streams are done\n"
+                           @"      __PBSJC_drain()\n"
                            @"    }\n"
                            @"  }\n"
                            @"  iterate()\n"
@@ -176,20 +173,41 @@ void Paq::bundle(NSDictionary* options, void (^callback)(NSError* error, NSStrin
 {
     __block void (^cbref)(NSError*, NSString* bundle) = [callback copy];
 
-    // See header file for the structure of the deps callback argument
-    deps(options, ^void(NSDictionary* deps) {
-        if (options[@"chainTransforms"] != nil && [options[@"chainTransforms"] boolValue]) {
-            // Transform bundles are actually standalone modules
-            NSMutableDictionary *optionsCopy = [options mutableCopy];
-            optionsCopy[@"standalone"] = [NSNumber numberWithBool:YES];
+    void (^startBundling)() = ^() {
+        // See header file for the structure of the deps callback argument
+        deps(options, ^void(NSDictionary* deps) {
+            if (options[@"chainTransforms"] != nil && [options[@"chainTransforms"] boolValue]) {
+                // Transform bundles are actually standalone modules
+                NSMutableDictionary *optionsCopy = [options mutableCopy];
+                optionsCopy[@"standalone"] = [NSNumber numberWithBool:YES];
+                
+                Pack::pack(@[_resolve->path_resolve(@[TRANSFORM_ROOT_FILE])], deps, optionsCopy, cbref);
+            }
+            else {
+                Pack::pack(_entry, deps, options, cbref);
+            }
+            cbref = nil;
+        });
+    };
+
+    if (_transformBundle != nil) {
+        _transformBundle->bundle(@{ @"chainTransforms" : [NSNumber numberWithBool:YES] }, ^(NSError* error, NSString* transformString) {
+            if (transformString == nil) {
+                [NSException raise:@"Fatal Exception" format:@"Could not chain the transforms: %@", error.localizedDescription];
+            }
+            else {
+                _transform = new Transform(@{
+                                             @"maxTasks" : [NSNumber numberWithInt:2],
+                                             @"transformChain" : transformString
+                                             });
+            }
             
-            Pack::pack(@[_resolve->path_resolve(@[TRANSFORM_ROOT_FILE])], deps, optionsCopy, cbref);
-        }
-        else {
-            Pack::pack(_entry, deps, options, cbref);
-        }
-        cbref = nil;
-    });
+            startBundling();
+        });
+    }
+    else {
+        startBundling();
+    }
 };
 
 void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, NSString* source, BOOL isEntry, void (^callback)(NSDictionary* deps))
@@ -268,13 +286,28 @@ void Paq::depsHelper(NSString* file, NSMutableDictionary* parent, NSString* sour
     });
 }
 
+void Paq::_transformFile(NSString* file, NSString* source, void (^callback)(NSString* transformed))
+{
+    if (_transform) {
+        _transform->transform(file, source, ^(NSError* error, NSString* transformedSource) {
+            if (error) {
+                [NSException raise:@"Fatal Exception" format:@"Failed to transform %@: %@", file, error];
+            }
+            callback(_insertGlobals(file, transformedSource));
+        });
+    }
+    else {
+        callback(_insertGlobals(file, source));
+    }
+}
+
 NSString* Paq::_insertGlobals(NSString* file, NSString* source)
 {
+    // TODO: Transform file before inserting globals and stuff
     NSMutableArray* globalKeysToDefine = [[NSMutableArray alloc] init];
     NSMutableArray* globalValuesToDefine = [[NSMutableArray alloc] init];
 
     // Not sure if its worth parsing the AST more smartly or not.
-
     if ([source rangeOfString:@"process"].location != NSNotFound) {
         [globalKeysToDefine addObject:@"process"];
         [globalValuesToDefine addObject:@"require('process')"];
@@ -324,7 +357,7 @@ void Paq::_getAST(NSString* file, NSString* source, void (^callback)(NSError* er
         dispatch_fd_t fd = open([file cStringUsingEncoding:NSUTF8StringEncoding], O_RDONLY);
 
         if (fd == -1) {
-            return callback([NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d opening %@", errno, file] }], nil, nil, nil);
+            return callback([NSError errorWithDomain:@"com.benng.paq" code:12 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d opening %@", errno, file] }], nil, nil, nil);
         }
 
         dispatch_semaphore_t readsema = dispatch_semaphore_create(0);
@@ -333,11 +366,11 @@ void Paq::_getAST(NSString* file, NSString* source, void (^callback)(NSError* er
             int res = close(fd);
             
             if(res != 0) {
-                return callback([NSError errorWithDomain:@"com.benng.paq" code:18 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d closing file", errno] }], nil, nil, nil);
+                return callback([NSError errorWithDomain:@"com.benng.paq" code:13 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"errno %d closing file", errno] }], nil, nil, nil);
             }
             
             if(error != 0) {
-                return callback([NSError errorWithDomain:@"com.benng.paq" code:16 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Error %d in dispatch_read of %@", error, file]}], nil, nil, nil);
+                return callback([NSError errorWithDomain:@"com.benng.paq" code:14 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Error %d in dispatch_read of %@", error, file]}], nil, nil, nil);
             }
             
             srcCode = [[NSString alloc] initWithData:(NSData *) data encoding:NSUTF8StringEncoding];
@@ -356,9 +389,9 @@ void Paq::_getAST(NSString* file, NSString* source, void (^callback)(NSError* er
     }
 
     // Insert globals now, because the replacements have require calls in them
-    srcCode = _insertGlobals(file, srcCode);
-
-    _parser->parse(srcCode, callback);
+    _transformFile(file, srcCode, ^(NSString* transformed) {
+        _parser->parse(transformed, callback);
+    });
 };
 
 void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved))
@@ -383,22 +416,23 @@ void Paq::_resolveRequires(NSArray* requires, NSMutableDictionary* parent, void 
 
 NSString* Paq::bundleSync(NSDictionary* options, NSError** error)
 {
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     __block NSString* bundled;
     __block NSError* err = nil;
 
-    dispatch_semaphore_t semab = dispatch_semaphore_create(0);
-
-    bundle(options, ^(NSError* erred, NSString* bundle) {
-        if(erred) {
-            err = erred;
-        }
-        else {
-            bundled = bundle;
-        }
-        dispatch_semaphore_signal(semab);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        bundle(options, ^(NSError* erred, NSString* bundle) {
+            if(erred) {
+                err = erred;
+            }
+            else {
+                bundled = bundle;
+            }
+            dispatch_semaphore_signal(sema);
+        });
     });
 
-    dispatch_semaphore_wait(semab, DISPATCH_TIME_FOREVER);
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
 
     if (err) {
         if (error) {
@@ -439,6 +473,8 @@ NSString* Paq::evalToString()
 
 Paq::~Paq()
 {
+    _transform = nil;
+    _transformBundle = nil;
     _serialQ = nil;
     _resolve = nil;
     _module_map = nil;

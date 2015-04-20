@@ -58,6 +58,8 @@ void Parser::parse(NSString* code, void (^callback)(NSError* error, NSArray* lit
                 [_contexts addObject:ctx];
                 
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                    // Must signal first or someone might delete the Parser and release the semaphore while its still in use
+                    dispatch_semaphore_signal(_contextSema);
                     
                     if (err != nil) {
                         callback(err, nil, nil, nil);
@@ -74,8 +76,6 @@ void Parser::parse(NSString* code, void (^callback)(NSError* error, NSArray* lit
                             callback([NSError errorWithDomain:@"com.benng.paq" code:4 userInfo:@{ NSLocalizedDescriptionKey : @"An unknown error occurred, there was no exception and an invalid return value from Acorn" }], nil, nil, nil);
                         }
                     }
-                    
-                    dispatch_semaphore_signal(_contextSema);
                 });
             });
         });

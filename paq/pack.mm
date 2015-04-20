@@ -82,7 +82,7 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
     if (options != nil && [options[@"standalone"] boolValue]) {
         if ([entry count] != 1) {
             return callback([NSError errorWithDomain:@"com.benng.paq"
-                                                code:13
+                                                code:9
                                             userInfo:@{
                                                 NSLocalizedDescriptionKey :
                                                     @"The standalone option can only be used "
@@ -97,7 +97,7 @@ void Pack::pack(NSArray* entry, NSDictionary* deps, NSDictionary* options,
     if (options != nil && [options[@"convertBrowserifyTransform"] boolValue]) {
         if ([entry count] != 1) {
             return callback([NSError errorWithDomain:@"com.benng.paq"
-                                                code:14
+                                                code:10
                                             userInfo:@{
                                                 NSLocalizedDescriptionKey :
                                                     @"The convertBrowserifyTransform option can only be used "

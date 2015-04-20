@@ -57,8 +57,8 @@ void Require::evaluateRequireExpressions(NSString* path, NSArray* expressions, v
                 
                 ctx.exceptionHandler = ^(JSContext* context, JSValue* exception) {
                     if(!_ignore_unresolvable) {
-                        NSString *errStr = [NSString stringWithFormat:@"JS Error %@ while evaluating the espression %@ in %@", [exception toString], expr, path];
-                        err = [NSError errorWithDomain:@"com.benng.paq" code:9 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
+                        NSString *errStr = [NSString stringWithFormat:@"RequireExpr JS Error %@ while evaluating the espression %@ in %@", [exception toString], expr, path];
+                        err = [NSError errorWithDomain:@"com.benng.paq" code:6 userInfo:@{NSLocalizedDescriptionKey: errStr, NSLocalizedRecoverySuggestionErrorKey: @"Rerun with --ignoreUnresolvableExpressions to continue"}];
                     }
                 };
                 
@@ -69,7 +69,7 @@ void Require::evaluateRequireExpressions(NSString* path, NSArray* expressions, v
                 if (!err) {
                     if (![evaluatedExpression isString]) {
                         if (!_ignore_unresolvable) {
-                            err = [NSError errorWithDomain:@"com.benng.paq" code:10 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
+                            err = [NSError errorWithDomain:@"com.benng.paq" code:7 userInfo:@{ NSLocalizedDescriptionKey : @"The evaluated expression did not result in a string value" }];
                         }
                     }
                     else {
@@ -86,6 +86,9 @@ void Require::evaluateRequireExpressions(NSString* path, NSArray* expressions, v
                 [_contexts addObject:ctx];
                 
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                    // Must signal first or someone might delete the Require and release the semaphore while its still in use
+                    dispatch_semaphore_signal(_contextSema);
+                    
                     if (errors.count > 0) {
                         // Merge together all our errors
                         NSMutableArray* errorDescs = [[NSMutableArray alloc] init];
@@ -100,15 +103,13 @@ void Require::evaluateRequireExpressions(NSString* path, NSArray* expressions, v
                         }];
                         
                         NSString* compoundErrorDesc = [[NSMutableString alloc] initWithFormat:@"Unhandled errors encountered parsing requires:\n%@\n", [errorDescs componentsJoinedByString:@"\n"]];
-                        NSError* compoundError = [NSError errorWithDomain:@"com.benng.paq" code:11 userInfo:@{ NSLocalizedDescriptionKey : compoundErrorDesc }];
+                        NSError* compoundError = [NSError errorWithDomain:@"com.benng.paq" code:8 userInfo:@{ NSLocalizedDescriptionKey : compoundErrorDesc }];
                         
                         callback(compoundError, nil);
                     }
                     else {
                         callback(nil, evaluated);
                     }
-                    
-                    dispatch_semaphore_signal(_contextSema);
                 });
             });
         });

@@ -80,7 +80,7 @@ NSString* Resolve::_resolveFilename(NSString* request, NSMutableDictionary* pare
         }
 
         if (error != nil) {
-            *error = [NSError errorWithDomain:@"com.benng.paq" code:17 userInfo:@{ NSLocalizedDescriptionKey : errString }];
+            *error = [NSError errorWithDomain:@"com.benng.paq" code:15 userInfo:@{ NSLocalizedDescriptionKey : errString }];
         }
 
         return nil;

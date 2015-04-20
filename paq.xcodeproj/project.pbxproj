@@ -118,6 +118,8 @@
 				B59884B41AC263B7005929C3 /* parser.h */,
 				B5479C741ACA076C0011FFE7 /* require.mm */,
 				B5479C731ACA076C0011FFE7 /* require.h */,
+				B51283A21AC5F5BF008C2E0A /* transform.mm */,
+				B51283A31AC5F5BF008C2E0A /* transform.h */,
 				B505A1641AC2A26D00986D7B /* script.mm */,
 				B505A1651AC2A26D00986D7B /* script.h */,
 				B505A1741AC2DEC300986D7B /* paq.mm */,
@@ -129,8 +131,6 @@
 				B512839A1AC5078B008C2E0A /* json.mm */,
 				B512839B1AC5078B008C2E0A /* json.h */,
 				B512839F1AC5C248008C2E0A /* optionparser.hpp */,
-				B51283A21AC5F5BF008C2E0A /* transform.mm */,
-				B51283A31AC5F5BF008C2E0A /* transform.h */,
 				B55FA79A1AE42156004AE27C /* PseudoBrowserJSContext.h */,
 				B55FA79B1AE42156004AE27C /* PseudoBrowserJSContext.m */,
 			);

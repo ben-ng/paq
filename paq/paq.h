@@ -12,6 +12,7 @@
 #import "parser.h"
 #import "require.h"
 #import "resolve.h"
+#import "transform.h"
 #import "pack.h"
 
 class Paq {
@@ -21,6 +22,8 @@ private:
     Parser* _parser;
     Require* _require;
     Resolve* _resolve;
+    Paq* _transformBundle;
+    Transform* _transform;
     NSMutableDictionary* _module_map;
     NSArray* _entry;
     NSDictionary* _options;
@@ -42,6 +45,7 @@ private:
     void depsHelper(NSString* file, NSMutableDictionary* parent, NSString* source, BOOL isEntry, void (^callback)(NSDictionary* deps));
     void _getAST(NSString* file, NSString* source, void (^callback)(NSError* err, NSArray* literals, NSArray* expressions, NSString* source));
     void _resolveRequires(NSArray* requires, NSMutableDictionary* parent, void (^callback)(NSArray* resolved));
+    void _transformFile(NSString* file, NSString* source, void (^callback)(NSString* transformed));
     NSString* _insertGlobals(NSString* file, NSString* source);
 
 public:
