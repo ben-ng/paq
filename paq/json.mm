@@ -13,34 +13,18 @@
  */
 NSString* JSONString(NSString* input)
 {
-    NSMutableString* s = [NSMutableString stringWithString:input];
-    [s replaceOccurrencesOfString:@"\""
-                        withString:@"\\\""
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"/"
-                        withString:@"\\/"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\n"
-                        withString:@"\\n"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\b"
-                        withString:@"\\b"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\f"
-                        withString:@"\\f"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\r"
-                        withString:@"\\r"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    [s replaceOccurrencesOfString:@"\t"
-                        withString:@"\\t"
-                           options:NSCaseInsensitiveSearch
-                             range:NSMakeRange(0, [s length])];
-    return [NSString stringWithFormat:@"\"%@\"", s];
+    NSArray* tarr = @[ input ];
+    if ([NSJSONSerialization isValidJSONObject:tarr]) {
+        // Serialize the dictionary
+        NSData* json = [NSJSONSerialization dataWithJSONObject:tarr options:0 error:nil];
+
+        // If no errors, let's view the JSON
+        if (json != nil) {
+            NSMutableCharacterSet* charSet = [[NSMutableCharacterSet alloc] init];
+            [charSet addCharactersInString:@"[] "];
+            return [[[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] stringByTrimmingCharactersInSet:charSet];
+        }
+    }
+
+    return nil;
 }
