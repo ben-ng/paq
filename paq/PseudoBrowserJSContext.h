@@ -11,10 +11,5 @@
 @interface PseudoBrowserJSContext : JSContext
 
 - (PseudoBrowserJSContext*)init;
-- (int)setTimeout:(JSValue*)function delay:(JSValue*)delay;
-- (int)setInterval:(JSValue*)function delay:(JSValue*)delay;
-- (void)clearHandle:(JSValue*)handle;
 
-@property (nonatomic, strong) NSMutableDictionary* handles;
-@property (nonatomic) int handle;
 @end

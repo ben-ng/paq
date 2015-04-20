@@ -15,114 +15,77 @@
     self = [super init];
 
     if (self) {
-        __weak PseudoBrowserJSContext* weakSelf = self;
-
-        _handles = [[NSMutableDictionary alloc] init];
+        self.exceptionHandler = ^(JSContext* ctx, JSValue* value) {
+            NSLog(@"PBSJC Exception: %@", [value toString]);
+        };
 
         NSArray* logFunctions = @[ @"log", @"info", @"warn", @"debug", @"error" ];
 
-        self[@"setTimeout"] = ^(JSValue* function, JSValue* delay) {
-            return [weakSelf setTimeout:function delay:delay];
+        self[@"_consoleObjcBridge"] = ^(JSValue* arg) {
+            NSLog(@"console: %@", [arg toString]);
         };
 
-        self[@"setImmediate"] = ^(JSValue* function, JSValue* delay) {
-            return [weakSelf setTimeout:function delay:delay];
-        };
-
-        self[@"setInterval"] = ^(JSValue* function, JSValue* delay) {
-            return [weakSelf setInterval:function delay:delay];
-        };
-
-        self[@"clearTimeout"] = ^(JSValue* handle) {
-            [weakSelf clearHandle:handle];
-        };
-
-        self[@"clearImmediate"] = ^(JSValue* handle) {
-            [weakSelf clearHandle:handle];
-        };
-
-        self[@"clearInterval"] = ^(JSValue* handle) {
-            [weakSelf clearHandle:handle];
-        };
+        [self evaluateScript:@"var console = {}"];
 
         // Fill in the console global with the functions people expect
-        [self evaluateScript:@"console = {}"];
-
         for (NSUInteger i = 0, ii = logFunctions.count; i < ii; ++i) {
-            [self evaluateScript:[NSString stringWithFormat:@"console.%@ = function noop(){}", logFunctions]];
+            [self evaluateScript:[NSString stringWithFormat:@"console.%@ = function () {\n"
+                                           @"  _consoleObjcBridge(Array.prototype.slice.call(arguments).join(' '))\n"
+                                           @"}\n",
+                                           logFunctions[i]]];
         }
+
+        // setTimeout is a TRICKY BEAST!
+        NSString* timeoutShim = @""
+            @"var __PBSJC_funcHandles = []\n"
+            @"  , __PBSJC_funcHandleCount = 0\n"
+            @"  , __PBSJC_drain = function __PBSJC_drain () {\n"
+            @"      var extracted, i, ii, cur\n"
+            @"      while (__PBSJC_funcHandles.length) {\n"
+            @"        extracted = __PBSJC_funcHandles\n"
+            @"        __PBSJC_funcHandles = []\n"
+            @"        extracted.sort(function (a, b) {\n"
+            @"          return a[1] - b[1]\n"
+            @"        })\n"
+            @"        for (i=0, ii=extracted.length; i<ii; ++i) {\n"
+            @"          cur = extracted[i]\n"
+            @"          if (cur[3] === true) {\n"
+            @"            __PBSJC_funcHandles.push(cur)\n"
+            @"          }\n"
+            @"          cur[0]()\n"
+            @"        }\n"
+            @"      }\n"
+            @"    }\n"
+            @"  , __PBSJC_clearFunc = function __PBSJC_clearFunc (handle) {\n"
+            @"      var i, ii\n"
+            @"      for (i=0, ii=__PBSJC_funcHandles.length; i<ii; ++i) {\n"
+            @"        if (__PBSJC_funcHandles[i][2] === handle) {\n"
+            @"          __PBSJC_funcHandles.splice(i, 1)\n"
+            @"          return\n"
+            @"        }\n"
+            @"      }\n"
+            @"    }\n"
+            @"  , __PBSJC_queueFunc = function __PBSJC_queueFunc (func, delay) {\n"
+            @"      __PBSJC_funcHandles.push([func, delay, __PBSJC_funcHandleCount++, false])\n"
+            @"    }\n"
+            @"  , __PBSJC_queueIntv = function __PBSJC_queueFunc (func, delay) {\n"
+            @"      __PBSJC_funcHandles.push([func, delay, __PBSJC_funcHandleCount++, true])\n"
+            @"    }\n"
+            @"  , setTimeout = __PBSJC_queueFunc\n"
+            @"  , setImmediate = __PBSJC_queueFunc\n"
+            @"  , setInterval = __PBSJC_queueIntv\n"
+            @"  , clearTimeout = __PBSJC_clearFunc\n"
+            @"  , clearInterval = __PBSJC_clearFunc\n"
+            @"  , clearImmediate = __PBSJC_clearFunc\n";
+
+        [self evaluateScript:timeoutShim];
     }
 
     return self;
 }
 
-- (int)setTimeout:(JSValue*)function delay:(JSValue*)delay
-{
-    int currentHandle = _handle;
-    __weak PseudoBrowserJSContext* weakSelf = self;
-
-    _handles[[NSNumber numberWithInt:_handle]] = function;
-
-    // Give each function a unique handle
-    _handle++;
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([delay toInt32] * NSEC_PER_MSEC)), dispatch_get_main_queue(), ^{
-        JSValue *funcref = weakSelf.handles[[NSNumber numberWithInt:currentHandle]];
-        
-        // If the timeout was cleared, the function will be null when we want to call it
-        if (![funcref isKindOfClass:NSNull.class]) {
-            [funcref callWithArguments:@[]];
-        }
-    });
-
-    return currentHandle;
-}
-
-- (int)setInterval:(JSValue*)function delay:(JSValue*)delay
-{
-    int currentHandle = _handle;
-    int delayInt = [delay toInt32];
-    __weak PseudoBrowserJSContext* weakSelf = self;
-
-    _handles[[NSNumber numberWithInt:_handle]] = function;
-
-    // Give each function a unique handle
-    _handle++;
-
-    __unsafe_unretained __block void (^iterationT)();
-    void (^iteration)() = ^void() {
-        // Immediately wait for the delay time
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInt * NSEC_PER_MSEC)), dispatch_get_main_queue(), ^{
-            JSValue *funcref = weakSelf.handles[[NSNumber numberWithInt:currentHandle]];
-            
-            // If the timeout was cleared, the function will be null when we want to call it
-            if (![funcref isKindOfClass:NSNull.class]) {
-                [funcref callWithArguments:@[]];
-                
-                // Call it again later
-                iterationT();
-            }
-        });
-    };
-    iterationT = iteration;
-    iteration();
-
-    return currentHandle;
-}
-
-- (void)clearHandle:(JSValue*)handle
-{
-    int handleInt = [handle toInt32];
-
-    if (handleInt >= 0 && _handles[[NSNumber numberWithInt:handleInt]] != nil) {
-        _handles[[NSNumber numberWithInt:handleInt]] = [NSNull null];
-    }
-}
-
 - (void)dealloc
 {
-    [_handles removeAllObjects];
-    _handles = nil;
 }
 
 @end
