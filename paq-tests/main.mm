@@ -539,15 +539,10 @@ TEST_CASE("Creates a transform chain", "[transform]")
     REQUIRE([evaluated rangeOfString:@"return \"My name is \""].location != NSNotFound);
 
     // And it just shouldn't do anything sometimes
-    evaluated = evaluateTransformSync(bundle, @"some-really/long-file/path/index.js",
-        @"var template = require('./template.hbs')\n"
-        @"\n"
-        @"// Should export \"Hello World!\"\n"
-        @"module.exports = template({input: 'World'})\n"
-        @"");
+    evaluated = evaluateTransformSync(bundle, @"index.js", @"var donothing = 4;");
 
     REQUIRE(evaluated != nil);
-    REQUIRE([evaluated rangeOfString:@"require('./template.hbs')"].location != NSNotFound);
+    REQUIRE([evaluated rangeOfString:@"var donothing = 4;"].location != NSNotFound);
 
     delete paq;
 }
