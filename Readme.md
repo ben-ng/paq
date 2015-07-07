@@ -17,7 +17,7 @@ Get updates by following me on Twitter:
  * Converting transforms like `hbsfy` for use with `paq`
 
 ## What's Not Working
- * `paq` can't actually run transforms yet. Almost there!
+ * `paq` can't actually run transforms yet. The code is written and tested, but I haven't hooked it up to the CLI because I couldn't decide on what the API should look like.
  * Replacement of `process.env` with actual environment vars.
 
 ## Usage
